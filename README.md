@@ -1,6 +1,6 @@
 # B1MG Voting App
 
-Voting application that allows users to vote on different B1MG variants
+Voting application that allows users to vote on different B1MG variants.
 Users get presented a randomly picked image of a B1MG variant and can vote for it.
 
 [![Convert-Pheno-UI](docs/ui.gif)](docs/ui.gif)
