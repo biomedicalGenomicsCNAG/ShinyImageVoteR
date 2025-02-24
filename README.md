@@ -34,6 +34,6 @@ Written by Ivo Christopher Leist, PhD student at CNAG [https://www.cnag.eu](http
 
 ### COPYRIGHT AND LICENSE
 
-Copyright (C) 2022-2023, Ivo Christopher Leist - CNAG.
+Copyright (C) 2025, Ivo Christopher Leist - CNAG.
 
 GPLv3 - GNU General Public License v3.0
