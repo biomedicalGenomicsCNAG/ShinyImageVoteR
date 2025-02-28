@@ -21,7 +21,12 @@ function App() {
         throw new Error("Failed to load next image");
       }
       const data = await response.json();
-      setCurrentImage(data);
+      if (Array.isArray(data)) {
+        console.log("data[0]", data[0]);
+        setCurrentImage(data[0]);
+      } else {
+        setCurrentImage(data);
+      }
       setRating(0);
     } catch (error) {
       toast.error("Failed to load next image");
@@ -60,7 +65,7 @@ function App() {
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-center mb-8">
-          Image Rating App
+          B1MG Variant Voting
         </h1>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">

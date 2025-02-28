@@ -11,6 +11,7 @@ Users get presented a randomly picked image of a B1MG variant and can vote for i
 ## Development Prerequisites
 - node (developed with v22.13.0)
 - npm (developed with v10.9.2)
+- R (developed with v4.2.2)
 
 ## Quickstart
 1. Start the node server
@@ -18,6 +19,13 @@ Users get presented a randomly picked image of a B1MG variant and can vote for i
 cd server
 npm install
 node run.js
+```
+
+Alternatively to the node server, you can use a R server:
+```bash
+cd server/plumber
+R -e "renv::restore()"
+Rscript run.R
 ```
 
 2. Open a new terminal to start the react application
