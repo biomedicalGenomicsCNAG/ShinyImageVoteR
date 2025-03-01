@@ -119,7 +119,15 @@ choose_picture <- function(drive_paths, institute, training_questions, voting_in
     candidates <- candidates %>%
       sample_n(size = n_sample)
   }
-
+  
+  # replace the path to the image with lh(3-6).googleusercontent.com
+  candidates <- candidates %>%
+    mutate(path = str_replace(
+      path, 
+      "drive.google.com/uc\\?export=view&id=", 
+      "lh3.googleusercontent.com/d/"
+    )
+  )
   candidates
 }
 

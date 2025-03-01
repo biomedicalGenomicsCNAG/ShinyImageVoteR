@@ -13,12 +13,33 @@ import {
     Button, 
     Box 
 } from "@mui/material";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import axios from "axios";
+
+const fetchImageUrl = async (): Promise<string> => {
+  const response = await axios.get(
+    "http://localhost:3000/api/images/next"
+  );
+  console.log("response", response);
+  return response.data.url;
+};
 
 const Voting: React.FC = () => {
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [agreement, setAgreement] = useState<string>("yes");
   const [observations, setObservations] = useState<string[]>([]);
   const [comment, setComment] = useState<string>("");
+
+  const { 
+    data: imageUrl, 
+    isLoading, 
+    error 
+  }: UseQueryResult<string, Error> = useQuery(
+    { 
+      queryKey: ["variantImage"], 
+      queryFn: fetchImageUrl 
+    }
+  );
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     console.log("newValue", newValue);
@@ -50,12 +71,23 @@ const Voting: React.FC = () => {
         <Box>
           <Typography variant="h6">Logged in as Training (answers won't be saved)</Typography>
           <Typography variant="h5">chr21:38376386</Typography>
-          <img
+          {/* <img
             src=""
             alt="Variant"
             height={500}
             width={888}
-          />
+          /> */}
+          {isLoading ? (
+            <Typography>Loading image...</Typography>
+          ) : error ? (
+            <Typography color="error">Error loading image</Typography>
+          ) : (
+            <>
+            <span>Image loaded</span>
+            <span>{imageUrl}</span>
+            <img src={imageUrl} alt="Variant" height={500} width={888} />
+            </>
+          )}
           <Typography variant="h5">
             Variant: <span style={{ color: "#FF7F00" }}>G</span> &gt; <span style={{ color: "#33A02C" }}>A</span>
           </Typography>

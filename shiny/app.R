@@ -182,7 +182,7 @@ server <- function(input, output) {
                 p(paste("Logged in as", voting_institute)),
                 # br(),
                 h5(choosePic()$coordinates),
-                img(src = choosePic()$path, height = 500, width = 500 * 16 / 9),
+                img(src = paste0(choosePic()$path,"=h2000-w2000")),
                 br(),
                 br(),
                 tags$h5(

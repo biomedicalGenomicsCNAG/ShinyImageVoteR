@@ -151,6 +151,11 @@ function(req, res) {
   #   url = "https://omicsdm.cnag.dev/bucketdevelomicsdm/alex-perez-e6fwIVD0FYs-unsplash.jpg"
   # )
 
+  res <- list(
+    id = image$image[1],
+    url = "https://lh3.googleusercontent.com/d/1GqYITqiyybwYOHFIDJh_gyVINUaY-VqR"
+  )
+
   print("res:")
   print(res)
 
@@ -158,9 +163,15 @@ function(req, res) {
   return(res)
 }
 
+#* @filter cors
+cors <- function(res) {
+    res$setHeader("Access-Control-Allow-Origin", "*")
+    plumber::forward()
+}
+
 #* Add a vote for an image
 #* @post /api/votes
-#* @json
+#* @jserializer json
 function(req, res) {
   # Parse the JSON request body
   body <- fromJSON(req$postBody)
