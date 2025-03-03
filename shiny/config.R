@@ -1,11 +1,12 @@
 # Libraries ####
 library(shiny)
 # library(rsconnect)
-library(tidyverse)
+# library(tidyverse)
 library(googlesheets4)
 options(gargle_quiet = FALSE)
 options(gargle_verbosity = "debug")
 library(jsonlite)
+library(magrittr)
 
 # Google authentication ####
 gs4_auth(email = Sys.getenv("GOOGLE_SERVICE_ACC"), path = "gsheets_config.json")
@@ -21,7 +22,6 @@ drive_paths <- list(
 )
 
 screenshots <- read_sheet(drive_paths$screenshots)
-
 vartype_dict <- unique(screenshots$variant)
 
 # Institutes and passwords ####
@@ -88,7 +88,7 @@ choose_picture <- function(drive_paths, institute, training_questions, voting_in
   # select candidates for random selection
   candidates <- screenshots %>%
     # pick the variants selected by the user
-    filter((variant == vartype | !(vartype %in% vartype_dict))) %>%
+    # filter((variant == vartype | !(vartype %in% vartype_dict))) %>%
     # get all images ids
     select(image, coordinates, path, REF, ALT, variant) %>%
     # add agreement info
@@ -119,15 +119,14 @@ choose_picture <- function(drive_paths, institute, training_questions, voting_in
     candidates <- candidates %>%
       sample_n(size = n_sample)
   }
-  
+
   # replace the path to the image with lh(3-6).googleusercontent.com
   candidates <- candidates %>%
     mutate(path = str_replace(
-      path, 
-      "drive.google.com/uc\\?export=view&id=", 
+      path,
+      "drive.google.com/uc\\?export=view&id=",
       "lh3.googleusercontent.com/d/"
-    )
-  )
+    ))
   candidates
 }
 

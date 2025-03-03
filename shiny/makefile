@@ -1,0 +1,34 @@
+
+include .Renviron
+include .env
+
+check-env:
+	@echo "GOOGLE_SERVICE_ACC=${GOOGLE_SERVICE_ACC}"
+	@echo "GDOCS_SCREENSHOTS_UID=${GDOCS_SCREENSHOTS_UID}"
+	@echo "GDOCS_ANNOTATIONS_UID=${GDOCS_ANNOTATIONS_UID}"
+	@echo "GOOGLE_AUTH_CLIENT_ID=${GOOGLE_AUTH_CLIENT_ID}"ç
+
+docker-build:
+	docker build -t ${DOCKER_REGISTRY}/b1mgvariantvoting:0.0.4 .
+
+docker-run:
+	docker run -d -p 8000:8000 \
+		-e GOOGLE_SERVICE_ACC="${GOOGLE_SERVICE_ACC}" \
+		-e GDOCS_SCREENSHOTS_UID="${GDOCS_SCREENSHOTS_UID}" \
+		-e GDOCS_ANNOTATIONS_UID="${GDOCS_ANNOTATIONS_UID}" \
+		-e GOOGLE_AUTH_CLIENT_ID="${GOOGLE_AUTH_CLIENT_ID}" \
+		${DOCKER_REGISTRY}/b1mgvariantvoting:0.0.4
+
+bk-docker-run:
+	docker run -d -p 8000:8000 \
+		-e GOOGLE_SERVICE_ACC="${GOOGLE_SERVICE_ACC}" \
+		-e GDOCS_SCREENSHOTS_UID="${GDOCS_SCREENSHOTS_UID}" \
+		-e GDOCS_ANNOTATIONS_UID="${GDOCS_ANNOTATIONS_UID}" \
+		-e GOOGLE_AUTH_CLIENT_ID="${GOOGLE_AUTH_CLIENT_ID}" \
+		# --volume $(shell pwd)/gsheets_config.json:/srv/shiny-server/gsheets_config.json \
+		# --entrypoint /bin/bash \
+		b1mgvariantvoting:0.0.2 
+		# -c "R -e \"install.packages('tidyverse')\" && R -e \"shiny::runApp('/srv/shiny-server/', port=3838, host='0.0.0.0')\""
+
+push-to-docker-registry:
+	docker push ${DOCKER_REGISTRY}/b1mgvariantvoting:0.0.4

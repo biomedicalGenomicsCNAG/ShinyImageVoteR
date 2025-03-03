@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    ".Renviron": "renviron"
+  },
+  "[renviron]": {
+    "editor.formatOnSave": false
+  }
+}
