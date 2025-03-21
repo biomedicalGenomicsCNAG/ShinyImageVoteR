@@ -2,7 +2,7 @@
 FROM rocker/shiny:latest
 
 ENV RENV_CONFIG_PAK_ENABLED=TRUE
-ENV PPM_URL=packagemanager.posit.co/cran/__linux__/bullseye/latest
+ENV PPM_URL=packagemanager.posit.co/cran/__linux__/noble/latest
 
 # Install system dependencies required by some R packages
 RUN apt-get update && apt-get install -y \
@@ -16,13 +16,9 @@ RUN Rscript -e "options(repos = c(PPM = 'https://${PPM_URL}'));install.packages(
 COPY renv.lock .
 RUN Rscript -e "renv::init(bare=TRUE);options(renv.config.ppm.url = 'https://${PPM_URL}');renv::restore()"
 
-# Install the required R packages
-# RUN R -e "install.packages(c('shiny', 'tidyverse', 'googlesheets4', 'jsonlite', 'googleAuthR', 'dplyr', 'tibble'), repos='https://cloud.r-project.org')"
-
 # Copy your application files to the Shiny server directory
 COPY config.R .
 COPY app.R .
-COPY gsheets_config.json .
 
 # Expose the Shiny server port
 EXPOSE 8000

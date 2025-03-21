@@ -1,15 +1,17 @@
 # Libraries ####
 library(shiny)
-# library(rsconnect)
-# library(tidyverse)
+library(tidyr)
+library(stringr)
 library(googlesheets4)
 options(gargle_quiet = FALSE)
 options(gargle_verbosity = "debug")
 library(jsonlite)
 library(magrittr)
 
-# Google authentication ####
-gs4_auth(email = Sys.getenv("GOOGLE_SERVICE_ACC"), path = "gsheets_config.json")
+gs4_auth(
+  email = Sys.getenv("GOOGLE_SERVICE_ACC"),
+  path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
+)
 
 cat("------------- >> confirm user name:")
 gs4_user()
