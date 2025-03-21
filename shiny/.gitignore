@@ -1,3 +1,4 @@
 gsheets_config.json
 .Renviron
-.env
+*.env
+.gcloud.env
