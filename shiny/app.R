@@ -6,10 +6,6 @@ library(dplyr)
 library(tibble)
 library(googlesheets4)
 
-# Set the Google OAuth client id (use your own if needed)
-# options(googleAuthR.webapp.client_id = "974472244095-deei60m9e2pblp9flsfikict78uak489.apps.googleusercontent.com")
-# options(googleAuthR.webapp.client_id = "1071691400636-9nsijeuc2retpsn3jfvqal4472vqunre.apps.googleusercontent.com")
-
 cat(Sys.getenv("GOOGLE_AUTH_CLIENT_ID"))
 
 options(googleAuthR.webapp.client_id = Sys.getenv("GOOGLE_AUTH_CLIENT_ID"))
