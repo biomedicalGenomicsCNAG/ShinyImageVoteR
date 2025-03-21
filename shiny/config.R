@@ -8,9 +8,14 @@ options(gargle_verbosity = "debug")
 library(jsonlite)
 library(magrittr)
 
+path_b64encoded <- Sys.getenv("GOOGLE_SERVICE_ACC_JSON")
+raw_json_string <- rawToChar(base64enc::base64decode(path_b64encoded))
+
 gs4_auth(
   email = Sys.getenv("GOOGLE_SERVICE_ACC"),
-  path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
+  path = raw_json_string
+  # path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
+  # path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
 )
 
 cat("------------- >> confirm user name:")
