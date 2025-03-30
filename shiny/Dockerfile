@@ -21,7 +21,9 @@ COPY config.R .
 COPY app.R .
 
 # Expose the Shiny server port
-EXPOSE 8000
+# EXPOSE 8000
+EXPOSE 8080
 
 # Run the Shiny server
-CMD ["R", "-e", "shiny::runApp(host='0.0.0.0', port=8000, launch.browser=FALSE)"]
+# CMD ["R", "-e", "shiny::runApp(host='0.0.0.0', port=8000, launch.browser=FALSE)"]
+CMD ["R", "-e", "shiny::runApp(host='0.0.0.0', port=8080, launch.browser=FALSE)"]
