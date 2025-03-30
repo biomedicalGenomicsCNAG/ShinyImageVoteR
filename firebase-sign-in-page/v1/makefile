@@ -1,9 +1,11 @@
 include .env
+VER=0.0.1
 
 docker-build:
-	docker build -t firebase-sign-in-page .
+	docker build -t ${DOCKER_REGISTRY}/firebase-sign-in-page:${VER} . && \
+	docker push ${DOCKER_REGISTRY}/firebase-sign-in-page:${VER}
 
-docker-run:
+docker-run: 
 	docker run --env-file .env -p 80:80 firebase-sign-in-page
 
 docker run:
@@ -21,3 +23,4 @@ docker-check-env-substituted:
 	docker run -it \
 	--env-file .env -p 80:80 firebase-sign-in-page \
 	/bin/sh -c "cat /usr/share/nginx/html/index.html"
+
