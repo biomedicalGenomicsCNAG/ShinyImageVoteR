@@ -186,7 +186,7 @@ server <- function(input, output, session) {
       fluidPage(
         p(paste("Logged in as", voting_institute)),
         h5(choosePic()$coordinates),
-        img(src = paste0(choosePic()$path, "=h2000-w2000")),
+        img(src = output$servedImage),
         br(),
         br(),
         tags$h5(
@@ -226,9 +226,22 @@ server <- function(input, output, session) {
     })
   }
 
+  output$servedImage <- renderImage({
+    # Assuming choosePic()$path contains the full path to the image
+    # e.g., /vol/b1mg/screenshot_URO_003_mutations_varSorted_redoBAQ
+    image_path <- choosePic()$path
+
+    # Return a list containing the src and contentType
+    list(src = image_path,
+         contentType = 'image/jpeg', # Assuming JPEG, adjust if different (e.g., 'image/png')
+         width = "100%", # Optional: control display width
+         height = "auto",   # Optional: control display height
+         alt = "Variant Image")
+  }, deleteFile = FALSE)
+
   output$ui2_questions <- voterUI()
 
-  table_counts <- eventReactive(c(input$Login, input$refresh_counts), {
+  table_counts <- eventReactive(c(input$Login, input.refresh_counts), {
     read_sheet(drive_paths$annotations) %>%
       filter(institute %in% institutes) %>%
       count(Institute = institute, sort = TRUE, name = "Votes") %>%
