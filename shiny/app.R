@@ -90,7 +90,7 @@ server <- function(input, output, session) {
   sign_ins <- callModule(googleSignIn, "demo")
 
   # Reactive value to track user authentication
-  USER <- reactiveValues(Logged = Logged)
+  USER <- reactiveValues(Logged = Logged, screenshots_randomized = FALSE, randomized_screenshots = NULL)
 
   # If a user signs in with Google, mark them as logged in.
   observe({
@@ -115,6 +115,7 @@ server <- function(input, output, session) {
   })
 
   # Render the appropriate UI based on login status.
+  # Also, randomize screenshots once per session.
   observe({
     if (USER$Logged == FALSE) {
       output$page <- renderUI({
@@ -122,7 +123,26 @@ server <- function(input, output, session) {
       })
     }
     if (USER$Logged == TRUE) {
-      cat("Observer User logged in !!")
+      if (!USER$screenshots_randomized) {
+        cat("Randomizing screenshots for the session.\n")
+        # Use a session-specific seed. Could also use user-specific if preferred.
+        set.seed(as.integer(Sys.time())) 
+        USER$randomized_screenshots <- screenshots[sample(nrow(screenshots)), ]
+        USER$screenshots_randomized <- TRUE
+      }
+      cat("Observer User logged in !!\n")
+
+      # Create institute-specific directory if it doesn't exist
+      if (!is.null(voting_institute) && nzchar(voting_institute)) {
+        institute_dir <- file.path("user_data", voting_institute)
+        if (!dir.exists(institute_dir)) {
+          cat(sprintf("Creating directory for institute: %s at %s\n", voting_institute, institute_dir))
+          dir.create(institute_dir, recursive = TRUE)
+        }
+      } else {
+        cat("Warning: voting_institute is not set. Cannot create directory.\n")
+      }
+
       output$page <- renderUI({
         div(class = "outer", do.call(bootstrapPage, c("", ui2())))
       })
@@ -156,13 +176,16 @@ server <- function(input, output, session) {
   pic <<- tibble()
   choosePic <- eventReactive(c(input$Login, input$go), {
     if (nrow(pic) == 0) {
+      # Use randomized screenshots if available
+      current_screenshots <- if (USER$screenshots_randomized) USER$randomized_screenshots else screenshots
+      
       pic <<- choose_picture(
         drive_paths,
         institute,
         training_questions,
         voting_institute,
         vartype,
-        screenshots,
+        current_screenshots, # Use the potentially randomized screenshots
         vartype_dict,
         n_sample = n_sample
       )
