@@ -2,11 +2,8 @@
   "bioconductor.version": null,
   "external.libraries": [],
   "ignored.packages": [],
-  "package.dependency.fields": [
-    "Imports",
-    "Depends",
-    "LinkingTo"
-  ],
+  "package.dependency.fields": ["Imports", "Depends", "LinkingTo"],
+  "pak.enabled": true,
   "ppm.enabled": null,
   "ppm.ignored.urls": [],
   "r.version": null,

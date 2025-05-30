@@ -1,12 +1,16 @@
 include .env
-VER=0.0.1
+VER=0.0.3
+DOMAIN=b1mg.auth.cnag.dev
 
 docker-build:
 	docker build -t ${DOCKER_REGISTRY}/firebase-sign-in-page:${VER} . && \
 	docker push ${DOCKER_REGISTRY}/firebase-sign-in-page:${VER}
 
 docker-run: 
-	docker run --env-file .env -p 80:80 firebase-sign-in-page
+	docker run --env-file .env -p 80:80 -p 443:443 \
+	-v $(shell pwd)/nginx_mountpoint/certs/${DOMAIN}:/etc/nginx/${DOMAIN}.pem:ro \
+	-v $(shell pwd)/nginx_mountpoint/certs/${DOMAIN}-key.pem:/etc/nginx/${DOMAIN}-key.pem:ro \
+	${DOCKER_REGISTRY}/firebase-sign-in-page:${VER}
 
 docker run:
 	-e VITE_FIREBASE_API_KEY=your_api_key \
