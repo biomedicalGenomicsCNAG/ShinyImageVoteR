@@ -3,38 +3,23 @@
 Voting application that allows users to vote on different B1MG variants.
 Users get presented a randomly picked image of a B1MG variant and can vote for it.
 
-[![Convert-Pheno-UI](docs/ui.gif)](docs/ui.gif)
-
-## Required external services
-- minio S3 (https://github.com/minio/minio)
+<!-- [![](docs/ui.gif)](docs/ui.gif) -->
 
 ## Development Prerequisites
-- node (developed with v22.13.0)
-- npm (developed with v10.9.2)
+
 - R (developed with v4.2.2)
 
 ## Quickstart
-1. Start the node server
-```bash
-cd server
-npm install
-node run.js
-```
 
-Alternatively to the node server, you can use a R server:
+1. Start the R shiny application:
+
 ```bash
-cd server/plumber
+cd shiny
 R -e "renv::restore()"
 Rscript run.R
 ```
 
-2. Open a new terminal to start the react application
-```bash
-cd ui
-npm install
-npm run dev
-```
-3. Navigate to http://localhost:5173
+2. Navigate to http://localhost:8000
 
 ### AUTHOR
 
