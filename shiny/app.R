@@ -325,16 +325,16 @@ server <- function(input, output, session) {
     renderUI({
       fluidPage(
         p(paste("Logged in as", user_id)),
-        # h5(choosePic()$coordinates),
+        h5(choosePic()$coordinates),
         # img(src = paste0(choosePic()$path, "=h2000-w2000")),
         br(),
         br(),
-        # tags$h5(
-        #   HTML(paste0(
-        #     "Variant: ", color_seq(choosePic()$REF), " > ", color_seq(choosePic()$ALT),
-        #     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-        #   ))
-        # ),
+        tags$h5(
+          HTML(paste0(
+            "Variant: ", color_seq(choosePic()$REF), " > ", color_seq(choosePic()$ALT),
+            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+          ))
+        ),
         br(),
         radioButtons(
           inputId = "agreement",
