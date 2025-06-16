@@ -2,24 +2,24 @@
 library(shiny)
 library(tidyr)
 library(stringr)
-library(googlesheets4)
-options(gargle_quiet = FALSE)
-options(gargle_verbosity = "debug")
+# library(googlesheets4)
+# options(gargle_quiet = FALSE)
+# options(gargle_verbosity = "debug")
 library(jsonlite)
 library(magrittr)
 
 path_b64encoded <- Sys.getenv("GOOGLE_SERVICE_ACC_JSON")
 raw_json_string <- rawToChar(base64enc::base64decode(path_b64encoded))
 
-gs4_auth(
-  email = Sys.getenv("GOOGLE_SERVICE_ACC"),
-  path = raw_json_string
-  # path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
-  # path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
-)
+# gs4_auth(
+#   email = Sys.getenv("GOOGLE_SERVICE_ACC"),
+#   path = raw_json_string
+#   # path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
+#   # path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
+# )
 
-cat("------------- >> confirm user name:")
-gs4_user()
+# cat("------------- >> confirm user name:")
+# gs4_user()
 
 # Drive data ####
 gdoc_base_url <- "https://docs.google.com/spreadsheets/d/"
@@ -28,8 +28,8 @@ drive_paths <- list(
   annotations = paste0(gdoc_base_url, Sys.getenv("GDOCS_ANNOTATIONS_UID"), "/edit?usp=sharing")
 )
 
-screenshots <- read_sheet(drive_paths$screenshots)
-vartype_dict <- unique(screenshots$variant)
+# screenshots <- read_sheet(drive_paths$screenshots)
+# vartype_dict <- unique(screenshots$variant)
 
 # Institutes and passwords ####
 
@@ -52,7 +52,13 @@ passwords <- c(
   "Training (answers won't be saved)" = "1plusmg"
 )
 
-institutes <- names(passwords)
+passwords <- c(
+  "Test" = "1234",
+  "Test2" = "1plusmg",
+  "Training (answers won't be saved)" = "1plusmg"
+)
+
+user_ids <- names(passwords)
 
 #  Variables ####
 
