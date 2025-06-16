@@ -7,6 +7,11 @@ library(tibble)
 # library(readr)
 # library(googlesheets4)
 library(digest)
+library(DBI)
+library(RSQLite)
+
+source("init_db.R")
+db_path <- "./screenshots/screenshots.sqlite"
 
 # Set the Google OAuth client id (use your own if needed)
 cat(Sys.getenv("GOOGLE_AUTH_CLIENT_ID"))
@@ -116,27 +121,13 @@ server <- function(input, output, session) {
   # Reactive value to track user authentication
   USER <- reactiveValues(Logged = Logged, screenshots_randomized = FALSE, randomized_screenshots = NULL)
 
-  # Read screenshots paths into a data frame use tibble
-  screenshots_df <- read.csv(
-    "./screenshots/uro003_paths.txt", 
-    sep= "\t",
-    header = FALSE,
-  ) 
-
-  # print the first few rows of screenshots to verify
-  cat("Screenshots data loaded:\n")
-  print(head(screenshots_df))
-  print(paste("Total screenshots:", nrow(screenshots_df)))
-
-  # set column names for screenshots
-  colnames(screenshots_df) <- c("coordinates", "REF", "ALT", "variant", "path")
-
-  # replace the path of all images with "./mock_images/yoga-1805784_960_720.png"
-  screenshots_df$path <- "./mock_images/yoga-1805784_960_720.png"
-
-  # print the first few rows of screenshots to verify
-  cat("Screenshots data with updated paths:\n")
-  print(head(screenshots_df))
+  # Connect to the screenshots database
+  con <- dbConnect(SQLite(), db_path)
+  onStop(function() {
+    dbDisconnect(con)
+  })
+  total_screenshots <- dbGetQuery(con, "SELECT COUNT(*) as n FROM screenshots")$n
+  cat(sprintf("Total screenshots in DB: %s\n", total_screenshots))
 
   # If a user signs in with Google, mark them as logged in.
   # observe({
@@ -265,68 +256,49 @@ server <- function(input, output, session) {
     }
   })
 
-  picture <<- NULL
-  save_txt <- observeEvent(input$go, {
-    # if (input$go == 0) {
-    #   picture <<- c(choosePic()$image)
-    # }
-    # picture <<- c(picture, choosePic()$image) %>% tail(2)
+  current_pic <- reactiveVal(NULL)
 
-    # if (input$go > 0 && choosePic()$image != "done") {
-    #   if (!grepl("^Training", voting_institute)) {
-    #     sheet_append(
-    #       ss = drive_paths$annotations,
-    #       data = tibble(
-    #         "timestamp" = Sys.time(),
-    #         "institute" = voting_institute,
-    #         "image" = picture[1],
-    #         "agreement" = input$agreement,
-    #         "observation" = input$observation,
-    #         "comment" = input$comment
-    #       )
-    #     )
-    #   }
-    # }
+  save_txt <- observeEvent(input$go, {
+    pic <- current_pic()
+    if (!is.null(pic) && !is.na(pic$rowid)) {
+      dbExecute(
+        con,
+        "UPDATE screenshots SET vote_count = vote_count + 1 WHERE rowid = ?",
+        params = list(pic$rowid)
+      )
+    }
   })
 
-  pic <<- tibble()
   choosePic <- eventReactive(c(input$Login, input$go), {
-    if (nrow(pic) == 0) {
-      # Use randomized screenshots if available
-      # current_screenshots <- if (USER$screenshots_randomized) USER$randomized_screenshots else screenshots
-      
-      pic <<- choose_picture(
-        drive_paths,
-        institute,
-        training_questions,
-        voting_institute,
-        vartype,
-        screenshots_df, # Use the updated screenshots data frame
-        # current_screenshots, # Use the potentially randomized screenshots
-        vartype_dict,
-        n_sample = n_sample
-      )
+    df <- dbGetQuery(
+      con,
+      "SELECT rowid, coordinates, REF, ALT, variant, path FROM screenshots WHERE vote_count < 3 ORDER BY RANDOM() LIMIT 1"
+    )
 
-      if (nrow(pic) == 0) {
-        pic <<- tibble(
-          image = "done",
-          REF = "-", ALT = "-",
-          coordinates = "There are no more variants to vote in this category!",
-          path = "https://imgpile.com/images/Ud9lAi.jpg"
-        )
-      }
+    if (nrow(df) == 0) {
+      res <- tibble(
+        rowid = NA,
+        coordinates = "There are no more variants to vote in this category!",
+        REF = "-",
+        ALT = "-",
+        variant = NA,
+        path = "https://imgpile.com/images/Ud9lAi.jpg"
+      )
+    } else {
+      res <- df[1, ]
     }
-    first_pic <- head(pic, 1)
-    pic <<- slice(pic, -1)
-    first_pic
+
+    current_pic(res)
+    res
   })
 
   voterUI <- function() {
     renderUI({
+      pic <- choosePic()
       fluidPage(
         p(paste("Logged in as", user_id)),
-        # h5(choosePic()$coordinates),
-        # img(src = paste0(choosePic()$path, "=h2000-w2000")),
+        h5(pic$coordinates),
+        # img(src = paste0(pic$path, "=h2000-w2000")),
         br(),
         br(),
         # tags$h5(
