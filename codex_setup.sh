@@ -3,6 +3,6 @@
 
 curl -O https://cdn.posit.co/r/ubuntu-2404/pkgs/r-${R_VERSION}_1_$(dpkg --print-architecture).deb
 apt update
-apt install ./r-${R_VERSION}_1_$(dpkg --print-architecture).deb
+apt install ./r-${R_VERSION}_1_$(dpkg --print-architecture).deb -y
 
 cd shiny && Rscript codex_setup.R
