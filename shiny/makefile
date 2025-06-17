@@ -36,4 +36,8 @@ push-to-docker-registry:
 	docker push ${DOCKER_REGISTRY}/b1mgvariantvoting:0.0.6
 
 init-sqlite-db:
-	Rscript -e "source('init_db.R')"
+	Rscript init_db.R
+
+dev:
+	R -e "renv::restore()" && \
+	Rscript run.R

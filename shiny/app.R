@@ -11,7 +11,7 @@ library(DBI)
 library(RSQLite)
 
 source("init_db.R")
-db_path <- "./screenshots/screenshots.sqlite"
+db_path <- "./screenshots/annotations.sqlite"
 
 # Set the Google OAuth client id (use your own if needed)
 cat(Sys.getenv("GOOGLE_AUTH_CLIENT_ID"))
@@ -121,13 +121,13 @@ server <- function(input, output, session) {
   # Reactive value to track user authentication
   USER <- reactiveValues(Logged = Logged, screenshots_randomized = FALSE, randomized_screenshots = NULL)
 
-  # Connect to the screenshots database
+  # Connect to the annotations database
   con <- dbConnect(SQLite(), db_path)
   onStop(function() {
     dbDisconnect(con)
   })
-  total_screenshots <- dbGetQuery(con, "SELECT COUNT(*) as n FROM screenshots")$n
-  cat(sprintf("Total screenshots in DB: %s\n", total_screenshots))
+  total_screenshots <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
+  cat(sprintf("Total annotations in DB: %s\n", total_screenshots))
 
   # If a user signs in with Google, mark them as logged in.
   # observe({
@@ -263,33 +263,146 @@ server <- function(input, output, session) {
     if (!is.null(pic) && !is.na(pic$rowid)) {
       dbExecute(
         con,
-        "UPDATE screenshots SET vote_count = vote_count + 1 WHERE rowid = ?",
+        "UPDATE annotations SET vote_count = vote_count + 1 WHERE rowid = ?",
         params = list(pic$rowid)
       )
     }
+    print("Saving annotations...")
+    user_dir <- file.path("user_data", voting_institute, user_id)
+    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations_dev.txt"))
+
+    annotations_df <- read.table(
+      user_annotations_file,
+      header = TRUE,
+      sep = "\t",
+      stringsAsFactors = FALSE
+    )
+
+    print("Annotations DataFrame before update:")
+    print(annotations_df)
+
+    # Update the annotations_df with the new agreement
+    if (!is.null(pic) && !is.na(pic$rowid)) {
+      coordinates <- pic$coordinates
+
+      print(paste("Updating annotations for coordinates:", coordinates))
+      print(paste("Agreement:", input$agreement))
+      print(paste("Alternative vartype:", input$alternative_vartype))
+      print(paste("Observation:", input$observation))
+      print(paste("Comment:", input$comment))
+
+
+
+      annotations_df[annotations_df$coordinates == coordinates, "agreement"] <- input$agreement
+
+      if (!is.null(input$alternative_vartype)) {
+        annotations_df[annotations_df$coordinates == coordinates, "alternative_vartype"] <- input$alternative_vartype
+      }
+
+      if (!is.null(input$observation)) {
+        annotations_df[annotations_df$coordinates == coordinates, "observation"] <- input$observation
+      }
+      
+      comment <- NA
+      if (input$comment != "") {
+        comment <- input$comment
+        annotations_df[annotations_df$coordinates == coordinates, "comment"] <- comment
+      }
+    } else {
+      print("No picture selected or picture is NA.")
+    }
+
+    print("Annotations DataFrame after update:")
+    print(annotations_df)
+
+    # Write the updated annotations_df back to the file
+    write.table(
+      annotations_df,
+      file = user_annotations_file,
+      sep = "\t",
+      row.names = FALSE,
+      col.names = TRUE,
+      quote = FALSE
+    )
+    print("Annotations saved successfully.")
   })
 
   choosePic <- eventReactive(c(input$Login, input$go), {
-    df <- dbGetQuery(
-      con,
-      "SELECT rowid, coordinates, REF, ALT, variant, path FROM screenshots WHERE vote_count < 3 ORDER BY RANDOM() LIMIT 1"
+    user_dir <- file.path("user_data", voting_institute, user_id)
+    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations_dev.txt"))
+
+    annotations_df <- read.table(
+      user_annotations_file,
+      header = TRUE,
+      sep = "\t",
+      stringsAsFactors = FALSE
     )
 
-    if (nrow(df) == 0) {
+    print("Annotations DataFrame:")
+    print(annotations_df)
+
+    print("annotations_df$agreement:")
+    print(annotations_df$agreement)
+
+    # Check if the user has already voted on all variants
+    if (all(!is.na(annotations_df$agreement))) {
       res <- tibble(
         rowid = NA,
-        coordinates = "There are no more variants to vote in this category!",
+        coordinates = "You have already voted on all variants in this category!",
         REF = "-",
         ALT = "-",
         variant = NA,
         path = "https://imgpile.com/images/Ud9lAi.jpg"
       )
-    } else {
-      res <- df[1, ]
+      current_pic(res)
+      return(res)
     }
 
-    current_pic(res)
-    res
+    # loop through the annotations_df to find the next variant that has not been voted on
+    for (i in 1:nrow(annotations_df)) {
+      if (is.na(annotations_df$agreement[i])) {
+        # Get the coordinates of the variant
+        coordinates <- annotations_df$coordinates[i]
+        # Query the database for the variant with these coordinates
+        query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coordinates, "'")
+
+        # Execute the query to get the variant that has not been voted on
+        df <- dbGetQuery(con, query)  
+
+        # assert that the query returns only one row
+        if (nrow(df) > 1) {
+          stop("Query returned more than one row. Check the DB.")
+        }
+
+        if (nrow(df) > 0) {
+          # If a variant is found, return it
+          current_pic(df[1, ])
+          return(df[1, ])
+        }
+      }
+    }
+
+    # Limit the query to 1 result
+    # query <- paste0(query, " LIMIT 1")
+    # Execute the query to get a random variant that has not been voted on
+    # and has less than 3 votes
+    # df <- dbGetQuery(con, query)
+
+    # if (nrow(df) == 0) {
+    #   res <- tibble(
+    #     rowid = NA,
+    #     coordinates = "There are no more variants to vote in this category!",
+    #     REF = "-",
+    #     ALT = "-",
+    #     variant = NA,
+    #     path = "https://imgpile.com/images/Ud9lAi.jpg"
+    #   )
+    # } else {
+    #   res <- df[1, ]
+    # }
+
+    # current_pic(res)
+    # res
   })
 
   voterUI <- function() {
