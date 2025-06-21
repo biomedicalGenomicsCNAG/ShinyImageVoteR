@@ -41,3 +41,6 @@ init-sqlite-db:
 dev:
 	# R -e "renv::restore()" && \
 	Rscript run.R
+
+stop:
+	fuser -k 8000/tcp

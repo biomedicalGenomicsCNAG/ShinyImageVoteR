@@ -84,7 +84,7 @@ ui2 <- function() {
       "Vote",
       uiOutput("ui2_questions"),
       actionButton(inputId = "back", label = "Back"),
-      actionButton(inputId = "go", label = "Next"),
+      actionButton(inputId = "go", label = "Next (press Enter)"),
       br(),
       textOutput("save_txt"),
       br(),
@@ -105,26 +105,23 @@ ui2 <- function() {
 # Main UI now includes an updated CSP meta tag that allows inline scripts without a nonce.
 ui <- fluidPage(
   tags$head(
-    tags$script(HTML("
-      history.pushState(null, null, location.href);  // Add a fake history state
+    # tags$script(HTML("
+    #   history.pushState(null, null, location.href);  // Add a fake history state
 
-      window.onpopstate = function(event) {
-        // Prevent actual browser navigation
-        history.pushState(null, null, location.href);
+    #   window.onpopstate = function(event) {
+    #     // Prevent actual browser navigation
+    #     console.log('Back button pressed, preventing navigation');
+    #     history.pushState(null, null, location.href);
 
-        // Send signal to Shiny that back was pressed
-        Shiny.setInputValue('back_button_pressed', new Date().getTime());
-      };
-      
-      // use Enter key to trigger the 'login' button
-      $(document).on('keypress', function(e) {
-      if (e.which == 13) {  // 13 is the Enter key
-        $('#loginButton').click();
-      }
-    });
-    "))
+    #     // Send signal to Shiny that back was pressed
+    #     Shiny.setInputValue('back_button_pressed', new Date().getTime());
+    #   };
+    # });
+    # ")),
+    # tags$script(src = "scripts/handleBrowserBackButton.js"),
+    tags$script(src = "scripts/hotkeys.js"),
   ),
-  htmlOutput("page")
+  htmlOutput("page"),
 )
 
 # Functions ####
@@ -227,28 +224,6 @@ server <- function(input, output, session) {
   })
   total_screenshots <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_screenshots))
-
-  # If a user signs in with Google, mark them as logged in.
-  # observe({
-  #   if (!is.null(sign_ins()) && !is.null(sign_ins()$email)) {
-  #     # Optionally, assign the signed in email as the institute
-  #     cat("User signed in with Google")
-  #     cat("Email: ", sign_ins()$email, "\n")
-  #     voting_institute <<- sign_ins()$email
-  #     USER$Logged <- TRUE
-  #   }
-  # })
-
-  # Manual login logic remains unchanged.
-  # observeEvent(input$Login, {
-  #   voting_institute <<- isolate(input$voting_institute)
-  #   # vartype <<- isolate(input$selected_vartype)
-  #   submitted_password <- isolate(input$passwd)
-
-  #   if (passwords[voting_institute] == submitted_password) {
-  #     USER$Logged <- TRUE
-  #   }
-  # })
 
   observeEvent(input$loginButton, {
     user_id <<- isolate(input$user_id)
@@ -633,15 +608,17 @@ server <- function(input, output, session) {
           ))
         ),
         br(),
-        radioButtons(
-          inputId = "agreement",
-          label = "Is the variant above correct?",
-          choices = c(
-            "Yes, it is." = "yes",
-            "There is no variant." = "no",
-            "There is a different variant." = "diff_var",
-            "I'm not sure." = "not_confident"
-          )
+        div(
+          radioButtons(
+            inputId = "agreement",
+            label = "Is the variant above correct? [hotkey 1-4]",
+            choices = c(
+              "Yes, it is [1]" = "yes",
+              "There is no variant [2]" = "no",
+              "There is a different variant [3]" = "diff_var",
+              "I'm not sure [4]" = "not_confident"
+            )
+          ),
         ),
         conditionalPanel(
           condition = "input.agreement == 'not_confident'",
