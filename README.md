@@ -7,7 +7,7 @@ Users get presented a randomly picked image of a B1MG variant and can vote for i
 
 ## Development Prerequisites
 
-- R (developed with v4.2.2)
+- R (developed with v4.5.0)
 
 ## Quickstart
 
