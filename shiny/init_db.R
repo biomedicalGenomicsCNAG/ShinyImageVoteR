@@ -10,7 +10,11 @@ sqlite_file <- "./screenshots/annotations.sqlite"
 if (!file.exists(sqlite_file)) {
   df <- read.table(text_file, sep="\t", header = FALSE, stringsAsFactors = FALSE)
   colnames(df) <- c("coordinates", "REF", "ALT", "variant", "path")
-  df$vote_count <- 0L
+  df$vote_count_total <- 0L
+  df$vote_count_correct <- 0L
+  df$vote_count_no_variant <- 0L
+  df$vote_count_different_variant <- 0L
+  df$vote_count_not_sure <- 0L
 
   con <- dbConnect(SQLite(), sqlite_file)
   dbWriteTable(con, "annotations", df, overwrite = TRUE)

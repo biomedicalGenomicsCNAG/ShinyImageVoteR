@@ -1,11 +1,7 @@
-# setwd("/Users/lestelles/test22/")
 source("config.R")
 library(shiny)
-# library(googleAuthR)
 library(dplyr)
 library(tibble)
-# library(readr)
-# library(googlesheets4)
 library(digest)
 library(DBI)
 library(RSQLite)
@@ -13,16 +9,8 @@ library(RSQLite)
 source("init_db.R")
 db_path <- "./screenshots/annotations.sqlite"
 
-# Set the Google OAuth client id (use your own if needed)
-cat(Sys.getenv("GOOGLE_AUTH_CLIENT_ID"))
-
-# options(googleAuthR.webapp.client_id = Sys.getenv("GOOGLE_AUTH_CLIENT_ID"))
-
 # Initial login status
 Logged <- FALSE
-
-# Login UI with manual inputs and a Google sign-in button
-
 
 institute_ids <- (c(
   "CNAG", "DKFZ", "DNGC", "Hartwig", "KU Leuven",
@@ -55,18 +43,10 @@ ui1 <- function() {
           choices = user_ids,
           selected = "Test"
         ),
-
-        # googleSignInUI("demo")
-        # selectInput(
-        #         inputId = "selected_vartype",
-        #         label = "Evaluate variants",
-        #         choices = c("All variants", vartype_dict)
-        # ),
         passwordInput("passwd", "Password", value = ""),
         br(),
         actionButton("loginButton", "Log in"),
         br(),
-        # Minimal Google Sign-In button as per your sample
       )
     ),
     tags$style(
@@ -83,8 +63,15 @@ ui2 <- function() {
     tabPanel(
       "Vote",
       uiOutput("ui2_questions"),
-      actionButton(inputId = "back", label = "Back"),
-      actionButton(inputId = "go", label = "Next (press Enter)"),
+      actionButton(
+        inputId = "back", 
+        label = "Back",
+        onclick = "history.back(); return false;"
+      ),
+      actionButton(
+        inputId = "nextBtn", 
+        label = "Next (press Enter)"
+      ),
       br(),
       textOutput("save_txt"),
       br(),
@@ -111,68 +98,6 @@ ui <- fluidPage(
 )
 
 # Functions ####
-choose_picture <- function(drive_paths, institute, training_questions, voting_institute, vartype, screenshots, vartype_dict, n_sample = 10) {
-  annot <- read_sheet(drive_paths$annotations) %>%
-    # first N questions per centre are for training
-    group_by(institute) %>%
-    slice(-c(1:training_questions)) %>%
-    ungroup() %>%
-    # a row that will be removed but contains all agreement fields
-    bind_rows(tibble("image" = "-", already_voted = T, agreement = c("yes", "no", "diff_var", "not_confident"))) %>%
-    # summarise if institute already voted
-    group_by(image) %>%
-    mutate(already_voted = (institute == voting_institute)) %>%
-    mutate(already_voted = any(already_voted)) %>%
-    count(image, already_voted, agreement) %>%
-    spread(agreement, n, fill = 0) %>%
-    mutate(total_votes = yes + no + diff_var + not_confident)
-
-
-  # select candidates for random selection
-  candidates <- screenshots %>%
-    # pick the variants selected by the user
-    # filter((variant == vartype | !(vartype %in% vartype_dict))) %>%
-    # get all images ids
-    select(image, coordinates, path, REF, ALT, variant) %>%
-    # add agreement info
-    left_join(annot) %>%
-    mutate(
-      yes = coalesce(yes, 0),
-      no = coalesce(no, 0),
-      not_confident = coalesce(not_confident, 0),
-      diff_var = coalesce(diff_var, 0),
-      total_votes = coalesce(total_votes, 0),
-      already_voted = coalesce(already_voted, FALSE)
-    ) %>%
-    # remove images if institute already voted
-    # mutate(already_voted = !(is.na(already_voted) | !already_voted)) %>%
-    filter(!already_voted) %>%
-    # arrange(desc(total_votes)) %>%
-
-    # filtering rules
-    filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
-    filter(!(no >= 3 & no / total_votes > 0.7))
-
-
-  # subset a sample of screenshots
-  if (!is.null(n_sample)) {
-    if (nrow(candidates) < n_sample) {
-      n_sample <- nrow(candidates)
-    }
-    candidates <- candidates %>%
-      sample_n(size = n_sample)
-  }
-
-  # replace the path to the image with lh(3-6).googleusercontent.com
-  candidates <- candidates %>%
-    mutate(path = str_replace(
-      path,
-      "drive.google.com/uc\\?export=view&id=",
-      "lh3.googleusercontent.com/d/"
-    ))
-  candidates
-}
-
 color_seq <- function(seq) {
 
   print("Coloring sequence:")
@@ -323,12 +248,12 @@ server <- function(input, output, session) {
 
   current_pic <- reactiveVal(NULL)
 
-  save_txt <- observeEvent(input$go, {
+  save_txt <- observeEvent(input$nextBtn, {
     pic <- current_pic()
     if (!is.null(pic) && !is.na(pic$rowid)) {
       dbExecute(
         con,
-        "UPDATE annotations SET vote_count = vote_count + 1 WHERE rowid = ?",
+        "UPDATE annotations SET vote_count_total = vote_count_total + 1 WHERE rowid = ?",
         params = list(pic$rowid)
       )
     }
@@ -405,12 +330,8 @@ server <- function(input, output, session) {
     choosePic_trigger_source("login")
   })
 
-  observeEvent(input$go, {
+  observeEvent(input$nextBtn, {
     choosePic_trigger_source("go")
-  })
-
-  observeEvent(input$back, {
-    choosePic_trigger_source("back")
   })
 
   # browser back button pressed
@@ -420,7 +341,7 @@ server <- function(input, output, session) {
     choosePic_trigger_source("query-string-change")
   })
 
-  choosePic <- eventReactive(c(input$loginButton, input$go, input$back, query()), {
+  choosePic <- eventReactive(c(input$loginButton, input$nextBtn, input$back, query()), {
     user_dir <- file.path("user_data", voting_institute, user_id)
     user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
 
@@ -456,38 +377,6 @@ server <- function(input, output, session) {
       return(res)
     }
 
-    # if back button was pressed, we need to find the previous variant
-    if (choosePic_trigger_source() == "back") {
-      print("Back button pressed, showing previous image.")
-      # Get the last voted variant
-      last_voted_variant <- tail(annotations_df$coordinates[!is.na(annotations_df$agreement)], 1)
-      if (length(last_voted_variant) == 0) {
-        print("No previous variant found.")
-        return(NULL)
-      }
-      # Query the database for the variant with these coordinates
-      query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", last_voted_variant, "'")
-      df <- dbGetQuery(con, query)
-      # assert that the query returns only one row
-      if (nrow(df) > 1) {
-        stop("Query returned more than one row. Check the DB.")
-      }
-      # replace in the path /vol/b1mg/ with images/
-      df$path <- gsub("/vol/b1mg/", "images/", df$path)
-      if (nrow(df) > 0) {
-        current_pic(df[1, ])
-        updateQueryString(
-          paste0("?coords=", df[1,]$coordinates),
-          mode = "push",
-          session = session
-        )
-        return(df[1, ])
-      } else {
-        print("No previous picture found.")
-        return(NULL)
-      }
-    }
-
     if (choosePic_trigger_source() == "query-string-change") {
       print("URL change detected, showing the image from the URL.")
       # Get the coordinates from the URL
@@ -520,7 +409,27 @@ server <- function(input, output, session) {
         # Get the coordinates of the variant
         coordinates <- annotations_df$coordinates[i]
         # Query the database for the variant with these coordinates
-        query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coordinates, "'")
+        cols <- c(
+          "rowid", 
+          "coordinates", 
+          "REF", 
+          "ALT", 
+          "variant", 
+          "path", 
+          "vote_count_total",
+          "vote_count_correct",
+          "vote_count_no_variant",
+          "vote_count_different_variant",
+          "vote_count_not_sure"
+        )
+
+        query <- paste0(
+          "SELECT ", 
+          paste(cols, collapse = ", "), 
+          " FROM annotations WHERE coordinates = '", coordinates, "'"
+        )
+
+        # query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path, vote_count FROM annotations WHERE coordinates = '", coordinates, "'")
 
         # Execute the query to get the variant that has not been voted on
         df <- dbGetQuery(con, query)  
@@ -534,6 +443,23 @@ server <- function(input, output, session) {
         df$path <- gsub("/vol/b1mg/", "images/", df$path)
 
         if (nrow(df) > 0) {
+
+          # Check if the variant has less than 3 votes
+          # TODO
+          # ask Miranda / Gabriela for the filter out logic
+
+          # if (df$vote_count < 3) {
+          #   print(paste("Found a variant with coordinates:", coordinates))
+          #   print(paste("Vote count:", df$vote_count))
+          # } else {
+          #   print(paste("Variant with coordinates:", coordinates, "has", df$vote_count, "votes. Skipping."))
+          #   next
+          # }
+
+          # filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
+          # filter(!(no >= 3 & no / total_votes > 0.7))
+
+
           # If a variant is found, return it
           current_pic(df[1, ])
           updateQueryString(
@@ -545,28 +471,6 @@ server <- function(input, output, session) {
         }
       }
     }
-
-    # Limit the query to 1 result
-    # query <- paste0(query, " LIMIT 1")
-    # Execute the query to get a random variant that has not been voted on
-    # and has less than 3 votes
-    # df <- dbGetQuery(con, query)
-
-    # if (nrow(df) == 0) {
-    #   res <- tibble(
-    #     rowid = NA,
-    #     coordinates = "There are no more variants to vote in this category!",
-    #     REF = "-",
-    #     ALT = "-",
-    #     variant = NA,
-    #     path = "https://imgpile.com/images/Ud9lAi.jpg"
-    #   )
-    # } else {
-    #   res <- df[1, ]
-    # }
-
-    # current_pic(res)
-    # res
   })
 
   observeEvent(input$back_button_pressed, {
@@ -645,7 +549,7 @@ server <- function(input, output, session) {
         div(
           radioButtons(
             inputId = "agreement",
-            label = "Is the variant above correct? [hotkey 1-4]",
+            label = "Is the variant above correct? [numkey 1-4]",
             choices = c(
               "Yes, it is [1]" = "yes",
               "There is no variant [2]" = "no",

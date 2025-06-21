@@ -1,10 +1,15 @@
-// Hotkeys for radio buttons on the voting page
-
 document.addEventListener("keydown", (e) => {
-  // Trigger login on Enter if login button is visible
+  // Trigger login button on Enter
   const loginBtn = document.getElementById("loginButton");
   if (e.key === "Enter" && loginBtn) {
     loginBtn.click();
+    return;
+  }
+
+  // Trigger next button on Enter
+  const nextBtn = document.getElementById("nextButton");
+  if (e.key === "Enter" && nextBtn) {
+    nextBtn.click();
     return;
   }
 
