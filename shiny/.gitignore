@@ -1,5 +1,3 @@
-gsheets_config.json
+user_data/*
 .Renviron
 *.env
-.gcloud.env
-gae_env.yaml

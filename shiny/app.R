@@ -102,23 +102,9 @@ ui2 <- function() {
   )
 }
 
-# Main UI now includes an updated CSP meta tag that allows inline scripts without a nonce.
+# Main UI ####
 ui <- fluidPage(
   tags$head(
-    # tags$script(HTML("
-    #   history.pushState(null, null, location.href);  // Add a fake history state
-
-    #   window.onpopstate = function(event) {
-    #     // Prevent actual browser navigation
-    #     console.log('Back button pressed, preventing navigation');
-    #     history.pushState(null, null, location.href);
-
-    #     // Send signal to Shiny that back was pressed
-    #     Shiny.setInputValue('back_button_pressed', new Date().getTime());
-    #   };
-    # });
-    # ")),
-    # tags$script(src = "scripts/handleBrowserBackButton.js"),
     tags$script(src = "scripts/hotkeys.js"),
   ),
   htmlOutput("page"),
@@ -237,7 +223,6 @@ server <- function(input, output, session) {
 
 
   # Render the appropriate UI based on login status.
-  # Also, randomize screenshots once per session.
   observe({
     if (USER$Logged == FALSE) {
       output$page <- renderUI({
@@ -410,6 +395,11 @@ server <- function(input, output, session) {
   # Reactive value to track the trigger source
   choosePic_trigger_source <- reactiveVal(NULL)
 
+  query <- reactive({
+    # session$clientData$url_search contains the raw "?foo=1&bar=xyz" string
+    parseQueryString(session$clientData$url_search)
+  })
+
   # Observer to update the choosePic trigger source
   observeEvent(input$loginButton, {
     choosePic_trigger_source("login")
@@ -424,11 +414,13 @@ server <- function(input, output, session) {
   })
 
   # browser back button pressed
-  observeEvent(input$back_button_pressed, {
-    choosePic_trigger_source("back")
+  observeEvent(query(), {
+    cat("Query string changed! New params:\n")
+    print(query())
+    choosePic_trigger_source("query-string-change")
   })
 
-  choosePic <- eventReactive(c(input$loginButton, input$go, input$back, input$back_button_pressed), {
+  choosePic <- eventReactive(c(input$loginButton, input$go, input$back, query()), {
     user_dir <- file.path("user_data", voting_institute, user_id)
     user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
 
@@ -455,6 +447,11 @@ server <- function(input, output, session) {
         variant = NA,
         path = "https://imgpile.com/images/Ud9lAi.jpg"
       )
+      updateQueryString(
+        "?coords=done",
+        mode = "push",
+        session = session
+      )
       current_pic(res)
       return(res)
     }
@@ -479,9 +476,40 @@ server <- function(input, output, session) {
       df$path <- gsub("/vol/b1mg/", "images/", df$path)
       if (nrow(df) > 0) {
         current_pic(df[1, ])
+        updateQueryString(
+          paste0("?coords=", df[1,]$coordinates),
+          mode = "push",
+          session = session
+        )
         return(df[1, ])
       } else {
         print("No previous picture found.")
+        return(NULL)
+      }
+    }
+
+    if (choosePic_trigger_source() == "query-string-change") {
+      print("URL change detected, showing the image from the URL.")
+      # Get the coordinates from the URL
+      coords <- parseQueryString(session$clientData$url_search)$coords
+      if (is.null(coords) || coords == "done") {
+        print("No coordinates found in the URL or all variants have been voted on.")
+        return(NULL)
+      }
+      # Query the database for the variant with these coordinates
+      query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coords, "'")
+      df <- dbGetQuery(con, query)
+      # assert that the query returns only one row
+      if (nrow(df) > 1) {
+        stop("Query returned more than one row. Check the DB.")
+      }
+      # replace in the path /vol/b1mg/ with images/
+      df$path <- gsub("/vol/b1mg/", "images/", df$path)
+      if (nrow(df) > 0) {
+        current_pic(df[1, ])
+        return(df[1, ])
+      } else {
+        print("No picture found for the given coordinates.")
         return(NULL)
       }
     }
@@ -508,6 +536,11 @@ server <- function(input, output, session) {
         if (nrow(df) > 0) {
           # If a variant is found, return it
           current_pic(df[1, ])
+          updateQueryString(
+            paste0("?coords=", df[1,]$coordinates),
+            mode = "push",
+            session = session
+          )
           return(df[1, ])
         }
       }
@@ -596,6 +629,7 @@ server <- function(input, output, session) {
         p(paste("Logged in as", user_id)),
         h5(pic$coordinates),
         img(
+          id = "variantImage",
           src = paste0(pic$path),
           style = "max-width:100%; height:auto;"
         ),
