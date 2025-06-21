@@ -39,5 +39,5 @@ init-sqlite-db:
 	Rscript init_db.R
 
 dev:
-	R -e "renv::restore()" && \
+	# R -e "renv::restore()" && \
 	Rscript run.R

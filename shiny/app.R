@@ -28,7 +28,7 @@ institute_ids <- (c(
   "CNAG", "DKFZ", "DNGC", "Hartwig", "KU Leuven",
   "University of Oslo", "University of Verona", "University of Helsinki",
   "SciLifeLab", "ISCIII", "Latvian BRSC", "MOMA",
-  "Universidade de Aveiro", "FPGMX", "Training (answers won't be saved)"
+  "Universidade de Aveiro", "FPGMX", "Training_answers_not_saved"
 ))
 
 # create folders for all institutes
@@ -46,12 +46,14 @@ ui1 <- function() {
         selectInput(
           inputId = "institutes_id",
           label = "Institute ID",
-          choices = c(institute_ids, "CNAG")
+          choices = institute_ids,
+          selected = "Training_answers_not_saved"
         ),
         selectInput(
           inputId = "user_id",
           label = "User ID",
-          choices = c(user_ids, "Training (answers won't be saved)")
+          choices = user_ids,
+          selected = "Test"
         ),
 
         # googleSignInUI("demo")
@@ -62,7 +64,7 @@ ui1 <- function() {
         # ),
         passwordInput("passwd", "Password", value = ""),
         br(),
-        actionButton("Login", "Log in"),
+        actionButton("loginButton", "Log in"),
         br(),
         # Minimal Google Sign-In button as per your sample
       )
@@ -81,6 +83,7 @@ ui2 <- function() {
     tabPanel(
       "Vote",
       uiOutput("ui2_questions"),
+      actionButton(inputId = "back", label = "Back"),
       actionButton(inputId = "go", label = "Next"),
       br(),
       textOutput("save_txt"),
@@ -112,14 +115,107 @@ ui <- fluidPage(
         // Send signal to Shiny that back was pressed
         Shiny.setInputValue('back_button_pressed', new Date().getTime());
       };
+      
+      // use Enter key to trigger the 'login' button
+      $(document).on('keypress', function(e) {
+      if (e.which == 13) {  // 13 is the Enter key
+        $('#loginButton').click();
+      }
+    });
     "))
   ),
   htmlOutput("page")
 )
 
+# Functions ####
+choose_picture <- function(drive_paths, institute, training_questions, voting_institute, vartype, screenshots, vartype_dict, n_sample = 10) {
+  annot <- read_sheet(drive_paths$annotations) %>%
+    # first N questions per centre are for training
+    group_by(institute) %>%
+    slice(-c(1:training_questions)) %>%
+    ungroup() %>%
+    # a row that will be removed but contains all agreement fields
+    bind_rows(tibble("image" = "-", already_voted = T, agreement = c("yes", "no", "diff_var", "not_confident"))) %>%
+    # summarise if institute already voted
+    group_by(image) %>%
+    mutate(already_voted = (institute == voting_institute)) %>%
+    mutate(already_voted = any(already_voted)) %>%
+    count(image, already_voted, agreement) %>%
+    spread(agreement, n, fill = 0) %>%
+    mutate(total_votes = yes + no + diff_var + not_confident)
+
+
+  # select candidates for random selection
+  candidates <- screenshots %>%
+    # pick the variants selected by the user
+    # filter((variant == vartype | !(vartype %in% vartype_dict))) %>%
+    # get all images ids
+    select(image, coordinates, path, REF, ALT, variant) %>%
+    # add agreement info
+    left_join(annot) %>%
+    mutate(
+      yes = coalesce(yes, 0),
+      no = coalesce(no, 0),
+      not_confident = coalesce(not_confident, 0),
+      diff_var = coalesce(diff_var, 0),
+      total_votes = coalesce(total_votes, 0),
+      already_voted = coalesce(already_voted, FALSE)
+    ) %>%
+    # remove images if institute already voted
+    # mutate(already_voted = !(is.na(already_voted) | !already_voted)) %>%
+    filter(!already_voted) %>%
+    # arrange(desc(total_votes)) %>%
+
+    # filtering rules
+    filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
+    filter(!(no >= 3 & no / total_votes > 0.7))
+
+
+  # subset a sample of screenshots
+  if (!is.null(n_sample)) {
+    if (nrow(candidates) < n_sample) {
+      n_sample <- nrow(candidates)
+    }
+    candidates <- candidates %>%
+      sample_n(size = n_sample)
+  }
+
+  # replace the path to the image with lh(3-6).googleusercontent.com
+  candidates <- candidates %>%
+    mutate(path = str_replace(
+      path,
+      "drive.google.com/uc\\?export=view&id=",
+      "lh3.googleusercontent.com/d/"
+    ))
+  candidates
+}
+
+color_seq <- function(seq) {
+
+  print("Coloring sequence:")
+  print(seq)
+
+  # RColorBrewer::brewer.pal(12, name = "Paired")
+  # color_dict = c("T" = "red", "C" = "blue", "A" = "green", "G" = "orange", "-" = "black")
+  color_dict <- c(
+    "T" = "#E31A1C",
+    "C" = "#1F78B4",
+    "A" = "#33A02C",
+    "G" = "#FF7F00",
+    "-" = "black"
+  )
+
+  colored_seq <- seq %>%
+    strsplit(., split = "") %>%
+    unlist() %>%
+    sapply(., function(x) sprintf('<span style="color:%s">%s</span>', color_dict[x], x)) %>%
+    paste(collapse = "")
+
+  colored_seq
+}
+
 server <- function(input, output, session) {
-  # Set up Google sign in using the minimal sample approach.
-  # sign_ins <- callModule(googleSignIn, "demo")
+  source("init_db.R")
 
   # Reactive value to track user authentication
   USER <- reactiveValues(Logged = Logged, screenshots_randomized = FALSE, randomized_screenshots = NULL)
@@ -154,10 +250,9 @@ server <- function(input, output, session) {
   #   }
   # })
 
-  observeEvent(input$Login, {
+  observeEvent(input$loginButton, {
     user_id <<- isolate(input$user_id)
     voting_institute <<- isolate(input$institutes_id)
-    # vartype <<- isolate(input$selected_vartype)
     submitted_password <- isolate(input$passwd)
 
     if (passwords[user_id] == submitted_password) {
@@ -323,7 +418,7 @@ server <- function(input, output, session) {
     }
 
     print("Annotations DataFrame after update:")
-    print(annotations_df)
+    # print(annotations_df)
 
     # Write the updated annotations_df back to the file
     write.table(
@@ -337,7 +432,28 @@ server <- function(input, output, session) {
     print("Annotations saved successfully.")
   })
 
-  choosePic <- eventReactive(c(input$Login, input$go), {
+  # Reactive value to track the trigger source
+  choosePic_trigger_source <- reactiveVal(NULL)
+
+  # Observer to update the choosePic trigger source
+  observeEvent(input$loginButton, {
+    choosePic_trigger_source("login")
+  })
+
+  observeEvent(input$go, {
+    choosePic_trigger_source("go")
+  })
+
+  observeEvent(input$back, {
+    choosePic_trigger_source("back")
+  })
+
+  # browser back button pressed
+  observeEvent(input$back_button_pressed, {
+    choosePic_trigger_source("back")
+  })
+
+  choosePic <- eventReactive(c(input$loginButton, input$go, input$back, input$back_button_pressed), {
     user_dir <- file.path("user_data", voting_institute, user_id)
     user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
 
@@ -348,11 +464,11 @@ server <- function(input, output, session) {
       stringsAsFactors = FALSE
     )
 
-    print("Annotations DataFrame:")
-    print(annotations_df)
+    # print("Annotations DataFrame:")
+    # print(annotations_df)
 
-    print("annotations_df$agreement:")
-    print(annotations_df$agreement)
+    # print("annotations_df$agreement:")
+    # print(annotations_df$agreement)
 
     # Check if the user has already voted on all variants
     if (all(!is.na(annotations_df$agreement))) {
@@ -366,6 +482,33 @@ server <- function(input, output, session) {
       )
       current_pic(res)
       return(res)
+    }
+
+    # if back button was pressed, we need to find the previous variant
+    if (choosePic_trigger_source() == "back") {
+      print("Back button pressed, showing previous image.")
+      # Get the last voted variant
+      last_voted_variant <- tail(annotations_df$coordinates[!is.na(annotations_df$agreement)], 1)
+      if (length(last_voted_variant) == 0) {
+        print("No previous variant found.")
+        return(NULL)
+      }
+      # Query the database for the variant with these coordinates
+      query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", last_voted_variant, "'")
+      df <- dbGetQuery(con, query)
+      # assert that the query returns only one row
+      if (nrow(df) > 1) {
+        stop("Query returned more than one row. Check the DB.")
+      }
+      # replace in the path /vol/b1mg/ with images/
+      df$path <- gsub("/vol/b1mg/", "images/", df$path)
+      if (nrow(df) > 0) {
+        current_pic(df[1, ])
+        return(df[1, ])
+      } else {
+        print("No previous picture found.")
+        return(NULL)
+      }
     }
 
     # loop through the annotations_df to find the next variant that has not been voted on

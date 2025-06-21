@@ -8,50 +8,6 @@ library(stringr)
 library(jsonlite)
 library(magrittr)
 
-path_b64encoded <- Sys.getenv("GOOGLE_SERVICE_ACC_JSON")
-raw_json_string <- rawToChar(base64enc::base64decode(path_b64encoded))
-
-# gs4_auth(
-#   email = Sys.getenv("GOOGLE_SERVICE_ACC"),
-#   path = raw_json_string
-#   # path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
-#   # path = Sys.getenv("GOOGLE_SERVICE_ACC_JSON"),
-# )
-
-# cat("------------- >> confirm user name:")
-# gs4_user()
-
-# Drive data ####
-gdoc_base_url <- "https://docs.google.com/spreadsheets/d/"
-drive_paths <- list(
-  screenshots = paste0(gdoc_base_url, Sys.getenv("GDOCS_SCREENSHOTS_UID"), "/edit?usp=sharing"),
-  annotations = paste0(gdoc_base_url, Sys.getenv("GDOCS_ANNOTATIONS_UID"), "/edit?usp=sharing")
-)
-
-# screenshots <- read_sheet(drive_paths$screenshots)
-# vartype_dict <- unique(screenshots$variant)
-
-# Institutes and passwords ####
-
-passwords <- c(
-  "Test" = "1plusmg",
-  "CNAG" = "1plusmg",
-  "DKFZ" = "1plusmg",
-  "DNGC" = "1plusmg",
-  "Hartwig" = "1plusmg",
-  "KU Leuven" = "2plusmg",
-  "University of Oslo" = "1plusmg",
-  "University of Verona" = "1plusmg",
-  "University of Helsinki" = "1plusmg",
-  "SciLifeLab" = "1plusmg",
-  "ISCIII" = "1plusmg",
-  "Latvian BRSC" = "1plusmg",
-  "MOMA" = "1plusmg",
-  "Universidade de Aveiro" = "1plusmg",
-  "FPGMX" = "1plusmg",
-  "Training (answers won't be saved)" = "1plusmg"
-)
-
 passwords <- c(
   "Test" = "1234",
   "Test2" = "1plusmg",
