@@ -45,7 +45,7 @@ ui1 <- function() {
         ),
         passwordInput("passwd", "Password", value = ""),
         br(),
-        actionButton("loginButton", "Log in"),
+        actionButton("loginBtn", "Log in"),
         br(),
       )
     ),
@@ -64,8 +64,8 @@ ui2 <- function() {
       "Vote",
       uiOutput("ui2_questions"),
       actionButton(
-        inputId = "back", 
-        label = "Back",
+        inputId = "backBtn", 
+        label = "Back (press Backspace)",
         onclick = "history.back(); return false;"
       ),
       actionButton(
@@ -136,7 +136,7 @@ server <- function(input, output, session) {
   total_screenshots <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_screenshots))
 
-  observeEvent(input$loginButton, {
+  observeEvent(input$loginBtn, {
     user_id <<- isolate(input$user_id)
     voting_institute <<- isolate(input$institutes_id)
     submitted_password <- isolate(input$passwd)
@@ -326,7 +326,7 @@ server <- function(input, output, session) {
   })
 
   # Observer to update the choosePic trigger source
-  observeEvent(input$loginButton, {
+  observeEvent(input$loginBtn, {
     choosePic_trigger_source("login")
   })
 
@@ -341,7 +341,7 @@ server <- function(input, output, session) {
     choosePic_trigger_source("query-string-change")
   })
 
-  choosePic <- eventReactive(c(input$loginButton, input$nextBtn, input$back, query()), {
+  choosePic <- eventReactive(c(input$loginBtn, input$nextBtn, query()), {
     user_dir <- file.path("user_data", voting_institute, user_id)
     user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
 
@@ -470,59 +470,6 @@ server <- function(input, output, session) {
           return(df[1, ])
         }
       }
-    }
-  })
-
-  observeEvent(input$back_button_pressed, {
-    # Your logic to show previous image
-    print("Back button pressed, showing previous image.")
-
-    user_dir <- file.path("user_data", voting_institute, user_id)
-    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
-
-    annotations_df <- read.table(
-      user_annotations_file,
-      header = TRUE,
-      sep = "\t",
-      stringsAsFactors = FALSE
-    )
-
-    pic <- current_pic()
-    print("Current picture:")
-    print(pic)
-
-    coordinates <- pic$coordinates
-
-    # find in annotations_df the row with the same coordinates
-    row_index <- which(annotations_df$coordinates == coordinates)
-    print(paste("Row index in annotations_df for coordinates", coordinates, ":", row_index))
-
-    # get the previous row index
-    prev_row_index <- row_index - 1
-    print(paste("Previous row index in annotations_df for coordinates", coordinates, ":", prev_row_index))
-
-    if (prev_row_index < 1) {
-      print("No previous row found, staying on the current picture.")
-      return()
-    }
-    prev_coordinates <- annotations_df$coordinates[prev_row_index]
-    print(paste("Previous coordinates:", prev_coordinates))
-    # Query the database for the variant with these coordinates
-    query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", prev_coordinates, "'")
-    # Execute the query to get the variant that has not been voted on
-    df <- dbGetQuery(con, query)
-    # assert that the query returns only one row
-    if (nrow(df) > 1) {
-      stop("Query returned more than one row. Check the DB.")
-    }
-    # replace in the path /vol/b1mg/ with images/
-    df$path <- gsub("/vol/b1mg/", "images/", df$path)
-    if (nrow(df) > 0) {
-      # If a variant is found, return it
-      current_pic(df[1, ])
-      print("Previous picture set successfully.")
-    } else {
-      print("No previous picture found.")
     }
   })
 

@@ -1,15 +1,22 @@
 document.addEventListener("keydown", (e) => {
   // Trigger login button on Enter
-  const loginBtn = document.getElementById("loginButton");
+  const loginBtn = document.getElementById("loginBtn");
   if (e.key === "Enter" && loginBtn) {
     loginBtn.click();
     return;
   }
 
   // Trigger next button on Enter
-  const nextBtn = document.getElementById("nextButton");
+  const nextBtn = document.getElementById("nextBtn");
   if (e.key === "Enter" && nextBtn) {
     nextBtn.click();
+    return;
+  }
+
+  // Tricker back button on backspace
+  const backBtn = document.getElementById("backBtn");
+  if (e.key === "Backspace" && backBtn) {
+    backBtn.click();
     return;
   }
 
