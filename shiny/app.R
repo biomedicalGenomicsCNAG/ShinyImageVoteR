@@ -5,6 +5,7 @@ library(tibble)
 library(digest)
 library(DBI)
 library(RSQLite)
+library(data.table)
 
 source("init_db.R")
 db_path <- "./screenshots/annotations.sqlite"
@@ -78,6 +79,10 @@ ui2 <- function() {
       br()
     ),
     tabPanel(
+      # TODO
+      # merge the user files of all intitutes into one dataframe
+      # and then count the number of non NA rows
+      # to get the number of total votes per institute
       "Monitor",
       fluidPage(
         # h5(sprintf("Total screenshots: %s", nrow(screenshots))),
@@ -196,7 +201,7 @@ server <- function(input, output, session) {
           user_info_file <- file.path(user_dir, paste0(user_id, "_info.json"))
           if (!file.exists(user_info_file)) {
             cat(sprintf("Creating user info file for: %s at %s\n", user_id, user_info_file))
-            write_json(user_info, user_info_file)
+            write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
           }
 
           # unser annotations file
@@ -250,14 +255,10 @@ server <- function(input, output, session) {
 
   save_txt <- observeEvent(input$nextBtn, {
     pic <- current_pic()
-    if (!is.null(pic) && !is.na(pic$rowid)) {
-      dbExecute(
-        con,
-        "UPDATE annotations SET vote_count_total = vote_count_total + 1 WHERE rowid = ?",
-        params = list(pic$rowid)
-      )
-    }
-    print("Saving annotations...")
+
+    # TODO
+    # Total vote count gets inflated if a user goes back and votes again
+    # on the same picture. This should be fixed.
     user_dir <- file.path("user_data", voting_institute, user_id)
     user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
 
@@ -272,38 +273,65 @@ server <- function(input, output, session) {
     print(annotations_df)
 
     # Update the annotations_df with the new agreement
-    if (!is.null(pic) && !is.na(pic$rowid)) {
-      coordinates <- pic$coordinates
 
-      print(paste("Updating annotations for coordinates:", coordinates))
+    if (!is.null(pic) && !is.na(pic$rowid)) {
+      coords <- pic$coordinates
+
+      print(paste("Updating annotations for coordinates:", coords))
       print(paste("Agreement:", input$agreement))
       print(paste("Alternative vartype:", input$alternative_vartype))
       print(paste("Observation:", input$observation))
       print(paste("Comment:", input$comment))
 
+      # use the row index to update the annotations_df
+      rowIdx <- which(annotations_df$coordinates == coords)
+      already_voted <- 
+        length(rowIdx) > 0 &&               # there is a matching row
+        any(!is.na(annotations_df[rowIdx, -1]))  # at least one non-NA among the other columns
 
+      if (already_voted) {
+        old_row_values <- annotations_df[rowIdx, ]
+      } 
+      # always update agreement
+      annotations_df[rowIdx, "agreement"] <- input$agreement
 
-      annotations_df[annotations_df$coordinates == coordinates, "agreement"] <- input$agreement
-
+      # only update if provided
       if (!is.null(input$alternative_vartype)) {
-        annotations_df[annotations_df$coordinates == coordinates, "alternative_vartype"] <- input$alternative_vartype
+        annotations_df[rowIdx, "alternative_vartype"] <- input$alternative_vartype
       }
 
       if (!is.null(input$observation)) {
-        annotations_df[annotations_df$coordinates == coordinates, "observation"] <- input$observation
+        annotations_df[rowIdx, "observation"] <- input$observation
       }
-      
+
+      # handle comment (default NA)
       comment <- NA
       if (input$comment != "") {
         comment <- input$comment
-        annotations_df[annotations_df$coordinates == coordinates, "comment"] <- comment
+        annotations_df[rowIdx, "comment"] <- comment
+      }
+      
+      if (!already_voted) {
+        # Increment the total screenshots voted for the user
+        user_info_file <- file.path(user_dir, paste0(user_id, "_info.json"))
+        user_info <- read_json(user_info_file)
+        user_info$total_screenshots_voted <- user_info$total_screenshots_voted + 1
+        write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
+
+        dbExecute(
+          con,
+          "UPDATE annotations SET vote_count_total = vote_count_total + 1 WHERE rowid = ?",
+          params = list(pic$rowid)
+        )
+      } else {
+        print("User has already voted on this picture. Not incrementing total_screenshots_voted.")
       }
     } else {
       print("No picture selected or picture is NA.")
     }
 
     print("Annotations DataFrame after update:")
-    # print(annotations_df)
+    print(annotations_df)
 
     # Write the updated annotations_df back to the file
     write.table(
@@ -314,6 +342,50 @@ server <- function(input, output, session) {
       col.names = TRUE,
       quote = FALSE
     )
+
+    if (already_voted) {
+      files <- list.files(
+        path = "user_data", 
+        pattern = "\\.txt$", 
+        full.names = TRUE,
+        recursive = TRUE
+      )
+      print("already_voted -> Files to read for annotations:")
+      print(files)
+      # read, filter, tag, and stack
+      result <- rbindlist(lapply(files, function(f) {
+        dt <- fread(f)
+        dt_sub <- dt[grepl(coords, coordinates)]
+        if (nrow(dt_sub)) dt_sub[, file := basename(f)]
+        dt_sub
+      }), use.names = TRUE, fill = TRUE) 
+
+      print("Resulting DataFrame after reading all user annotations:")
+      print(result)
+
+      # grouby by agreement and count
+      counts <- result %>%
+        group_by(agreement) %>%
+        summarise(count = n(), .groups = 'drop')
+      print("Counts of agreements:")
+      print(counts)
+
+      # TODO update the vote counts in the database
+      # Warning: Error in : Parameter 2 does not have length 1.
+
+      # update the vote counts in the database
+      # dbExecute(
+      #   con,
+      #   "UPDATE annotations SET vote_count_correct = ?, vote_count_no_variant = ?, vote_count_different_variant = ?, vote_count_not_sure = ? WHERE coordinates = ?",
+      #   params = list(
+      #     counts$count[counts$agreement == "yes"],
+      #     counts$count[counts$agreement == "no"],
+      #     counts$count[counts$agreement == "diff_var"],
+      #     counts$count[counts$agreement == "not_confident"],
+      #     coords
+      #   )
+      # )
+    }
     print("Annotations saved successfully.")
   })
 
