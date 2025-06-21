@@ -102,14 +102,17 @@ ui2 <- function() {
 # Main UI now includes an updated CSP meta tag that allows inline scripts without a nonce.
 ui <- fluidPage(
   tags$head(
-    tags$meta(
-      `http-equiv` = "Content-Security-Policy",
-      content = "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: https://www.gstatic.com https://apis.google.com;"
-    ),
-    tags$meta(
-      `http-equiv` = "Cross-Origin-Opener-Policy",
-      content = "same-origin-allow-popups"
-    )
+    tags$script(HTML("
+      history.pushState(null, null, location.href);  // Add a fake history state
+
+      window.onpopstate = function(event) {
+        // Prevent actual browser navigation
+        history.pushState(null, null, location.href);
+
+        // Send signal to Shiny that back was pressed
+        Shiny.setInputValue('back_button_pressed', new Date().getTime());
+      };
+    "))
   ),
   htmlOutput("page")
 )
@@ -224,7 +227,14 @@ server <- function(input, output, session) {
             annotations_header <- c(
               "coordinates", "agreement", "alternative_vartype","observation","comment"
             )
-            coords <- screenshots_df$coordinates
+
+            # query the database for all coordinates
+            query <- "SELECT coordinates FROM annotations"
+            coords <- dbGetQuery(con, query)
+            print("Coordinates from DB:")
+            print(coords)
+
+            # coords <- screenshots_df$coordinates
             # randomize coordinates
             coords <- sample(coords, length(coords), replace = FALSE)
             
@@ -269,7 +279,7 @@ server <- function(input, output, session) {
     }
     print("Saving annotations...")
     user_dir <- file.path("user_data", voting_institute, user_id)
-    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations_dev.txt"))
+    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
 
     annotations_df <- read.table(
       user_annotations_file,
@@ -329,7 +339,7 @@ server <- function(input, output, session) {
 
   choosePic <- eventReactive(c(input$Login, input$go), {
     user_dir <- file.path("user_data", voting_institute, user_id)
-    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations_dev.txt"))
+    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
 
     annotations_df <- read.table(
       user_annotations_file,
@@ -374,6 +384,9 @@ server <- function(input, output, session) {
           stop("Query returned more than one row. Check the DB.")
         }
 
+        # replace in the path /vol/b1mg/ with images/
+        df$path <- gsub("/vol/b1mg/", "images/", df$path)
+
         if (nrow(df) > 0) {
           # If a variant is found, return it
           current_pic(df[1, ])
@@ -405,13 +418,69 @@ server <- function(input, output, session) {
     # res
   })
 
+  observeEvent(input$back_button_pressed, {
+    # Your logic to show previous image
+    print("Back button pressed, showing previous image.")
+
+    user_dir <- file.path("user_data", voting_institute, user_id)
+    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
+
+    annotations_df <- read.table(
+      user_annotations_file,
+      header = TRUE,
+      sep = "\t",
+      stringsAsFactors = FALSE
+    )
+
+    pic <- current_pic()
+    print("Current picture:")
+    print(pic)
+
+    coordinates <- pic$coordinates
+
+    # find in annotations_df the row with the same coordinates
+    row_index <- which(annotations_df$coordinates == coordinates)
+    print(paste("Row index in annotations_df for coordinates", coordinates, ":", row_index))
+
+    # get the previous row index
+    prev_row_index <- row_index - 1
+    print(paste("Previous row index in annotations_df for coordinates", coordinates, ":", prev_row_index))
+
+    if (prev_row_index < 1) {
+      print("No previous row found, staying on the current picture.")
+      return()
+    }
+    prev_coordinates <- annotations_df$coordinates[prev_row_index]
+    print(paste("Previous coordinates:", prev_coordinates))
+    # Query the database for the variant with these coordinates
+    query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", prev_coordinates, "'")
+    # Execute the query to get the variant that has not been voted on
+    df <- dbGetQuery(con, query)
+    # assert that the query returns only one row
+    if (nrow(df) > 1) {
+      stop("Query returned more than one row. Check the DB.")
+    }
+    # replace in the path /vol/b1mg/ with images/
+    df$path <- gsub("/vol/b1mg/", "images/", df$path)
+    if (nrow(df) > 0) {
+      # If a variant is found, return it
+      current_pic(df[1, ])
+      print("Previous picture set successfully.")
+    } else {
+      print("No previous picture found.")
+    }
+  })
+
   voterUI <- function() {
     renderUI({
       pic <- choosePic()
       fluidPage(
         p(paste("Logged in as", user_id)),
         h5(pic$coordinates),
-        img(src = paste0(pic$path, "=h2000-w2000")),
+        img(
+          src = paste0(pic$path),
+          style = "max-width:100%; height:auto;"
+        ),
         br(),
         br(),
         tags$h5(
