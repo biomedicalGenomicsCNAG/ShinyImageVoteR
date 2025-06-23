@@ -65,10 +65,14 @@ ui2 <- function() {
         # useShinyjs(),  # Initialize shinyjs
         "Vote",
         uiOutput("ui2_questions"),
-        actionButton(
-          "backBtn",  
-          "Back (press Backspace)",
-          onclick="history.back(); return false;"),
+        hidden(
+          disabled(
+            actionButton(
+              "backBtn",  
+              "Back (press Backspace)",
+              onclick="history.back(); return false;")
+            )
+        ),
         actionButton("nextBtn",  "Next (press Enter)")
       ),
       tabPanel(
@@ -143,10 +147,6 @@ color_seq <- function(seq) {
 }
 
 server <- function(input, output, session) {
-
-  # shinyjs::show("testDiv")
-  # shinyjs::hide("testDiv")
-  # shinyjs::hide("backBtn")
 
   # Reactive value to track user authentication
   USER <- reactiveValues(Logged = Logged)
@@ -386,8 +386,8 @@ server <- function(input, output, session) {
       user_info <- read_json(user_info_file)
 
       # update images voted in the current session
-      user_info$sessions[[session$token]]$images_voted <- 
-        user_info$sessions[[session$token]]$images_voted + 1
+      user_info$sessions[[session$token]]$session_votes_count <- 
+        user_info$sessions[[session$token]]$session_votes_count + 1
       
       # update total images voted
       user_info$total_images_voted <- user_info$total_images_voted + 1
@@ -491,12 +491,12 @@ server <- function(input, output, session) {
   observeEvent(input$loginBtn, {
     print("Login button pressed, setting trigger source to 'login'.")
     shinyjs::runjs("console.log('✅ shinyjs loaded at ' + new Date());")
-    shinyjs::hideElement("backBtn")
     choosePic_trigger_source("login")
   })
 
   observeEvent(input$nextBtn, {
     showElement("backBtn")
+    enable("backBtn")
     choosePic_trigger_source("go")
   })
 
@@ -627,7 +627,12 @@ server <- function(input, output, session) {
       pic <- choosePic()
       fluidPage(
         tags$head(
+          # TODO
+          # fix that the hotkeys.js is loaded multiple times
           tags$script(src = "scripts/hotkeys.js"),
+          # shiny::singleton(
+          #   includeScript("wwww/scripts/hotkeys.js")
+          # ),
         ),
         p(paste("Logged in as", user_id)),
         h5(pic$coordinates),
