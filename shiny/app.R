@@ -185,7 +185,7 @@ server <- function(input, output, session) {
 
         session$userData$sessionInfo <- list(
           start_time = Sys.time(),
-          end_time = NA,  # to be updated when the session ends
+          end_time = NA  # to be updated when the session ends
         )
 
         user_info$sessions[[session$token]] <- session$userData$sessionInfo
@@ -221,7 +221,7 @@ server <- function(input, output, session) {
 
       session$userData$sessionInfo <- list(
         start_time = Sys.time(),
-        end_time = NA,  # to be updated when the session ends
+        end_time = NA # to be updated when the session ends
       )
       user_info$sessions[[session$token]] <- session$userData$sessionInfo
 
@@ -240,20 +240,18 @@ server <- function(input, output, session) {
       # query the database for all coordinates
       query <- "SELECT coordinates FROM annotations"
       coords <- dbGetQuery(con, query)
-      print("Coordinates from DB:")
-      print(coords)
 
-      # randomize coordinates using the seed set above
-      coords <- sample(coords, length(coords), replace = FALSE)
+      coords_vec <- as.character(coords[[1]])
+      randomised_coords <- sample(coords_vec, length(coords_vec), replace = FALSE)
       
       # Initialize with empty strings except for coordinates
       annotations_df <- setNames(
         as.data.frame(
           lapply(cfg_user_annotations_colnames, function(col) {
             if (col == "coordinates") {
-              coords
+              randomised_coords
             } else {
-              rep("", length(coords))
+              rep("", length(randomised_coords))
             }
           }),
           stringsAsFactors = FALSE
