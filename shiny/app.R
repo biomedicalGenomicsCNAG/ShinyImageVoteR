@@ -186,13 +186,10 @@ server <- function(input, output, session) {
         session$userData$sessionInfo <- list(
           start_time = Sys.time(),
           end_time = NA,  # to be updated when the session ends
-          session_votes_count = 0
         )
 
         user_info$sessions[[session$token]] <- session$userData$sessionInfo
         write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
-
-        session$userData$SessionVotesCount <- reactiveVal(0)
         return()
       }
       
@@ -225,10 +222,7 @@ server <- function(input, output, session) {
       session$userData$sessionInfo <- list(
         start_time = Sys.time(),
         end_time = NA,  # to be updated when the session ends
-        session_votes_count = 0  # Initialize with 0 votes
       )
-      session$userData$sessionVotesCount <- reactiveVal(0)
-
       user_info$sessions[[session$token]] <- session$userData$sessionInfo
 
       print("User info:")
@@ -243,7 +237,6 @@ server <- function(input, output, session) {
       )
 
       # create user annotations file
-      
       # query the database for all coordinates
       query <- "SELECT coordinates FROM annotations"
       coords <- dbGetQuery(con, query)
@@ -305,14 +298,6 @@ server <- function(input, output, session) {
       output$page <- renderUI({
         div(class = "outer", do.call(bootstrapPage, c("", ui2())))
       })
-
-      # output$page <- renderUI({
-      #   do.call(
-      #     bootstrapPage,
-      #     c(list(useShinyjs()), ui2()
-      #     ) 
-      #   )
-      # })
     }
   })
 
@@ -351,9 +336,10 @@ server <- function(input, output, session) {
     already_voted <- !is.na(previous_agreement) && previous_agreement != ""
     new_agreement <- input$agreement
 
-    # always update the agreement
+    # always update the agreement and the shiny_session_id
     annotations_df[rowIdx, "agreement"] <- input$agreement 
-    
+    annotations_df[rowIdx, "shiny_session_id"] <- session$token
+
     # only update if provided
     if (!is.null(input$alternative_vartype)) {
       annotations_df[rowIdx, "alternative_vartype"] <- input$alternative_vartype
@@ -384,10 +370,6 @@ server <- function(input, output, session) {
       # Increment the total images voted for the user
       user_info_file <- session$userData$userInfoFile
       user_info <- read_json(user_info_file)
-
-      # update images voted in the current session
-      user_info$sessions[[session$token]]$session_votes_count <- 
-        user_info$sessions[[session$token]]$session_votes_count + 1
       
       # update total images voted
       user_info$total_images_voted <- user_info$total_images_voted + 1

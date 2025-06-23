@@ -109,5 +109,6 @@ cfg_user_annotations_colnames <- c(
    "agreement", 
    "alternative_vartype",
    "observation",
-   "comment"
+   "comment",
+   "shiny_session_id"
 )
