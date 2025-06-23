@@ -606,9 +606,9 @@ server <- function(input, output, session) {
     renderUI({
       pic <- choosePic()
       fluidPage(
-        # to make sure that the srcipt is loaded only once
+        # to make sure that the script is loaded only once
         shiny::singleton(
-          includeScript("/home/ivo/projects/bioinfo/cnag/repos/B1MG-variant-voting/shiny/www/scripts/hotkeys.js")
+          includeScript("www/scripts/hotkeys.js")
         ),
         p(paste("Logged in as", user_id)),
         h5(pic$coordinates),
