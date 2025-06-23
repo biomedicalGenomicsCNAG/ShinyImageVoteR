@@ -289,6 +289,16 @@ server <- function(input, output, session) {
       comment <- input$comment
       annotations_df[rowIdx, "comment"] <- comment
     }
+
+    print("HERE")
+    print(paste0("already_voted:", already_voted))
+    # TODO
+    # Hide + disable the "Next" button if all ?coords=done
+
+    # TODO
+    # Hide + disable the back button if this is the first image in that session
+    # Idea in _info.json count the number of screenshots voted in that session
+    # and if it is 0, then hide the back button
     
     if (!already_voted && user_dir != "Training_answers_not_saved") {
       # Increment the total screenshots voted for the user
