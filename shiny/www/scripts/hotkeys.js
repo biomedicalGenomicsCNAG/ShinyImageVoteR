@@ -16,11 +16,7 @@ document.addEventListener("keydown", (e) => {
     ) {
       return;
     }
-    console.log("Backspace pressed, going back");
-    console.log("History length:", history.length);
-    history.back();
-    // otherwise, fire your back button
-    // document.getElementById("backBtn")?.click();
+    document.getElementById("backBtn")?.click();
     return;
   }
 

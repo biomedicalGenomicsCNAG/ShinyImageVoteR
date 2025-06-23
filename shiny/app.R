@@ -489,6 +489,58 @@ server <- function(input, output, session) {
   observeEvent(query(), {
     cat("Query string changed! New params:\n")
     print(query())
+
+    # # load the annotation_df from that user
+    # user_annotations_file <- session$userData$userAnnotationsFile
+
+    # if (is.null(user_annotations_file)) {
+    #   cat("User annotations file is not set in session data.\n")
+    #   return(NULL)
+    # }
+
+    # if (!file.exists(user_annotations_file)) {
+    #   cat(sprintf("User annotations file does not exist: %s\n", user_annotations_file))
+    #   return(NULL)
+    # }
+
+    # coords <- parseQueryString(session$clientData$url_search)$coords
+    # if (is.null(coords) || coords == "done") {
+    #   print("No coordinates found in the URL or all variants have been voted on.")
+    #   return(NULL)
+    # }
+
+    # print(paste0("user_annotations_file:", user_annotations_file))
+    # annotations_df <- read.table(
+    #   user_annotations_file,
+    #   header = TRUE,
+    #   sep = "\t",
+    #   stringsAsFactors = FALSE
+    # )
+
+    # # filter tha annotations_df for the current sessionId
+    # session_id <- session$token
+    # annotations_df <- annotations_df[annotations_df$shiny_session_id == session_id, ]
+
+    # if (nrow(annotations_df) == 0) {
+    #   print("No annotations found for the current session.")
+    #   return(NULL)
+    # }
+
+    # print("Annotations DataFrame for the current session:")
+    # print(annotations_df)
+
+    # # get the row index for the coordinates
+    # rowIdx <- which(annotations_df$coordinates == coords)
+    # print(paste("Row index for coordinates:", coords, "is", rowIdx))
+    # if (length(rowIdx) == 0) {
+    #   print("HIDE back button")
+    #   hideElement("backBtn")
+    #   disable("backBtn")
+    # } else {
+    #   print("SHOW back button")
+    #   showElement("backBtn")
+    #   enable("backBtn")
+    # }
     choosePic_trigger_source("query-string-change")
   })
 
@@ -550,6 +602,40 @@ server <- function(input, output, session) {
       }
       if (nrow(df) > 0) {
         current_pic(df[1, ])
+        # check if the back button needs to be shown or hidden
+        print("annotations_df before filtering:")
+        print(annotations_df)
+
+        # filter the annotations_df to only show the rows with the same session ID
+        session_annotations_df <- annotations_df %>%
+          filter(shiny_session_id == session$token)
+
+        # session_id <- session$token
+        # annotations_df <- annotations_df[annotations_df$shiny_session_id == session_id, ]
+        print("Filtered Annotations DataFrame for the current session:")
+        print(session_annotations_df)
+
+        if (nrow(session_annotations_df) > 0) {
+          rowIdx <- which(session_annotations_df$coordinates == coords)
+          print(paste("Row index for coordinates:", coords, "is", rowIdx))
+          # if rowIdx is null, it means that the coordinates were not found in the annotations_df
+          if (length(rowIdx) == 0) {
+            show("backBtn")
+            enable("backBtn")
+          } else {
+            if (rowIdx == 1) {
+              print("HIDE back button")
+              hideElement("backBtn")
+              disable("backBtn")
+            }
+
+            if (rowIdx > 1) {
+              print("SHOW back button")
+              showElement("backBtn")
+              enable("backBtn")
+            }
+          }
+        }
         return(df[1, ])
       } else {
         print("No picture found for the given coordinates.")
@@ -590,9 +676,12 @@ server <- function(input, output, session) {
           # filter(!(no >= 3 & no / total_votes > 0.7))
 
           # If a variant is found, return it
+
+          coords <- df[1, ]$coordinates
+
           current_pic(df[1, ])
           updateQueryString(
-            paste0("?coords=", df[1,]$coordinates),
+            paste0("?coords=",coords),
             mode = "push",
             session = session
           )
@@ -620,9 +709,12 @@ server <- function(input, output, session) {
         br(),
         br(),
         tags$h5(
+          id = "variantInfo",
           HTML(paste0(
-            "Variant: ", color_seq(choosePic()$REF), " > ", color_seq(choosePic()$ALT),
-            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+            "Somatic mutation: ", 
+            color_seq(choosePic()$REF),
+            " > ", 
+            color_seq(choosePic()$ALT)
           ))
         ),
         br(),
