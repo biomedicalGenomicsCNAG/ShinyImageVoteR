@@ -241,9 +241,6 @@ server <- function(input, output, session) {
   save_txt <- observeEvent(input$nextBtn, {
     pic <- current_pic()
 
-    # TODO
-    # Total vote count gets inflated if a user goes back and votes again
-    # on the same picture. This should be fixed.
     user_dir <- file.path("user_data", voting_institute, user_id)
     user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
 
@@ -498,22 +495,13 @@ server <- function(input, output, session) {
         }
 
         if (nrow(df) > 0) {
-
-          # Check if the variant has less than 3 votes
           # TODO
-          # ask Miranda / Gabriela for the filter out logic
-
-          # if (df$vote_count < 3) {
-          #   print(paste("Found a variant with coordinates:", coordinates))
-          #   print(paste("Vote count:", df$vote_count))
-          # } else {
-          #   print(paste("Variant with coordinates:", coordinates, "has", df$vote_count, "votes. Skipping."))
-          #   next
-          # }
-
+          # Filter logic for the actual voting
+          # Reasoning why this is commented out in the README
+ 
+          # inspritation for the filtering logic from legacy code:
           # filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
           # filter(!(no >= 3 & no / total_votes > 0.7))
-
 
           # If a variant is found, return it
           current_pic(df[1, ])
@@ -551,21 +539,16 @@ server <- function(input, output, session) {
         div(
           radioButtons(
             inputId = "agreement",
-            label = "Is the variant above correct? [numkey 1-4]",
-            choices = c(
-              "Yes, it is [1]" = "yes",
-              "There is no variant [2]" = "no",
-              "There is a different variant [3]" = "diff_var",
-              "I'm not sure [4]" = "not_confident"
-            )
+            label = cfg_radioBtns_label,
+            choices = cfg_radio_options2val_map
           ),
         ),
         conditionalPanel(
           condition = "input.agreement == 'not_confident'",
           checkboxGroupInput(
             inputId = "observation",
-            label = "Observations",
-            choices = cfg_observations_dict
+            label = cfg_checkboxes_label,
+            choices = cfg_observations2val_map
           )
         ),
         conditionalPanel(

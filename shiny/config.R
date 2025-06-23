@@ -27,7 +27,7 @@ cfg_db_cols <- c(
 )
 
 ## Login UI
-cfg_institute_ids <- (c(
+institute_ids <- (c(
   "CNAG",
   "DKFZ",
   "DNGC",
@@ -44,7 +44,7 @@ cfg_institute_ids <- (c(
   "University of Verona"
 ))
 
-cfg_institute_ids <- c("Training_answers_not_saved", cfg_institute_ids)
+cfg_institute_ids <- c("Training_answers_not_saved", institute_ids)
 
 passwords <- c(
   "Test" = "1234",
@@ -54,14 +54,39 @@ passwords <- c(
 cfg_user_ids <- names(passwords)
 
 ## Voting UI
+
+cfg_radioBtns_label <- "Is the somatic mutation above correct? [num keys 1-4]"
+
+radio_options2val_map <- c(
+  "Yes, it is" = "yes",
+  "There is no variant" = "no",
+  "There is a different variant" = "diff_var",
+  "I'm not sure" = "not_confident"
+)
+
+cfg_radio_options2val_map <- setNames(
+  as.vector(radio_options2val_map),
+  paste0(names(radio_options2val_map), " [", seq_along(radio_options2val_map), "]")
+)
+
 ### Options when the radio button I'm not sure [4] is selected
-cfg_observations_dict <- c(
+
+cfg_checkboxes_label <- "Please select the reason for your uncertainty [keyboard keys a-h]"
+
+observations_dict <- c(
   "Issues with coverage" = "coverage",
   "Low allele frequency" = "low_vaf",
   "Alignment issues" = "alignment",
   "Complex event" = "complex",
   "Quality issues with the image" = "img_qual_issue",
   "Issue with the voting platform" = "platform_issue"
+)
+
+observation_hotkeys = c("a", "s", "d", "f", "g", "h")
+
+cfg_observations2val_map <- setNames(
+  as.vector(observations_dict),
+  paste0(names(observations_dict), " [", observation_hotkeys, "]")
 )
 
 ### Colors for the nucleotides
