@@ -16,11 +16,7 @@ df <- read.table(
 )
 
 colnames(df) <- cfg_db_general_cols
-vote_counts_cols <- c(
-  unlist(cfg_vote2dbcolumn_map, use.names = FALSE), 
-  "vote_count_total"
-)
-df[vote_counts_cols] <- lapply(vote_counts_cols, function(x) 0L)
+df[cfg_vote_counts_cols] <- lapply(cfg_vote_counts_cols, function(x) 0L)
 
 # point the path to symlinked images directory
 df$path <- gsub("/vol/b1mg/", "images/", df$path)

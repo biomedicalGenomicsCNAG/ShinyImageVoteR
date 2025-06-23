@@ -409,6 +409,7 @@ server <- function(input, output, session) {
     choosePic_trigger_source("query-string-change")
   })
 
+
   # Triggered when the user logs in, clicks the next button, 
   # or goes back (with the actionButton "Back" or browser back button)
   choosePic <- eventReactive(c(input$loginBtn, input$nextBtn, query()), {
@@ -464,8 +465,6 @@ server <- function(input, output, session) {
       if (nrow(df) > 1) {
         stop("Query returned more than one row. Check the DB.")
       }
-      # replace in the path /vol/b1mg/ with images/
-      df$path <- gsub("/vol/b1mg/", "images/", df$path)
       if (nrow(df) > 0) {
         current_pic(df[1, ])
         return(df[1, ])
@@ -482,23 +481,10 @@ server <- function(input, output, session) {
         # Get the coordinates of the variant
         coordinates <- annotations_df$coordinates[i]
         # Query the database for the variant with these coordinates
-        cols <- c(
-          "rowid", 
-          "coordinates", 
-          "REF", 
-          "ALT", 
-          "variant", 
-          "path", 
-          "vote_count_total",
-          "vote_count_correct",
-          "vote_count_no_variant",
-          "vote_count_different_variant",
-          "vote_count_not_sure"
-        )
 
         query <- paste0(
           "SELECT ", 
-          paste(cols, collapse = ", "), 
+          paste(cfg_db_cols, collapse = ", "), 
           " FROM annotations WHERE coordinates = '", coordinates, "'"
         )
         # Execute the query to get the variant that has not been voted on

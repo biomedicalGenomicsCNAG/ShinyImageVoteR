@@ -16,6 +16,16 @@ cfg_vote2dbcolumn_map <- list(
   not_confident = "vote_count_not_sure"
 )
 
+cfg_vote_counts_cols <- c(
+  unlist(cfg_vote2dbcolumn_map, use.names = FALSE), 
+  "vote_count_total"
+)
+
+cfg_db_cols <- c(
+  cfg_db_general_cols, 
+  cfg_vote_counts_cols
+)
+
 ## Login UI
 cfg_institute_ids <- (c(
   "CNAG",
