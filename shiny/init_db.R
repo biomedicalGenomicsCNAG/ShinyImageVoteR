@@ -1,22 +1,45 @@
+# This script initializes the SQLite database for the Shiny app.
+
+#load necessary libraries
 library(DBI)
 library(RSQLite)
 
-# Path to the text file with screenshot info
-text_file <- "./screenshots/uro003_paths_mock.txt"
-# Path to the sqlite database
-sqlite_file <- "./screenshots/annotations.sqlite"
+# load configuration (variables have a "cfg_" prefix)
+source("config.R")
 
-# Create database only if it doesn't exist
-if (!file.exists(sqlite_file)) {
-  df <- read.table(text_file, sep="\t", header = FALSE, stringsAsFactors = FALSE)
-  colnames(df) <- c("coordinates", "REF", "ALT", "variant", "path")
-  df$vote_count_total <- 0L
-  df$vote_count_correct <- 0L
-  df$vote_count_no_variant <- 0L
-  df$vote_count_different_variant <- 0L
-  df$vote_count_not_sure <- 0L
+# Create database
+df <- read.table(
+  cfg_to_be_voted_images_file, 
+  sep="\t", 
+  header = FALSE, 
+  stringsAsFactors = FALSE
+)
 
-  con <- dbConnect(SQLite(), sqlite_file)
-  dbWriteTable(con, "annotations", df, overwrite = TRUE)
-  dbDisconnect(con)
-}
+colnames(df) <- cfg_db_general_cols
+vote_counts_cols <- c(
+  unlist(cfg_vote2dbcolumn_map, use.names = FALSE), 
+  "vote_count_total"
+)
+df[vote_counts_cols] <- lapply(vote_counts_cols, function(x) 0L)
+
+# point the path to symlinked images directory
+df$path <- gsub("/vol/b1mg/", "images/", df$path)
+
+con <- dbConnect(SQLite(), cfg_sqlite_file)
+dbWriteTable(con, "annotations", df, overwrite = TRUE)
+
+dbExecute(con, "
+  CREATE TRIGGER update_vote_total_update
+  AFTER UPDATE ON annotations
+  FOR EACH ROW
+  BEGIN
+    UPDATE annotations
+    SET vote_count_total = 
+        vote_count_correct +
+        vote_count_no_variant +
+        vote_count_different_variant +
+        vote_count_not_sure
+    WHERE rowid = NEW.rowid;
+  END;
+")
+dbDisconnect(con)

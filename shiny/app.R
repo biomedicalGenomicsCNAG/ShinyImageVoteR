@@ -1,4 +1,3 @@
-source("config.R")
 library(shiny)
 library(dplyr)
 library(tibble)
@@ -6,22 +5,21 @@ library(digest)
 library(DBI)
 library(RSQLite)
 library(data.table)
+library(jsonlite)
 
-source("init_db.R")
-db_path <- "./screenshots/annotations.sqlite"
+# load configuration (variables have a "cfg_" prefix)
+source("config.R")
+
+# Initialize the SQLite database
+if (!file.exists(cfg_sqlite_file)) {
+  source("init_db.R")
+}
 
 # Initial login status
 Logged <- FALSE
 
-institute_ids <- (c(
-  "CNAG", "DKFZ", "DNGC", "Hartwig", "KU Leuven",
-  "University of Oslo", "University of Verona", "University of Helsinki",
-  "SciLifeLab", "ISCIII", "Latvian BRSC", "MOMA",
-  "Universidade de Aveiro", "FPGMX", "Training_answers_not_saved"
-))
-
 # create folders for all institutes
-lapply(institute_ids, function(institute) {
+lapply(cfg_institute_ids, function(institute) {
   # replace spaces with underscores in institute names
   institute <- gsub(" ", "_", institute)
   dir.create(file.path("user_data", institute), recursive = TRUE, showWarnings = FALSE)
@@ -35,13 +33,13 @@ ui1 <- function() {
         selectInput(
           inputId = "institutes_id",
           label = "Institute ID",
-          choices = institute_ids,
+          choices = cfg_institute_ids,
           selected = "Training_answers_not_saved"
         ),
         selectInput(
           inputId = "user_id",
           label = "User ID",
-          choices = user_ids,
+          choices = cfg_user_ids,
           selected = "Test"
         ),
         passwordInput("passwd", "Password", value = ""),
@@ -87,7 +85,6 @@ ui2 <- function() {
       fluidPage(
         # h5(sprintf("Total screenshots: %s", nrow(screenshots))),
         tableOutput("table_counts"),
-        h6(sprintf("*%s training questions are subtracted from the number of votes.", training_questions)),
         actionButton(inputId = "refresh_counts", label = "Refresh counts")
       )
     )
@@ -108,33 +105,22 @@ color_seq <- function(seq) {
   print("Coloring sequence:")
   print(seq)
 
-  # RColorBrewer::brewer.pal(12, name = "Paired")
-  # color_dict = c("T" = "red", "C" = "blue", "A" = "green", "G" = "orange", "-" = "black")
-  color_dict <- c(
-    "T" = "#E31A1C",
-    "C" = "#1F78B4",
-    "A" = "#33A02C",
-    "G" = "#FF7F00",
-    "-" = "black"
-  )
-
   colored_seq <- seq %>%
     strsplit(., split = "") %>%
     unlist() %>%
-    sapply(., function(x) sprintf('<span style="color:%s">%s</span>', color_dict[x], x)) %>%
+    sapply(., function(x) sprintf('<span style="color:%s">%s</span>', cfg_nt2color_map[x], x)) %>%
     paste(collapse = "")
 
   colored_seq
 }
 
 server <- function(input, output, session) {
-  source("init_db.R")
 
   # Reactive value to track user authentication
   USER <- reactiveValues(Logged = Logged, screenshots_randomized = FALSE, randomized_screenshots = NULL)
 
   # Connect to the annotations database
-  con <- dbConnect(SQLite(), db_path)
+  con <- dbConnect(SQLite(), cfg_sqlite_file)
   onStop(function() {
     dbDisconnect(con)
   })
@@ -150,7 +136,6 @@ server <- function(input, output, session) {
       USER$Logged <- TRUE
     }
   })
-
 
   # Render the appropriate UI based on login status.
   observe({
@@ -205,13 +190,9 @@ server <- function(input, output, session) {
           }
 
           # unser annotations file
-          user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
+          user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
           if (!file.exists(user_annotations_file)) {
             cat(sprintf("Creating user annotations file for: %s at %s\n", user_id, user_annotations_file))
-
-            annotations_header <- c(
-              "coordinates", "agreement", "alternative_vartype","observation","comment"
-            )
 
             # query the database for all coordinates
             query <- "SELECT coordinates FROM annotations"
@@ -219,20 +200,24 @@ server <- function(input, output, session) {
             print("Coordinates from DB:")
             print(coords)
 
-            # coords <- screenshots_df$coordinates
-            # randomize coordinates
+            # randomize coordinates using the seed set above
             coords <- sample(coords, length(coords), replace = FALSE)
             
-            # create a dataframe with the coordinates and empty columns for annotations
-            annotations_df <- data.frame(
-              coordinates = coords,
-              agreement = rep("", length(coords)),
-              alternative_vartype = rep("", length(coords)),
-              observation = rep("", length(coords)),
-              comment = rep("", length(coords)),
-              stringsAsFactors = FALSE
+            # Initialize with empty strings except for coordinates
+            annotations_df <- setNames(
+              as.data.frame(
+                lapply(cfg_user_annotations_colnames, function(col) {
+                  if (col == "coordinates") {
+                    coords
+                  } else {
+                    rep("", length(coords))
+                  }
+                }),
+                stringsAsFactors = FALSE
+              ),
+              cfg_user_annotations_colnames
             )
-            
+
             # write annotations_df to a text file
             write.table(
               annotations_df,
@@ -260,7 +245,7 @@ server <- function(input, output, session) {
     # Total vote count gets inflated if a user goes back and votes again
     # on the same picture. This should be fixed.
     user_dir <- file.path("user_data", voting_institute, user_id)
-    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
+    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
 
     annotations_df <- read.table(
       user_annotations_file,
@@ -273,61 +258,60 @@ server <- function(input, output, session) {
     print(annotations_df)
 
     # Update the annotations_df with the new agreement
+    coords <- pic$coordinates
 
-    if (!is.null(pic) && !is.na(pic$rowid)) {
-      coords <- pic$coordinates
+    print(paste("Updating annotations for coordinates:", coords))
+    print(paste("Agreement:", input$agreement))
+    print(paste("Alternative vartype:", input$alternative_vartype))
+    print(paste("Observation:", input$observation))
+    print(paste("Comment:", input$comment))
 
-      print(paste("Updating annotations for coordinates:", coords))
-      print(paste("Agreement:", input$agreement))
-      print(paste("Alternative vartype:", input$alternative_vartype))
-      print(paste("Observation:", input$observation))
-      print(paste("Comment:", input$comment))
+    # use the row index to update the annotations_df
+    rowIdx <- which(annotations_df$coordinates == coords)
 
-      # use the row index to update the annotations_df
-      rowIdx <- which(annotations_df$coordinates == coords)
-      already_voted <- 
-        length(rowIdx) > 0 &&               # there is a matching row
-        any(!is.na(annotations_df[rowIdx, -1]))  # at least one non-NA among the other columns
+    # store the previous agreement for later use
+    previous_agreement <- annotations_df[rowIdx, "agreement"]
+    already_voted <- !is.na(previous_agreement) && previous_agreement != ""
+    new_agreement <- input$agreement
 
-      if (already_voted) {
-        old_row_values <- annotations_df[rowIdx, ]
-      } 
-      # always update agreement
-      annotations_df[rowIdx, "agreement"] <- input$agreement
+    # always update the agreement
+    annotations_df[rowIdx, "agreement"] <- input$agreement 
+    
+    # only update if provided
+    if (!is.null(input$alternative_vartype)) {
+      annotations_df[rowIdx, "alternative_vartype"] <- input$alternative_vartype
+    }
 
-      # only update if provided
-      if (!is.null(input$alternative_vartype)) {
-        annotations_df[rowIdx, "alternative_vartype"] <- input$alternative_vartype
-      }
+    if (!is.null(input$observation)) {
+      annotations_df[rowIdx, "observation"] <- input$observation
+    }
 
-      if (!is.null(input$observation)) {
-        annotations_df[rowIdx, "observation"] <- input$observation
-      }
+    # handle comment (default NA)
+    comment <- NA
+    if (input$comment != "") {
+      comment <- input$comment
+      annotations_df[rowIdx, "comment"] <- comment
+    }
+    
+    if (!already_voted && user_dir != "Training_answers_not_saved") {
+      # Increment the total screenshots voted for the user
+      user_info_file <- file.path(user_dir, paste0(user_id, "_info.json"))
+      user_info <- read_json(user_info_file)
+      user_info$total_screenshots_voted <- user_info$total_screenshots_voted + 1
+      write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
 
-      # handle comment (default NA)
-      comment <- NA
-      if (input$comment != "") {
-        comment <- input$comment
-        annotations_df[rowIdx, "comment"] <- comment
-      }
-      
-      if (!already_voted) {
-        # Increment the total screenshots voted for the user
-        user_info_file <- file.path(user_dir, paste0(user_id, "_info.json"))
-        user_info <- read_json(user_info_file)
-        user_info$total_screenshots_voted <- user_info$total_screenshots_voted + 1
-        write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
+      # depending on the agreement, update the vote counts in the database
+      vote_col <- cfg_vote2dbcolumn_map[[input$agreement]]
 
-        dbExecute(
-          con,
-          "UPDATE annotations SET vote_count_total = vote_count_total + 1 WHERE rowid = ?",
-          params = list(pic$rowid)
-        )
-      } else {
-        print("User has already voted on this picture. Not incrementing total_screenshots_voted.")
-      }
-    } else {
-      print("No picture selected or picture is NA.")
+      dbExecute(
+        con,
+        paste0(
+          "UPDATE annotations SET ", 
+          vote_col, 
+          " = ", vote_col, " + 1 WHERE coordinates = ?"
+        ),
+        params = list(coords)
+      )
     }
 
     print("Annotations DataFrame after update:")
@@ -343,7 +327,11 @@ server <- function(input, output, session) {
       quote = FALSE
     )
 
-    if (already_voted) {
+    if (
+      already_voted && 
+      previous_agreement != input$agreement 
+      && user_dir != "Training_answers_not_saved"
+      ) {
       files <- list.files(
         path = "user_data", 
         pattern = "\\.txt$", 
@@ -352,8 +340,12 @@ server <- function(input, output, session) {
       )
       print("already_voted -> Files to read for annotations:")
       print(files)
-      # read, filter, tag, and stack
-      result <- rbindlist(lapply(files, function(f) {
+
+      # Exclude files from the "Training_answers_not_saved" folder
+      files <- files[!grepl("Training_answers_not_saved/", files)]
+
+      # get all rows with the same coordinates from all user annotation files
+      same_coords_df <- rbindlist(lapply(files, function(f) {
         dt <- fread(f)
         dt_sub <- dt[grepl(coords, coordinates)]
         if (nrow(dt_sub)) dt_sub[, file := basename(f)]
@@ -361,30 +353,34 @@ server <- function(input, output, session) {
       }), use.names = TRUE, fill = TRUE) 
 
       print("Resulting DataFrame after reading all user annotations:")
-      print(result)
+      print(same_coords_df)
 
-      # grouby by agreement and count
-      counts <- result %>%
+      # Count the different agreements (yes, no, diff_var, not_confident)
+      agreement_counts_df <- same_coords_df %>%
         group_by(agreement) %>%
         summarise(count = n(), .groups = 'drop')
       print("Counts of agreements:")
       print(counts)
 
-      # TODO update the vote counts in the database
-      # Warning: Error in : Parameter 2 does not have length 1.
-
-      # update the vote counts in the database
-      # dbExecute(
-      #   con,
-      #   "UPDATE annotations SET vote_count_correct = ?, vote_count_no_variant = ?, vote_count_different_variant = ?, vote_count_not_sure = ? WHERE coordinates = ?",
-      #   params = list(
-      #     counts$count[counts$agreement == "yes"],
-      #     counts$count[counts$agreement == "no"],
-      #     counts$count[counts$agreement == "diff_var"],
-      #     counts$count[counts$agreement == "not_confident"],
-      #     coords
-      #   )
-      # )
+      # loop over the agreement_counts_df and update the vote counts in the database
+      for (i in 1:nrow(agreement_counts_df)) {
+        agreement <- agreement_counts_df$agreement[i]
+        count <- agreement_counts_df$count[i] 
+        vote_col <- vote2dbcolumn_map[[agreement]]
+        if (!is.null(vote_col)) {
+          dbExecute(
+            con,
+            paste0(
+              "UPDATE annotations SET ", 
+              vote_col, 
+              " = ", vote_col, " + ", count, 
+              " WHERE coordinates = ?"
+            ),
+            params = list(coords)
+          )
+        }
+      }
+      print("Vote counts updated in the database based on all user annotations.")
     }
     print("Annotations saved successfully.")
   })
@@ -392,12 +388,7 @@ server <- function(input, output, session) {
   # Reactive value to track the trigger source
   choosePic_trigger_source <- reactiveVal(NULL)
 
-  query <- reactive({
-    # session$clientData$url_search contains the raw "?foo=1&bar=xyz" string
-    parseQueryString(session$clientData$url_search)
-  })
-
-  # Observer to update the choosePic trigger source
+  # Observers to update the choosePic trigger source
   observeEvent(input$loginBtn, {
     choosePic_trigger_source("login")
   })
@@ -406,16 +397,23 @@ server <- function(input, output, session) {
     choosePic_trigger_source("go")
   })
 
-  # browser back button pressed
+  # actionButton "Back" or Go back one page in browser pressed
+  query <- reactive({
+    # example string "?coords=chrY:10935390" string
+    parseQueryString(session$clientData$url_search)
+  })
+  
   observeEvent(query(), {
     cat("Query string changed! New params:\n")
     print(query())
     choosePic_trigger_source("query-string-change")
   })
 
+  # Triggered when the user logs in, clicks the next button, 
+  # or goes back (with the actionButton "Back" or browser back button)
   choosePic <- eventReactive(c(input$loginBtn, input$nextBtn, query()), {
     user_dir <- file.path("user_data", voting_institute, user_id)
-    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.txt"))
+    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
 
     annotations_df <- read.table(
       user_annotations_file,
@@ -449,6 +447,8 @@ server <- function(input, output, session) {
       return(res)
     }
 
+    # actionButton "Back" or Go back one page in browser pressed
+    print("Checking if the user pressed the Back button or went back in the browser...")
     if (choosePic_trigger_source() == "query-string-change") {
       print("URL change detected, showing the image from the URL.")
       # Get the coordinates from the URL
@@ -476,6 +476,7 @@ server <- function(input, output, session) {
     }
 
     # loop through the annotations_df to find the next variant that has not been voted on
+    print("Looking for the next variant that has not been voted on...")
     for (i in 1:nrow(annotations_df)) {
       if (is.na(annotations_df$agreement[i])) {
         # Get the coordinates of the variant
@@ -500,19 +501,15 @@ server <- function(input, output, session) {
           paste(cols, collapse = ", "), 
           " FROM annotations WHERE coordinates = '", coordinates, "'"
         )
-
-        # query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path, vote_count FROM annotations WHERE coordinates = '", coordinates, "'")
-
         # Execute the query to get the variant that has not been voted on
-        df <- dbGetQuery(con, query)  
+        df <- dbGetQuery(con, query)
+        print("Query result:")
+        print(df)
 
         # assert that the query returns only one row
         if (nrow(df) > 1) {
           stop("Query returned more than one row. Check the DB.")
         }
-
-        # replace in the path /vol/b1mg/ with images/
-        df$path <- gsub("/vol/b1mg/", "images/", df$path)
 
         if (nrow(df) > 0) {
 
@@ -582,7 +579,7 @@ server <- function(input, output, session) {
           checkboxGroupInput(
             inputId = "observation",
             label = "Observations",
-            choices = observations_dict
+            choices = cfg_observations_dict
           )
         ),
         conditionalPanel(
