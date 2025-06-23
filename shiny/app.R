@@ -62,7 +62,7 @@ ui2 <- function() {
     navbarPage(
       "Variant voter",
       tabPanel(
-        useShinyjs(),  # Initialize shinyjs
+        # useShinyjs(),  # Initialize shinyjs
         "Vote",
         uiOutput("ui2_questions"),
         actionButton(
@@ -114,7 +114,7 @@ ui2 <- function() {
 
 # Main UI ####
 ui <- fluidPage(
-  # useShinyjs(),  # Initialize shinyjs
+  useShinyjs(),  # Initialize shinyjs
   tags$head(
     tags$script("
       $(document).on('keydown', function(e) {
@@ -145,8 +145,8 @@ color_seq <- function(seq) {
 server <- function(input, output, session) {
 
   # shinyjs::show("testDiv")
-  shinyjs::hide("testDiv")
-  shinyjs::hide("backBtn")
+  # shinyjs::hide("testDiv")
+  # shinyjs::hide("backBtn")
 
   # Reactive value to track user authentication
   USER <- reactiveValues(Logged = Logged)
@@ -302,17 +302,17 @@ server <- function(input, output, session) {
       })
     }
     if (USER$Logged == TRUE) {
-      # output$page <- renderUI({
-      #   div(class = "outer", do.call(bootstrapPage, c("", ui2())))
-      # })
-
       output$page <- renderUI({
-        do.call(
-          bootstrapPage,
-          c(list(useShinyjs()), ui2()
-          ) 
-        )
+        div(class = "outer", do.call(bootstrapPage, c("", ui2())))
       })
+
+      # output$page <- renderUI({
+      #   do.call(
+      #     bootstrapPage,
+      #     c(list(useShinyjs()), ui2()
+      #     ) 
+      #   )
+      # })
     }
   })
 
