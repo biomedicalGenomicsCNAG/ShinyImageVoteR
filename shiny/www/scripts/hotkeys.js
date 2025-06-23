@@ -1,16 +1,17 @@
 document.addEventListener("keydown", (e) => {
   // ——— special buttons ———
   if (e.key === "Enter") {
-    (
-      document.getElementById("loginBtn") || document.getElementById("nextBtn")
-    )?.click();
+    document.getElementById("nextBtn")?.click();
     return;
   }
 
   // ——— back button ———
   if (e.key === "Backspace") {
     // if the comment box is focused, let Backspace delete text instead
-    if (document.activeElement.id === "comment") {
+    if (
+      document.activeElement.id === "comment" ||
+      document.activeElement.id === "passwd"
+    ) {
       return;
     }
     // otherwise, fire your back button

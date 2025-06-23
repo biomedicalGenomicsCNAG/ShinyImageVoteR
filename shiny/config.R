@@ -46,12 +46,17 @@ institute_ids <- (c(
 
 cfg_institute_ids <- c("Training_answers_not_saved", institute_ids)
 
+cfg_selected_institute_id <- "Training_answers_not_saved"
+cfg_selected_institute_id <- "CNAG"
+
 passwords <- c(
   "Test" = "1234",
   "Test2" = "1plusmg",
   "Training (answers won't be saved)" = "1plusmg"
 )
 cfg_user_ids <- names(passwords)
+
+cfg_selected_user_id <- "Test"
 
 ## Voting UI
 

@@ -6,6 +6,7 @@ library(DBI)
 library(RSQLite)
 library(data.table)
 library(jsonlite)
+library(shinyjs)
 
 # load configuration (variables have a "cfg_" prefix)
 source("config.R")
@@ -34,13 +35,12 @@ ui1 <- function() {
           inputId = "institutes_id",
           label = "Institute ID",
           choices = cfg_institute_ids,
-          selected = "Training_answers_not_saved"
+          selected = cfg_selected_institute_id
         ),
-        selectInput(
+        textInput(
           inputId = "user_id",
           label = "User ID",
-          choices = cfg_user_ids,
-          selected = "Test"
+          value = cfg_selected_user_id
         ),
         passwordInput("passwd", "Password", value = ""),
         br(),
@@ -57,44 +57,74 @@ ui1 <- function() {
 
 # Main UI (after login)
 ui2 <- function() {
-  navbarPage(
-    "Variant voter",
-    tabPanel(
-      "Vote",
-      uiOutput("ui2_questions"),
-      actionButton(
-        inputId = "backBtn", 
-        label = "Back (press Backspace)",
-        onclick = "history.back(); return false;"
+   tagList(
+    # useShinyjs(),
+    navbarPage(
+      "Variant voter",
+      tabPanel(
+        useShinyjs(),
+        "Vote",
+        uiOutput("ui2_questions"),
+        actionButton(inputId = "testDiv", "✅ shinyjs is running!"), 
+        actionButton(
+          "backBtn",  
+          "Back (press Backspace)",
+          onclick="history.back(); return false;"),
+        actionButton("nextBtn",  "Next (press Enter)")
       ),
-      actionButton(
-        inputId = "nextBtn", 
-        label = "Next (press Enter)"
-      ),
-      br(),
-      textOutput("save_txt"),
-      br(),
-      br()
-    ),
-    tabPanel(
-      # TODO
-      # merge the user files of all intitutes into one dataframe
-      # and then count the number of non NA rows
-      # to get the number of total votes per institute
-      "Monitor",
-      fluidPage(
-        # h5(sprintf("Total screenshots: %s", nrow(screenshots))),
-        tableOutput("table_counts"),
-        actionButton(inputId = "refresh_counts", label = "Refresh counts")
+      tabPanel(
+        "Monitor",
+        fluidPage(
+          tableOutput("table_counts"),
+          actionButton("refresh_counts", "Refresh counts")
+        )
       )
     )
   )
+  # navbarPage(
+  #   "Variant voter",
+  #   header = useShinyjs(),  # ← inject shinyjs via header
+  #   tabPanel(
+  #     "Vote",
+  #     uiOutput("ui2_questions"),
+  #     actionButton(inputId = "testDiv", "✅ shinyjs is running!"), 
+  #     actionButton(
+  #       inputId = "backBtn", 
+  #       label = "Back (press Backspace)",
+  #       onclick = "history.back(); return false;"
+  #     ),
+  #     actionButton(
+  #       inputId = "nextBtn", 
+  #       label = "Next (press Enter)"
+  #     ),
+  #   ),
+  #   tabPanel(
+  #     # TODO
+  #     # merge the user files of all intitutes into one dataframe
+  #     # and then count the number of non NA rows
+  #     # to get the number of total votes per institute
+  #     "Monitor",
+  #     fluidPage(
+  #       # h5(sprintf("Total images: %s", nrow(images))),
+  #       tableOutput("table_counts"),
+  #       actionButton(inputId = "refresh_counts", label = "Refresh counts")
+  #     )
+  #   )
+  # )
 }
 
 # Main UI ####
 ui <- fluidPage(
+  useShinyjs(),
+  # actionButton(inputId = "testDiv", "✅ shinyjs is running!"), 
   tags$head(
-    tags$script(src = "scripts/hotkeys.js"),
+    tags$script("
+      $(document).on('keydown', function(e) {
+        if (e.key === 'Enter') {
+          $('#loginBtn').click();
+        }
+      });
+    "),
   ),
   htmlOutput("page"),
 )
@@ -116,16 +146,20 @@ color_seq <- function(seq) {
 
 server <- function(input, output, session) {
 
+  # shinyjs::show("testDiv")
+  shinyjs::hide("testDiv")
+  shinyjs::hide("backBtn")
+
   # Reactive value to track user authentication
-  USER <- reactiveValues(Logged = Logged, screenshots_randomized = FALSE, randomized_screenshots = NULL)
+  USER <- reactiveValues(Logged = Logged)
 
   # Connect to the annotations database
   con <- dbConnect(SQLite(), cfg_sqlite_file)
   onStop(function() {
     dbDisconnect(con)
   })
-  total_screenshots <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
-  cat(sprintf("Total annotations in DB: %s\n", total_screenshots))
+  total_images <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
+  cat(sprintf("Total annotations in DB: %s\n", total_images))
 
   observeEvent(input$loginBtn, {
     user_id <<- isolate(input$user_id)
@@ -134,7 +168,132 @@ server <- function(input, output, session) {
 
     if (passwords[user_id] == submitted_password) {
       USER$Logged <- TRUE
+      session$userData$userId <- user_id
+      session$userData$votingInstitute <- voting_institute
+
+      user_dir <- file.path("user_data", voting_institute, user_id)
+      session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
+      session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
+      
+      if (!dir.exists(user_dir)) {
+        cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
+        dir.create(user_dir, recursive = TRUE)
+      }
+      
+      if (file.exists(session$userData$userInfoFile)) {
+        # Load existing user info
+        user_info_file <- session$userData$userInfoFile
+        user_info <- read_json(user_info_file)
+
+        session$userData$sessionInfo <- list(
+          start_time = Sys.time(),
+          end_time = NA,  # to be updated when the session ends
+          session_votes_count = 0
+        )
+
+        user_info$sessions[[session$token]] <- session$userData$sessionInfo
+        write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
+
+        session$userData$SessionVotesCount <- reactiveVal(0)
+        return()
+      }
+      
+      # Concatenate time and user_id
+      combined <- paste0(user_id, as.numeric(Sys.time()))
+
+      # Create a numeric seed (e.g., using crc32 hash and convert to integer)
+      seed <- strtoi(substr(digest(combined, algo = "crc32"), 1, 7), base = 16)
+      print("Seed for randomization:")
+      print(seed)
+      "********"
+    
+      # store user info in json file
+      set.seed(seed)  # Use user_id to create a unique seed
+
+      user_info <- list(
+        user_id = user_id,
+        voting_institute = voting_institute,
+        images_randomisation_seed = seed,
+        total_images_voted = 0
+        # TODO figure out how you could track below with Shiny
+        # average_time_per_image = 0,
+        # average_images_per_session = 0,
+        # max_images_per_session = 0,
+        # max_time_per_image = 0,
+        # average_session_length_in_minutes = 0,
+        # max_session_length_in_minutes = 0,
+      )
+
+      session$userData$sessionInfo <- list(
+        start_time = Sys.time(),
+        end_time = NA,  # to be updated when the session ends
+        session_votes_count = 0  # Initialize with 0 votes
+      )
+      session$userData$sessionVotesCount <- reactiveVal(0)
+
+      user_info$sessions[[session$token]] <- session$userData$sessionInfo
+
+      print("User info:")
+      print(user_info)
+
+      # create user info file
+      write_json(
+        user_info, 
+        session$userData$userInfoFile, 
+        auto_unbox = TRUE, 
+        pretty = TRUE
+      )
+
+      # create user annotations file
+      
+      # query the database for all coordinates
+      query <- "SELECT coordinates FROM annotations"
+      coords <- dbGetQuery(con, query)
+      print("Coordinates from DB:")
+      print(coords)
+
+      # randomize coordinates using the seed set above
+      coords <- sample(coords, length(coords), replace = FALSE)
+      
+      # Initialize with empty strings except for coordinates
+      annotations_df <- setNames(
+        as.data.frame(
+          lapply(cfg_user_annotations_colnames, function(col) {
+            if (col == "coordinates") {
+              coords
+            } else {
+              rep("", length(coords))
+            }
+          }),
+          stringsAsFactors = FALSE
+        ),
+        cfg_user_annotations_colnames
+      )
+
+      # write annotations_df to a text file
+      write.table(
+        annotations_df,
+        file = session$userData$userAnnotationsFile,
+        sep = "\t",
+        row.names = FALSE,
+        col.names = TRUE,
+        quote = FALSE
+      )            
     }
+  })
+
+  # Update end_time on session end
+  session$onSessionEnded(function() {
+    cat(sprintf("Session ended"))
+    user_info_file <- session$userData$userInfoFile
+    print(paste("User info file:", user_info_file))
+    if (is.null(user_info_file)) {
+      print("No user info file found.")
+      return()
+    }
+    user_info <- read_json(user_info_file)
+    user_info$sessions[[session$token]]$end_time <- Sys.time()
+    write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
   })
 
   # Render the appropriate UI based on login status.
@@ -145,91 +304,6 @@ server <- function(input, output, session) {
       })
     }
     if (USER$Logged == TRUE) {
-      cat("Observer User logged in !!\n")
-
-      # Create user-specific file if it doesn't exist
-      if (!is.null(user_id) && nzchar(user_id)) {
-        user_dir <- file.path("user_data", voting_institute, user_id)
-        print("User directory:")
-        print(user_dir)
-        print("++++++++")
-        if (!dir.exists(user_dir)) {
-          cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
-          dir.create(user_dir, recursive = TRUE)
-
-          # Concatenate time and user_id
-          combined <- paste0(user_id, as.numeric(Sys.time()))
-
-          # Create a numeric seed (e.g., using crc32 hash and convert to integer)
-          seed <- strtoi(substr(digest(combined, algo = "crc32"), 1, 7), base = 16)
-          print("Seed for randomization:")
-          print(seed)
-          "********"
-        
-          # store user info in json file
-          set.seed(seed)  # Use user_id to create a unique seed
-          user_info <- list(
-            user_id = user_id,
-            voting_institute = voting_institute,
-            seed = seed,
-            first_login = Sys.time(),
-            last_login = Sys.time(),
-            total_screenshots_voted = 0
-            # TODO figure out how you could track below with Shiny
-            # average_time_per_screenshot = 0,
-            # average_screenshots_per_session = 0,
-            # max_screenshots_per_session = 0,
-            # max_time_per_screenshot = 0,
-            # average_session_length_in_minutes = 0,
-            # max_session_length_in_minutes = 0,
-          )
-          user_info_file <- file.path(user_dir, paste0(user_id, "_info.json"))
-          if (!file.exists(user_info_file)) {
-            cat(sprintf("Creating user info file for: %s at %s\n", user_id, user_info_file))
-            write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
-          }
-
-          # unser annotations file
-          user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
-          if (!file.exists(user_annotations_file)) {
-            cat(sprintf("Creating user annotations file for: %s at %s\n", user_id, user_annotations_file))
-
-            # query the database for all coordinates
-            query <- "SELECT coordinates FROM annotations"
-            coords <- dbGetQuery(con, query)
-            print("Coordinates from DB:")
-            print(coords)
-
-            # randomize coordinates using the seed set above
-            coords <- sample(coords, length(coords), replace = FALSE)
-            
-            # Initialize with empty strings except for coordinates
-            annotations_df <- setNames(
-              as.data.frame(
-                lapply(cfg_user_annotations_colnames, function(col) {
-                  if (col == "coordinates") {
-                    coords
-                  } else {
-                    rep("", length(coords))
-                  }
-                }),
-                stringsAsFactors = FALSE
-              ),
-              cfg_user_annotations_colnames
-            )
-
-            # write annotations_df to a text file
-            write.table(
-              annotations_df,
-              file = user_annotations_file,
-              sep = "\t",
-              row.names = FALSE,
-              col.names = TRUE,
-              quote = FALSE
-            )            
-          }
-        }
-      }
       output$page <- renderUI({
         div(class = "outer", do.call(bootstrapPage, c("", ui2())))
       })
@@ -238,7 +312,7 @@ server <- function(input, output, session) {
 
   current_pic <- reactiveVal(NULL)
 
-  save_txt <- observeEvent(input$nextBtn, {
+  observeEvent(input$nextBtn, {
     pic <- current_pic()
 
     user_dir <- file.path("user_data", voting_institute, user_id)
@@ -297,15 +371,27 @@ server <- function(input, output, session) {
 
     # TODO
     # Hide + disable the back button if this is the first image in that session
-    # Idea in _info.json count the number of screenshots voted in that session
+    # Idea in _info.json count the number of images voted in that session
     # and if it is 0, then hide the back button
     
     if (!already_voted && user_dir != "Training_answers_not_saved") {
-      # Increment the total screenshots voted for the user
-      user_info_file <- file.path(user_dir, paste0(user_id, "_info.json"))
+      # Increment the total images voted for the user
+      user_info_file <- session$userData$userInfoFile
       user_info <- read_json(user_info_file)
-      user_info$total_screenshots_voted <- user_info$total_screenshots_voted + 1
-      write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
+
+      # update images voted in the current session
+      user_info$sessions[[session$token]]$images_voted <- 
+        user_info$sessions[[session$token]]$images_voted + 1
+      
+      # update total images voted
+      user_info$total_images_voted <- user_info$total_images_voted + 1
+      
+      write_json(
+        user_info, 
+        user_info_file,
+        auto_unbox = TRUE, 
+        pretty = TRUE
+      )
 
       # depending on the agreement, update the vote counts in the database
       vote_col <- cfg_vote2dbcolumn_map[[input$agreement]]
@@ -397,10 +483,15 @@ server <- function(input, output, session) {
 
   # Observers to update the choosePic trigger source
   observeEvent(input$loginBtn, {
+    print("Login button pressed, setting trigger source to 'login'.")
+    shinyjs::runjs("console.log('✅ shinyjs loaded at ' + new Date());")
+    # TODO
+    shinyjs::hideElement(selector = "#variantImage")
     choosePic_trigger_source("login")
   })
 
   observeEvent(input$nextBtn, {
+    showElement("backBtn")
     choosePic_trigger_source("go")
   })
 
@@ -530,6 +621,9 @@ server <- function(input, output, session) {
     renderUI({
       pic <- choosePic()
       fluidPage(
+        tags$head(
+          tags$script(src = "scripts/hotkeys.js"),
+        ),
         p(paste("Logged in as", user_id)),
         h5(pic$coordinates),
         img(
