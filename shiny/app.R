@@ -62,10 +62,9 @@ ui2 <- function() {
     navbarPage(
       "Variant voter",
       tabPanel(
-        useShinyjs(),
+        useShinyjs(),  # Initialize shinyjs
         "Vote",
         uiOutput("ui2_questions"),
-        actionButton(inputId = "testDiv", "✅ shinyjs is running!"), 
         actionButton(
           "backBtn",  
           "Back (press Backspace)",
@@ -115,8 +114,7 @@ ui2 <- function() {
 
 # Main UI ####
 ui <- fluidPage(
-  useShinyjs(),
-  # actionButton(inputId = "testDiv", "✅ shinyjs is running!"), 
+  # useShinyjs(),  # Initialize shinyjs
   tags$head(
     tags$script("
       $(document).on('keydown', function(e) {
@@ -304,8 +302,16 @@ server <- function(input, output, session) {
       })
     }
     if (USER$Logged == TRUE) {
+      # output$page <- renderUI({
+      #   div(class = "outer", do.call(bootstrapPage, c("", ui2())))
+      # })
+
       output$page <- renderUI({
-        div(class = "outer", do.call(bootstrapPage, c("", ui2())))
+        do.call(
+          bootstrapPage,
+          c(list(useShinyjs()), ui2()
+          ) 
+        )
       })
     }
   })
@@ -485,8 +491,7 @@ server <- function(input, output, session) {
   observeEvent(input$loginBtn, {
     print("Login button pressed, setting trigger source to 'login'.")
     shinyjs::runjs("console.log('✅ shinyjs loaded at ' + new Date());")
-    # TODO
-    shinyjs::hideElement(selector = "#variantImage")
+    shinyjs::hideElement("backBtn")
     choosePic_trigger_source("login")
   })
 
