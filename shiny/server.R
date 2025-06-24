@@ -581,16 +581,35 @@ server <- function(input, output, session) {
     print("Session counts DataFrame:")
     print(session_counts_df)
 
+    # get all the session times from the user info file
+    user_info <- read_json(user_info_file)
+    sessions <- user_info$sessions
+    session_times <- sapply(sessions, function(session) {
+      if (!is.null(session$start_time) && !is.null(session$end_time)) {
+        as.numeric(difftime(session$end_time, session$start_time, units = "mins"))
+      } else {
+        NA
+      }
+    })
+    session_times <- session_times[!is.na(session_times)]
+  
+    average_session_length <- NA
+    max_session_length <- NA
+    if (length(session_times) > 0) {
+      average_session_length <- mean(session_times)
+      max_session_length <- max(session_times)
+    }
+    
     voting_stats_df <- data.frame(
       user_id = session$userData$userId,
       voting_institute = session$userData$votingInstitute,
       total_votes = sum(session_counts_df$images_voted),
       total_sessions = nrow(session_counts_df),
-      averagev_votes_per_session = mean(session_counts_df$images_voted),
+      average_votes_per_session = mean(session_counts_df$images_voted),
       max_votes_per_session =  max(session_counts_df$images_voted),
       
-      average_session_length_in_minutes = NA,
-      max_session_length_in_minutes = NA
+      average_session_length_in_minutes =  average_session_length,
+      max_session_length_in_minutes =  max_session_length,
       
       # TODO: Track the time from one nextBtn click to another
       # add time_till_vote_casted_in_seconds to the annotations_df
