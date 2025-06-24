@@ -80,7 +80,7 @@ ui2 <- function() {
         actionButton("nextBtn",  "Next (press Enter)")
       ),
       tabPanel(
-        "Monitor",
+        "Leaderboard",
         fluidPage(
           tableOutput("table_counts"),
           actionButton("refresh_counts", "Refresh counts")
