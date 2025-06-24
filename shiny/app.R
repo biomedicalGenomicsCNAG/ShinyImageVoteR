@@ -87,10 +87,10 @@ ui2 <- function() {
         )
       ),
       tabPanel(
-        "User info",
+        "User stats",
         fluidPage(
-         tableOutput("user_info_table"),
-         actionButton("refresh_user_info", "Refresh user info"), 
+         tableOutput("user_stats_table"),
+         actionButton("refresh_user_stats", "Refresh user stats"), 
         )
       ),
       tabPanel(
@@ -738,7 +738,7 @@ server <- function(input, output, session) {
     institutes_voting_counts()
   })
 
-  user_info_table <- eventReactive(c(input$Login, input$refresh_user_info), {
+  user_stats_table <- eventReactive(c(input$Login, input$refresh_user_stats), {
     user_info_file <- session$userData$userInfoFile
     user_annotations_file <- session$userData$userAnnotationsFile
     
@@ -786,8 +786,8 @@ server <- function(input, output, session) {
     transposed_df
   })
 
-  output$user_info_table <- renderTable({
-    user_info_table()
+  output$user_stats_table <- renderTable({
+    user_stats_table()
   })
 }
 
