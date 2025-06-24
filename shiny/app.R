@@ -82,8 +82,25 @@ ui2 <- function() {
       tabPanel(
         "Leaderboard",
         fluidPage(
-          tableOutput("table_counts"),
+          tableOutput("institutes_voting_counts"),
           actionButton("refresh_counts", "Refresh counts")
+        )
+      ),
+      tabPanel(
+        "User info",
+        fluidPage(
+         tableOutput("user_info_table"),
+         actionButton("refresh_user_info", "Refresh user info"), 
+        )
+      ),
+      tabPanel(
+        "About",
+        fluidPage(
+          h3("About this app"),
+          p("This app allows users to vote on somatic mutations in images."),
+          p("Users can log in, view images, and provide their votes and comments."),
+          p("The app tracks user sessions and stores annotations in a SQLite database."),
+          p("Developed by Ivo Christopher Leist")
         )
       )
     )
@@ -681,7 +698,7 @@ server <- function(input, output, session) {
     )
   })
 
-  table_counts <- eventReactive(c(input$Login, input$refresh_counts), {
+  institutes_voting_counts <- eventReactive(c(input$Login, input$refresh_counts), {
     # loop through the cfg_institute_ids inside the folder user_dat
     counts_list <- lapply(cfg_institute_ids, function(institute) {
       institutes_dir <- file.path("user_data", institute)
@@ -717,8 +734,60 @@ server <- function(input, output, session) {
     counts_df
   })
 
-  output$table_counts <- renderTable({
-    table_counts()
+  output$institutes_voting_counts <- renderTable({
+    institutes_voting_counts()
+  })
+
+  user_info_table <- eventReactive(c(input$Login, input$refresh_user_info), {
+    user_info_file <- session$userData$userInfoFile
+    user_annotations_file <- session$userData$userAnnotationsFile
+    
+    if (!file.exists(user_info_file)) {
+      return(data.frame())
+    }
+
+    # load user annotations file into a data frame
+    annotations_df <- read.table(
+      user_annotations_file,
+      header = TRUE,
+      sep = "\t",
+      stringsAsFactors = FALSE
+    )
+
+    # groupby by shiny_session_id and count the number of images voted
+    session_counts <- annotations_df %>%
+      group_by(shiny_session_id) %>%
+      summarise(
+        images_voted = n(),
+        .groups = 'drop'
+      )
+    print("Session counts DataFrame:")
+    print(session_counts)
+    session_counts
+
+    voting_stats_df <- data.frame(
+      user_id = user_id,
+      voting_institute = voting_institute,
+      total_images_voted = 0,
+      total_sessions = 0,
+      average_time_per_image = NA,
+      average_images_per_session = NA,
+      max_images_per_session = NA,
+      max_time_per_image = NA,
+      average_session_length_in_minutes = NA,
+      max_session_length_in_minutes = NA
+    )
+
+    transposed_df <- as.data.frame(t(voting_stats_df))
+    colnames(transposed_df) <- "value"
+    transposed_df$metric <- rownames(transposed_df)
+    rownames(transposed_df) <- NULL
+    transposed_df <- transposed_df[, c("metric", "value")]
+    transposed_df
+  })
+
+  output$user_info_table <- renderTable({
+    user_info_table()
   })
 }
 
