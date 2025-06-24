@@ -41,6 +41,9 @@ server <- function(input, output, session) {
   # Holds the data of the currently displayed mutation
   current_mutation <- reactiveVal(NULL)
 
+  # Track when the current voting image was rendered
+  vote_start_time <- reactiveVal(Sys.time())
+
   # Connect to the annotations database
   con <- dbConnect(SQLite(), cfg_sqlite_file)
   onStop(function() {
@@ -232,6 +235,10 @@ server <- function(input, output, session) {
       annotations_df[rowIdx, "comment"] <- comment
     }
 
+    # calculate time spent on the current variant
+    time_spent <- as.numeric(difftime(Sys.time(), vote_start_time(), units = "secs"))
+    annotations_df[rowIdx, "time_till_vote_casted_in_seconds"] <- time_spent
+
     print(paste0("already_voted:", already_voted))
     
     if (!already_voted && session$userData$votingInstitute != cfg_test_institute) {
@@ -377,6 +384,7 @@ server <- function(input, output, session) {
         disable("nextBtn")
 
         current_mutation(res)
+        vote_start_time(Sys.time())
         return(res)
       } else {
         showElement("voting_questions_div")
@@ -393,6 +401,7 @@ server <- function(input, output, session) {
       }
       if (nrow(df) > 0) {
         current_mutation(df[1, ])
+        vote_start_time(Sys.time())
         # check if the back button needs to be shown or hidden
         print("annotations_df before filtering:")
         print(annotations_df)
@@ -449,6 +458,7 @@ server <- function(input, output, session) {
         session = session
       )
       current_mutation(res)
+      vote_start_time(Sys.time())
       return(res)
     }
 
@@ -489,6 +499,7 @@ server <- function(input, output, session) {
           coords <- df[1, ]$coordinates
 
           current_mutation(df[1, ])
+          vote_start_time(Sys.time())
           updateQueryString(
             paste0("?coords=",coords),
             mode = "push",
@@ -594,11 +605,16 @@ server <- function(input, output, session) {
     session_times <- session_times[!is.na(session_times)]
   
     average_session_length <- NA
-    max_session_length <- NA
-    if (length(session_times) > 0) {
-      average_session_length <- mean(session_times)
-      max_session_length <- max(session_times)
-    }
+      max_session_length <- NA
+      if (length(session_times) > 0) {
+        average_session_length <- mean(session_times)
+        max_session_length <- max(session_times)
+      }
+
+      time_vals <- as.numeric(annotations_df$time_till_vote_casted_in_seconds)
+      time_vals <- time_vals[!is.na(time_vals)]
+      average_time_per_vote <- if (length(time_vals) > 0) mean(time_vals) else NA
+      max_time_per_vote <- if (length(time_vals) > 0) max(time_vals) else NA
     
     voting_stats_df <- data.frame(
       user_id = session$userData$userId,
@@ -610,11 +626,9 @@ server <- function(input, output, session) {
       
       average_session_length_in_minutes =  average_session_length,
       max_session_length_in_minutes =  max_session_length,
-      
-      # TODO: Track the time from one nextBtn click to another
-      # add time_till_vote_casted_in_seconds to the annotations_df
-      average_time_per_vote_in_seconds = NA,
-      max_time_per_vote_in_seconds = NA
+
+      average_time_per_vote_in_seconds = average_time_per_vote,
+      max_time_per_vote_in_seconds = max_time_per_vote
     )
 
     transposed_df <- as.data.frame(t(voting_stats_df))
