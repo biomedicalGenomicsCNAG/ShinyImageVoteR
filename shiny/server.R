@@ -109,8 +109,7 @@ server <- function(input, output, session) {
       user_info <- list(
         user_id = user_id,
         voting_institute = voting_institute,
-        images_randomisation_seed = seed,
-        total_images_voted = 0
+        images_randomisation_seed = seed
       )
 
       session$userData$sessionInfo <- list(
@@ -245,17 +244,7 @@ server <- function(input, output, session) {
       # Increment the total images voted for the user
       user_info_file <- session$userData$userInfoFile
       user_info <- read_json(user_info_file)
-      
-      # update total images voted
-      user_info$total_images_voted <- user_info$total_images_voted + 1
-      
-      write_json(
-        user_info, 
-        user_info_file,
-        auto_unbox = TRUE, 
-        pretty = TRUE
-      )
-
+       
       # depending on the agreement, update the vote counts in the database
       vote_col <- cfg_vote2dbcolumn_map[[input$agreement]]
 
@@ -539,11 +528,20 @@ server <- function(input, output, session) {
 
       # Loop through each user directory and count the total images voted
       for (user_dir in user_dirs) {
-        user_info_file <- file.path(user_dir, paste0(basename(user_dir), "_info.json"))
-        user_info <- read_json(user_info_file)
-        if (!is.null(user_info$total_images_voted)) {
-          total_images <- total_images + user_info$total_images_voted
+        user_annotations_file <- file.path(user_dir, paste0(basename(user_dir), "_annotations.tsv"))
+        if (!file.exists(user_annotations_file)) {
+          next
         }
+        # Read the user annotations file
+        user_annotations_df <- read.table(
+          user_annotations_file,
+          header = TRUE,
+          sep = "\t",
+          stringsAsFactors = FALSE
+        )
+        # Count the number of images voted by the user
+        user_voted_images <- sum(!is.na(user_annotations_df$shiny_session_id))
+        total_images <- total_images + user_voted_images
       }
       data.frame(institute = institute, users = total_users, total_images_voted = total_images)
     })
@@ -605,16 +603,21 @@ server <- function(input, output, session) {
     session_times <- session_times[!is.na(session_times)]
   
     average_session_length <- NA
-      max_session_length <- NA
-      if (length(session_times) > 0) {
-        average_session_length <- mean(session_times)
-        max_session_length <- max(session_times)
-      }
+    max_session_length <- NA
+    if (length(session_times) > 0) {
+      average_session_length <- mean(session_times)
+      max_session_length <- max(session_times)
+    }
 
-      time_vals <- as.numeric(annotations_df$time_till_vote_casted_in_seconds)
-      time_vals <- time_vals[!is.na(time_vals)]
-      average_time_per_vote <- if (length(time_vals) > 0) mean(time_vals) else NA
-      max_time_per_vote <- if (length(time_vals) > 0) max(time_vals) else NA
+    time_vals <- as.numeric(annotations_df$time_till_vote_casted_in_seconds)
+    time_vals <- time_vals[!is.na(time_vals)]
+    
+    average_time_per_vote <- NA
+    max_time_per_vote <- NA
+    if (length(time_vals) >0) {
+      average_time_per_vote <- mean(time_vals)
+      max_time_per_vote <- max(time_vals)
+    }
     
     voting_stats_df <- data.frame(
       user_id = session$userData$userId,
