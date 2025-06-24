@@ -18,6 +18,8 @@ RUN Rscript -e "renv::init(bare=TRUE);options(renv.config.ppm.url = 'https://${P
 
 # Copy your application files to the Shiny server directory
 COPY config.R .
+COPY ui.R .
+COPY server.R .
 COPY app.R .
 
 # Expose the Shiny server port
