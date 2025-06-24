@@ -58,13 +58,17 @@ ui1 <- function() {
 # Main UI (after login)
 ui2 <- function() {
    tagList(
-    # useShinyjs(),
     navbarPage(
       "Variant voter",
       tabPanel(
-        # useShinyjs(),  # Initialize shinyjs
-        "Vote",
-        uiOutput("ui2_questions"),
+        shiny::singleton(
+          includeScript("www/scripts/hotkeys.js")
+        ),
+        title = "Vote",
+        fluidPage(
+          uiOutput("ui2_image"),
+          uiOutput("ui2_questions")
+        ),
         hidden(
           disabled(
             actionButton(
@@ -84,36 +88,6 @@ ui2 <- function() {
       )
     )
   )
-  # navbarPage(
-  #   "Variant voter",
-  #   header = useShinyjs(),  # ← inject shinyjs via header
-  #   tabPanel(
-  #     "Vote",
-  #     uiOutput("ui2_questions"),
-  #     actionButton(inputId = "testDiv", "✅ shinyjs is running!"), 
-  #     actionButton(
-  #       inputId = "backBtn", 
-  #       label = "Back (press Backspace)",
-  #       onclick = "history.back(); return false;"
-  #     ),
-  #     actionButton(
-  #       inputId = "nextBtn", 
-  #       label = "Next (press Enter)"
-  #     ),
-  #   ),
-  #   tabPanel(
-  #     # TODO
-  #     # merge the user files of all intitutes into one dataframe
-  #     # and then count the number of non NA rows
-  #     # to get the number of total votes per institute
-  #     "Monitor",
-  #     fluidPage(
-  #       # h5(sprintf("Total images: %s", nrow(images))),
-  #       tableOutput("table_counts"),
-  #       actionButton(inputId = "refresh_counts", label = "Refresh counts")
-  #     )
-  #   )
-  # )
 }
 
 # Main UI ####
@@ -477,7 +451,7 @@ server <- function(input, output, session) {
   observeEvent(input$nextBtn, {
     showElement("backBtn")
     enable("backBtn")
-    choosePic_trigger_source("go")
+    choosePic_trigger_source("next")
   })
 
   # actionButton "Back" or Go back one page in browser pressed
@@ -489,58 +463,6 @@ server <- function(input, output, session) {
   observeEvent(query(), {
     cat("Query string changed! New params:\n")
     print(query())
-
-    # # load the annotation_df from that user
-    # user_annotations_file <- session$userData$userAnnotationsFile
-
-    # if (is.null(user_annotations_file)) {
-    #   cat("User annotations file is not set in session data.\n")
-    #   return(NULL)
-    # }
-
-    # if (!file.exists(user_annotations_file)) {
-    #   cat(sprintf("User annotations file does not exist: %s\n", user_annotations_file))
-    #   return(NULL)
-    # }
-
-    # coords <- parseQueryString(session$clientData$url_search)$coords
-    # if (is.null(coords) || coords == "done") {
-    #   print("No coordinates found in the URL or all variants have been voted on.")
-    #   return(NULL)
-    # }
-
-    # print(paste0("user_annotations_file:", user_annotations_file))
-    # annotations_df <- read.table(
-    #   user_annotations_file,
-    #   header = TRUE,
-    #   sep = "\t",
-    #   stringsAsFactors = FALSE
-    # )
-
-    # # filter tha annotations_df for the current sessionId
-    # session_id <- session$token
-    # annotations_df <- annotations_df[annotations_df$shiny_session_id == session_id, ]
-
-    # if (nrow(annotations_df) == 0) {
-    #   print("No annotations found for the current session.")
-    #   return(NULL)
-    # }
-
-    # print("Annotations DataFrame for the current session:")
-    # print(annotations_df)
-
-    # # get the row index for the coordinates
-    # rowIdx <- which(annotations_df$coordinates == coords)
-    # print(paste("Row index for coordinates:", coords, "is", rowIdx))
-    # if (length(rowIdx) == 0) {
-    #   print("HIDE back button")
-    #   hideElement("backBtn")
-    #   disable("backBtn")
-    # } else {
-    #   print("SHOW back button")
-    #   showElement("backBtn")
-    #   enable("backBtn")
-    # }
     choosePic_trigger_source("query-string-change")
   })
 
@@ -558,41 +480,40 @@ server <- function(input, output, session) {
       stringsAsFactors = FALSE
     )
 
-    # print("Annotations DataFrame:")
-    # print(annotations_df)
-
-    # print("annotations_df$agreement:")
-    # print(annotations_df$agreement)
-
-    # Check if the user has already voted on all variants
-    if (all(!is.na(annotations_df$agreement))) {
-      res <- tibble(
-        rowid = NA,
-        coordinates = "You have already voted on all variants in this category!",
-        REF = "-",
-        ALT = "-",
-        variant = NA,
-        path = "https://imgpile.com/images/Ud9lAi.jpg"
-      )
-      updateQueryString(
-        "?coords=done",
-        mode = "push",
-        session = session
-      )
-      current_pic(res)
-      return(res)
-    }
-
     # actionButton "Back" or Go back one page in browser pressed
     print("Checking if the user pressed the Back button or went back in the browser...")
     if (choosePic_trigger_source() == "query-string-change") {
       print("URL change detected, showing the image from the URL.")
       # Get the coordinates from the URL
       coords <- parseQueryString(session$clientData$url_search)$coords
-      if (is.null(coords) || coords == "done") {
+      if (is.null(coords)) {
         print("No coordinates found in the URL or all variants have been voted on.")
         return(NULL)
       }
+
+      if (coords == "done") {
+        print("All variants have been voted on.")
+        res <- tibble(
+          rowid = NA,
+          coordinates = "You have already voted on all variants in this category!",
+          REF = "-",
+          ALT = "-",
+          variant = NA,
+          path = "https://imgpile.com/images/Ud9lAi.jpg"
+        )
+
+        hideElement("ui2_questions")
+        hideElement("nextBtn")
+        disable("nextBtn")
+
+        current_pic(res)
+        return(res)
+      } else {
+        showElement("ui2_questions")
+        showElement("nextBtn")
+        enable("nextBtn")
+      }
+
       # Query the database for the variant with these coordinates
       query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coords, "'")
       df <- dbGetQuery(con, query)
@@ -643,8 +564,27 @@ server <- function(input, output, session) {
       }
     }
 
+    if (all(!is.na(annotations_df$agreement))) {
+      res <- tibble(
+        rowid = NA,
+        coordinates = "You have already voted on all variants in this category!",
+        REF = "-",
+        ALT = "-",
+        variant = NA,
+        path = "https://imgpile.com/images/Ud9lAi.jpg"
+      )
+      updateQueryString(
+        "?coords=done",
+        mode = "push",
+        session = session
+      )
+      current_pic(res)
+      return(res)
+    }
+
     # loop through the annotations_df to find the next variant that has not been voted on
     print("Looking for the next variant that has not been voted on...")
+    not_voted_image_found <- FALSE
     for (i in 1:nrow(annotations_df)) {
       if (is.na(annotations_df$agreement[i])) {
         # Get the coordinates of the variant
@@ -691,61 +631,57 @@ server <- function(input, output, session) {
     }
   })
 
-  voterUI <- function() {
-    renderUI({
-      pic <- choosePic()
-      fluidPage(
-        # to make sure that the script is loaded only once
-        shiny::singleton(
-          includeScript("www/scripts/hotkeys.js")
-        ),
-        p(paste("Logged in as", user_id)),
-        h5(pic$coordinates),
-        img(
-          id = "variantImage",
-          src = paste0(pic$path),
-          style = "max-width:100%; height:auto;"
-        ),
-        br(),
-        br(),
-        tags$h5(
-          id = "variantInfo",
-          HTML(paste0(
-            "Somatic mutation: ", 
-            color_seq(choosePic()$REF),
-            " > ", 
-            color_seq(choosePic()$ALT)
-          ))
-        ),
-        br(),
-        div(
-          radioButtons(
-            inputId = "agreement",
-            label = cfg_radioBtns_label,
-            choices = cfg_radio_options2val_map
-          ),
-        ),
-        conditionalPanel(
-          condition = "input.agreement == 'not_confident'",
-          checkboxGroupInput(
-            inputId = "observation",
-            label = cfg_checkboxes_label,
-            choices = cfg_observations2val_map
-          )
-        ),
-        conditionalPanel(
-          condition = "input.agreement == 'diff_var' || input.agreement == 'not_confident'",
-          textInput(
-            inputId = "comment",
-            label = "Comments",
-            value = ""
-          )
+  output$ui2_image <- renderUI({
+    pic <- choosePic()
+    if (is.null(pic)) {
+      return(NULL)
+    }
+    div(
+      img(
+        id = "variantImage",
+        src = paste0(pic$path),
+        style = "max-width:100%; height:auto;"
+      ),
+      br(),
+      br(),
+      h5(
+        HTML(paste0(
+          "Somatic mutation: ", 
+          color_seq(pic$REF),
+          " > ", 
+          color_seq(pic$ALT)
+        ))
+      ),
+      br()
+    )
+  })
+
+  output$ui2_questions <- renderUI({
+    div(
+      radioButtons(
+        inputId = "agreement",
+        label = cfg_radioBtns_label,
+        choices = cfg_radio_options2val_map
+      ),
+      conditionalPanel(
+        condition = "input.agreement == 'not_confident'",
+        checkboxGroupInput(
+          inputId = "observation",
+          label = cfg_checkboxes_label,
+          choices = cfg_observations2val_map
+        )
+      ),
+      conditionalPanel(
+        condition = "input.agreement == 'diff_var' || input.agreement == 'not_confident'",
+        textInput(
+          inputId = "comment",
+          label = "Comments",
+          value = ""
         )
       )
-    })
-  }
-
-  output$ui2_questions <- voterUI()
+    )
+  })
+  # output$ui2_questions <- voterUI()
 
   # table_counts <- eventReactive(c(input$Login, input$refresh_counts), {
   #   read_sheet(drive_paths$annotations) %>%
