@@ -108,13 +108,6 @@ server <- function(input, output, session) {
         voting_institute = voting_institute,
         images_randomisation_seed = seed,
         total_images_voted = 0
-        # TODO figure out how you could track below with Shiny
-        # average_time_per_image = 0,
-        # average_images_per_session = 0,
-        # max_images_per_session = 0,
-        # max_time_per_image = 0,
-        # average_session_length_in_minutes = 0,
-        # max_session_length_in_minutes = 0,
       )
 
       session$userData$sessionInfo <- list(
@@ -493,7 +486,6 @@ server <- function(input, output, session) {
           # filter(!(no >= 3 & no / total_votes > 0.7))
 
           # If a variant is found, return it
-
           coords <- df[1, ]$coordinates
 
           current_mutation(df[1, ])
@@ -576,28 +568,34 @@ server <- function(input, output, session) {
       stringsAsFactors = FALSE
     )
 
+    # remove rows with empty shiny_session_id
+    annotations_df <- annotations_df[!is.na(annotations_df$shiny_session_id), ]
+
     # groupby by shiny_session_id and count the number of images voted
-    session_counts <- annotations_df %>%
+    session_counts_df <- annotations_df %>%
       group_by(shiny_session_id) %>%
       summarise(
         images_voted = n(),
         .groups = 'drop'
       )
     print("Session counts DataFrame:")
-    print(session_counts)
-    session_counts
+    print(session_counts_df)
 
     voting_stats_df <- data.frame(
       user_id = session$userData$userId,
       voting_institute = session$userData$votingInstitute,
-      total_images_voted = 0,
-      total_sessions = 0,
-      average_time_per_image = NA,
-      average_images_per_session = NA,
-      max_images_per_session = NA,
-      max_time_per_image = NA,
+      total_votes = sum(session_counts_df$images_voted),
+      total_sessions = nrow(session_counts_df),
+      averagev_votes_per_session = mean(session_counts_df$images_voted),
+      max_votes_per_session =  max(session_counts_df$images_voted),
+      
       average_session_length_in_minutes = NA,
       max_session_length_in_minutes = NA
+      
+      # TODO: Track the time from one nextBtn click to another
+      # add time_till_vote_casted_in_seconds to the annotations_df
+      average_time_per_vote_in_seconds = NA,
+      max_time_per_vote_in_seconds = NA
     )
 
     transposed_df <- as.data.frame(t(voting_stats_df))
