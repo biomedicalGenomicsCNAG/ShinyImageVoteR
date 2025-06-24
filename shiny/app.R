@@ -642,9 +642,7 @@ server <- function(input, output, session) {
         src = paste0(pic$path),
         style = "max-width:100%; height:auto;"
       ),
-      br(),
-      br(),
-      h5(
+      div(
         HTML(paste0(
           "Somatic mutation: ", 
           color_seq(pic$REF),
@@ -655,6 +653,7 @@ server <- function(input, output, session) {
       br()
     )
   })
+
 
   output$ui2_questions <- renderUI({
     div(
