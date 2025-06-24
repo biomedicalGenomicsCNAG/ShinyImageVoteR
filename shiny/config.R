@@ -106,10 +106,11 @@ cfg_nt2color_map <- c(
 
 ### user annotations file column names
 cfg_user_annotations_colnames <- c(
-   "coordinates", 
-   "agreement", 
+   "coordinates",
+   "agreement",
    "alternative_vartype",
    "observation",
    "comment",
-   "shiny_session_id"
+   "shiny_session_id",
+   "time_till_vote_casted_in_seconds"
 )
