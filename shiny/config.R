@@ -44,9 +44,10 @@ institute_ids <- (c(
   "University of Verona"
 ))
 
-cfg_institute_ids <- c("Training_answers_not_saved", institute_ids)
+cfg_test_institute <- "Training_answers_not_saved"
+cfg_institute_ids <- c(cfg_test_institute, institute_ids)
 
-cfg_selected_institute_id <- "Training_answers_not_saved"
+cfg_selected_institute_id <- cfg_test_institute
 cfg_selected_institute_id <- "CNAG"
 
 passwords <- c(

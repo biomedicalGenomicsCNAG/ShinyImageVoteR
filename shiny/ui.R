@@ -1,4 +1,6 @@
-ui1 <- function() {
+library(shinyjs)
+
+login_page <- function() {
   tagList(
     div(
       id = "login",
@@ -27,8 +29,69 @@ ui1 <- function() {
   )
 }
 
-# Main UI (after login)
-ui2 <- function() {
+render_login_page <- function() {
+  div(class = "outer", do.call(bootstrapPage, c("", login_page())))
+}
+
+color_seq <- function(seq, nt2color_map) {
+  print("Coloring sequence:")
+  print(seq)
+
+  colored_seq <- seq %>%
+    strsplit(., split = "") %>%
+    unlist() %>%
+    sapply(., function(x) sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)) %>%
+    paste(collapse = "")
+
+  colored_seq
+}
+
+render_voting_image_div <- function(mut_df, nt2color_map) {
+  div(
+    img(
+      id = "variantImage",
+      src = paste0(mut_df$path),
+      style = "max-width:100%; height:auto;"
+    ),
+    div(
+      HTML(paste0(
+        "Somatic mutation: ", 
+        color_seq(mut_df$REF, nt2color_map),
+        " > ", 
+        color_seq(mut_df$ALT, nt2color_map)
+      ))
+    ),
+    br()
+  )
+}
+
+render_voting_questions_div <- function() {
+  div(
+    radioButtons(
+      inputId = "agreement",
+      label = cfg_radioBtns_label,
+      choices = cfg_radio_options2val_map
+    ),
+    conditionalPanel(
+      condition = "input.agreement == 'not_confident'",
+      checkboxGroupInput(
+        inputId = "observation",
+        label = cfg_checkboxes_label,
+        choices = cfg_observations2val_map
+      )
+    ),
+    conditionalPanel(
+      condition = "input.agreement == 'diff_var' || input.agreement == 'not_confident'",
+      textInput(
+        inputId = "comment",
+        label = "Comments",
+        value = ""
+      )
+    )
+  )
+}
+
+voting_page <- function() {
    tagList(
     navbarPage(
       "Variant voter",
@@ -38,8 +101,8 @@ ui2 <- function() {
         ),
         title = "Vote",
         fluidPage(
-          uiOutput("ui2_image"),
-          uiOutput("ui2_questions")
+          uiOutput("voting_image_div"),
+          uiOutput("voting_questions_div"),
         ),
         hidden(
           disabled(
@@ -79,7 +142,11 @@ ui2 <- function() {
   )
 }
 
-# Main UI ####
+render_voting_page <- function() {
+  div(class = "outer", do.call(bootstrapPage, c("", voting_page())))
+}
+
+# Main UI
 ui <- fluidPage(
   useShinyjs(),  # Initialize shinyjs
   tags$head(
@@ -93,4 +160,3 @@ ui <- fluidPage(
   ),
   htmlOutput("page"),
 )
-

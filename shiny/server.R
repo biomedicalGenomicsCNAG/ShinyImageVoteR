@@ -1,7 +1,45 @@
+
+library(DBI)
+library(data.table)
+library(digest)
+library(dplyr)
+library(jsonlite)
+library(RSQLite)
+library(shiny)
+library(shinyjs)
+library(tibble)
+
+source("config.R")
+source("ui.R")
+
+# Initialize the SQLite database
+if (!file.exists(cfg_sqlite_file)) {
+  source("init_db.R")
+}
+
+# create folders for all institutes
+lapply(cfg_institute_ids, function(institute) {
+  # replace spaces with underscores in institute names
+  institute <- gsub(" ", "_", institute)
+  dir.create(file.path("user_data", institute), recursive = TRUE, showWarnings = FALSE)
+})
+
 server <- function(input, output, session) {
 
-  # Reactive value to track user authentication
-  USER <- reactiveValues(Logged = Logged)
+  # Tracks the url parameters be they manually set in the URL or
+  # set by the app when the user clicks on the "Back" button
+  # or presses "Go back one page" in the browser
+  url_params <- reactive({
+    # example "?coords=chrY:10935390"
+    parseQueryString(session$clientData$url_search)
+  })
+
+  # Tracks the trigger source of the get_mutation function
+  # could be "login", "next", "back", "manual url params change"
+  get_mutation_trigger_source <- reactiveVal(NULL)
+  
+  # Holds the data of the currently displayed mutation
+  current_mutation <- reactiveVal(NULL)
 
   # Connect to the annotations database
   con <- dbConnect(SQLite(), cfg_sqlite_file)
@@ -11,14 +49,21 @@ server <- function(input, output, session) {
   total_images <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
-  observeEvent(input$loginBtn, {
-    user_id <<- isolate(input$user_id)
-    voting_institute <<- isolate(input$institutes_id)
-    submitted_password <- isolate(input$passwd)
+  output$page <- renderUI({
+    render_login_page()
+  }) 
 
+  observeEvent(input$loginBtn, {
+    submitted_password <- input$passwd
+
+    user_id <- input$user_id
     if (passwords[user_id] == submitted_password) {
-      USER$Logged <- TRUE
+      output$page <- renderUI({
+        render_voting_page()
+      })
       session$userData$userId <- user_id
+
+      voting_institute <- input$institutes_id
       session$userData$votingInstitute <- voting_institute
 
       user_dir <- file.path("user_data", voting_institute, user_id)
@@ -42,6 +87,7 @@ server <- function(input, output, session) {
 
         user_info$sessions[[session$token]] <- session$userData$sessionInfo
         write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
+        get_mutation_trigger_source("login")
         return()
       }
       
@@ -119,7 +165,8 @@ server <- function(input, output, session) {
         row.names = FALSE,
         col.names = TRUE,
         quote = FALSE
-      )            
+      )
+      get_mutation_trigger_source("login")         
     }
   })
 
@@ -137,27 +184,13 @@ server <- function(input, output, session) {
     write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
   })
 
-  # Render the appropriate UI based on login status.
-  observe({
-    if (USER$Logged == FALSE) {
-      output$page <- renderUI({
-        div(class = "outer", do.call(bootstrapPage, c("", ui1())))
-      })
-    }
-    if (USER$Logged == TRUE) {
-      output$page <- renderUI({
-        div(class = "outer", do.call(bootstrapPage, c("", ui2())))
-      })
-    }
-  })
-
-  current_pic <- reactiveVal(NULL)
-
   observeEvent(input$nextBtn, {
-    pic <- current_pic()
-
-    user_dir <- file.path("user_data", voting_institute, user_id)
-    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
+    get_mutation_trigger_source("next")
+    showElement("backBtn")
+    enable("backBtn")
+    
+    mut_df <- current_mutation()
+    user_annotations_file <- session$userData$userAnnotationsFile
 
     annotations_df <- read.table(
       user_annotations_file,
@@ -170,7 +203,7 @@ server <- function(input, output, session) {
     print(annotations_df)
 
     # Update the annotations_df with the new agreement
-    coords <- pic$coordinates
+    coords <- mut_df$coordinates
 
     print(paste("Updating annotations for coordinates:", coords))
     print(paste("Agreement:", input$agreement))
@@ -206,17 +239,9 @@ server <- function(input, output, session) {
       annotations_df[rowIdx, "comment"] <- comment
     }
 
-    print("HERE")
     print(paste0("already_voted:", already_voted))
-    # TODO
-    # Hide + disable the "Next" button if all ?coords=done
-
-    # TODO
-    # Hide + disable the back button if this is the first image in that session
-    # Idea in _info.json count the number of images voted in that session
-    # and if it is 0, then hide the back button
     
-    if (!already_voted && user_dir != "Training_answers_not_saved") {
+    if (!already_voted && session$userData$votingInstitute != cfg_test_institute) {
       # Increment the total images voted for the user
       user_info_file <- session$userData$userInfoFile
       user_info <- read_json(user_info_file)
@@ -261,7 +286,7 @@ server <- function(input, output, session) {
     if (
       already_voted && 
       previous_agreement != input$agreement 
-      && user_dir != "Training_answers_not_saved"
+      && session$userData$votingInstitute != cfg_test_institute
       ) {
       files <- list.files(
         path = "user_data", 
@@ -272,8 +297,8 @@ server <- function(input, output, session) {
       print("already_voted -> Files to read for annotations:")
       print(files)
 
-      # Exclude files from the "Training_answers_not_saved" folder
-      files <- files[!grepl("Training_answers_not_saved/", files)]
+      # Exclude files from the cfg_test_institute folder
+      files <- files[!grepl(paste0(cfg_test_institute,"/"), files)]
 
       # get all rows with the same coordinates from all user annotation files
       same_coords_df <- rbindlist(lapply(files, function(f) {
@@ -316,40 +341,14 @@ server <- function(input, output, session) {
     print("Annotations saved successfully.")
   })
 
-  # Reactive value to track the trigger source
-  choosePic_trigger_source <- reactiveVal(NULL)
-
-  # Observers to update the choosePic trigger source
-  observeEvent(input$loginBtn, {
-    print("Login button pressed, setting trigger source to 'login'.")
-    shinyjs::runjs("console.log('✅ shinyjs loaded at ' + new Date());")
-    choosePic_trigger_source("login")
+  observeEvent(url_params(), {
+    get_mutation_trigger_source("url-params-change")
   })
-
-  observeEvent(input$nextBtn, {
-    showElement("backBtn")
-    enable("backBtn")
-    choosePic_trigger_source("next")
-  })
-
-  # actionButton "Back" or Go back one page in browser pressed
-  query <- reactive({
-    # example string "?coords=chrY:10935390" string
-    parseQueryString(session$clientData$url_search)
-  })
-  
-  observeEvent(query(), {
-    cat("Query string changed! New params:\n")
-    print(query())
-    choosePic_trigger_source("query-string-change")
-  })
-
 
   # Triggered when the user logs in, clicks the next button, 
   # or goes back (with the actionButton "Back" or browser back button)
-  choosePic <- eventReactive(c(input$loginBtn, input$nextBtn, query()), {
-    user_dir <- file.path("user_data", voting_institute, user_id)
-    user_annotations_file <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
+  get_mutation <- eventReactive(c(input$loginBtn, input$nextBtn, url_params()), {
+    user_annotations_file <- session$userData$userAnnotationsFile
 
     annotations_df <- read.table(
       user_annotations_file,
@@ -360,7 +359,7 @@ server <- function(input, output, session) {
 
     # actionButton "Back" or Go back one page in browser pressed
     print("Checking if the user pressed the Back button or went back in the browser...")
-    if (choosePic_trigger_source() == "query-string-change") {
+    if (get_mutation_trigger_source() == "url-params-change") {
       print("URL change detected, showing the image from the URL.")
       # Get the coordinates from the URL
       coords <- parseQueryString(session$clientData$url_search)$coords
@@ -380,14 +379,14 @@ server <- function(input, output, session) {
           path = "https://imgpile.com/images/Ud9lAi.jpg"
         )
 
-        hideElement("ui2_questions")
+        hideElement("voting_questions_div")
         hideElement("nextBtn")
         disable("nextBtn")
 
-        current_pic(res)
+        current_mutation(res)
         return(res)
       } else {
-        showElement("ui2_questions")
+        showElement("voting_questions_div")
         showElement("nextBtn")
         enable("nextBtn")
       }
@@ -400,7 +399,7 @@ server <- function(input, output, session) {
         stop("Query returned more than one row. Check the DB.")
       }
       if (nrow(df) > 0) {
-        current_pic(df[1, ])
+        current_mutation(df[1, ])
         # check if the back button needs to be shown or hidden
         print("annotations_df before filtering:")
         print(annotations_df)
@@ -437,7 +436,7 @@ server <- function(input, output, session) {
         }
         return(df[1, ])
       } else {
-        print("No picture found for the given coordinates.")
+        print("No mutation found for the given coordinates.")
         return(NULL)
       }
     }
@@ -456,7 +455,7 @@ server <- function(input, output, session) {
         mode = "push",
         session = session
       )
-      current_pic(res)
+      current_mutation(res)
       return(res)
     }
 
@@ -497,7 +496,7 @@ server <- function(input, output, session) {
 
           coords <- df[1, ]$coordinates
 
-          current_pic(df[1, ])
+          current_mutation(df[1, ])
           updateQueryString(
             paste0("?coords=",coords),
             mode = "push",
@@ -509,55 +508,17 @@ server <- function(input, output, session) {
     }
   })
 
-  output$ui2_image <- renderUI({
-    pic <- choosePic()
-    if (is.null(pic)) {
+  output$voting_image_div <- renderUI({
+    mut_df <- get_mutation()
+    if (is.null(mut_df)) {
       return(NULL)
     }
-    div(
-      img(
-        id = "variantImage",
-        src = paste0(pic$path),
-        style = "max-width:100%; height:auto;"
-      ),
-      div(
-        HTML(paste0(
-          "Somatic mutation: ", 
-          color_seq(pic$REF),
-          " > ", 
-          color_seq(pic$ALT)
-        ))
-      ),
-      br()
-    )
+    render_voting_image_div(mut_df, cfg_nt2color_map)
   })
 
-
-  output$ui2_questions <- renderUI({
-    div(
-      radioButtons(
-        inputId = "agreement",
-        label = cfg_radioBtns_label,
-        choices = cfg_radio_options2val_map
-      ),
-      conditionalPanel(
-        condition = "input.agreement == 'not_confident'",
-        checkboxGroupInput(
-          inputId = "observation",
-          label = cfg_checkboxes_label,
-          choices = cfg_observations2val_map
-        )
-      ),
-      conditionalPanel(
-        condition = "input.agreement == 'diff_var' || input.agreement == 'not_confident'",
-        textInput(
-          inputId = "comment",
-          label = "Comments",
-          value = ""
-        )
-      )
-    )
-  })
+  output$voting_questions_div <- renderUI(
+    render_voting_questions_div()
+  )
 
   institutes_voting_counts <- eventReactive(c(input$Login, input$refresh_counts), {
     # loop through the cfg_institute_ids inside the folder user_dat
@@ -627,8 +588,8 @@ server <- function(input, output, session) {
     session_counts
 
     voting_stats_df <- data.frame(
-      user_id = user_id,
-      voting_institute = voting_institute,
+      user_id = session$userData$userId,
+      voting_institute = session$userData$votingInstitute,
       total_images_voted = 0,
       total_sessions = 0,
       average_time_per_image = NA,
