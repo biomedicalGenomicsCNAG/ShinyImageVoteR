@@ -680,18 +680,46 @@ server <- function(input, output, session) {
       )
     )
   })
-  # output$ui2_questions <- voterUI()
 
-  # table_counts <- eventReactive(c(input$Login, input$refresh_counts), {
-  #   read_sheet(drive_paths$annotations) %>%
-  #     filter(institute %in% institutes) %>%
-  #     count(Institute = institute, sort = TRUE, name = "Votes") %>%
-  #     mutate(Votes = as.integer(Votes - training_questions))
-  # })
+  table_counts <- eventReactive(c(input$Login, input$refresh_counts), {
+    # loop through the cfg_institute_ids inside the folder user_dat
+    counts_list <- lapply(cfg_institute_ids, function(institute) {
+      institutes_dir <- file.path("user_data", institute)
+      if (!dir.exists(institutes_dir)) {
+        return(data.frame(institute = institute, users = 0, total_images_voted = 0))
+      }
 
-  # output$table_counts <- renderTable({
-  #   table_counts()
-  # })
+      # Get all user directories in the institute folder
+      user_dirs <- list.dirs(institutes_dir, full.names = TRUE, recursive = FALSE)
+      institute_users_count <- length(user_dirs)
+      total_users <- institute_users_count
+      total_images <- 0
+
+      # Loop through each user directory and count the total images voted
+      for (user_dir in user_dirs) {
+        user_info_file <- file.path(user_dir, paste0(basename(user_dir), "_info.json"))
+        user_info <- read_json(user_info_file)
+        if (!is.null(user_info$total_images_voted)) {
+          total_images <- total_images + user_info$total_images_voted
+        }
+      }
+      data.frame(institute = institute, users = total_users, total_images_voted = total_images)
+    })
+    counts_df <- do.call(rbind, counts_list)
+    counts_df <- counts_df %>%
+      mutate(
+        institute = factor(institute, levels = cfg_institute_ids)
+      ) %>%
+      arrange(desc(total_images_voted)) 
+
+    print("Counts DataFrame:")
+    print(counts_df)
+    counts_df
+  })
+
+  output$table_counts <- renderTable({
+    table_counts()
+  })
 }
 
 # Run the Shiny app
