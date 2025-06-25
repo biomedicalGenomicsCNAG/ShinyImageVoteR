@@ -61,6 +61,7 @@ server <- function(input, output, session) {
 
     user_id <- input$user_id
     if (passwords[user_id] == submitted_password) {
+      shinyjs::html("login_error", "")
       output$page <- renderUI({
         render_voting_page()
       })
@@ -161,7 +162,9 @@ server <- function(input, output, session) {
         col.names = TRUE,
         quote = FALSE
       )
-      get_mutation_trigger_source("login")         
+      get_mutation_trigger_source("login")
+    } else {
+      shinyjs::html("login_error", "Wrong password. Please try again.")
     }
   })
 
