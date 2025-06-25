@@ -26,6 +26,9 @@ lapply(cfg_institute_ids, function(institute) {
 
 server <- function(input, output, session) {
 
+  jsCode <- "shinyjs.loginSuccessful = function(params){localStorage.setItem('loggedUserId', params.userId);localStorage.setItem('loggedUserPass', params.pass);}\nshinyjs.logout = function(){localStorage.removeItem('loggedUserId');localStorage.removeItem('loggedUserPass');location.reload();}"
+  shinyjs::extendShinyjs(text = jsCode)
+
   # Tracks the url parameters be they manually set in the URL or
   # set by the app when the user clicks on the "Back" button
   # or presses "Go back one page" in the browser
@@ -65,6 +68,8 @@ server <- function(input, output, session) {
       })
       return()
     }
+
+    shinyjs::js$loginSuccessful(list(userId = user_id, pass = input$passwd))
 
     output$page <- renderUI({
       render_voting_page()
@@ -167,6 +172,13 @@ server <- function(input, output, session) {
       quote = FALSE
     )
     get_mutation_trigger_source("login")
+  })
+
+  observeEvent(input$logoutBtn, {
+    output$page <- renderUI({
+      render_login_page()
+    })
+    shinyjs::js$logout()
   })
 
   # Update end_time on session end

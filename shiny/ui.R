@@ -89,8 +89,11 @@ render_voting_questions_div <- function() {
 
 voting_page <- function() {
    tagList(
-    navbarPage(
-      "Variant voter",
+  navbarPage(
+    "Variant voter",
+    header = div(
+      actionButton("logoutBtn", "Logout", class = "navbar-btn pull-right")
+    ),
       tabPanel(
         shiny::singleton(
           includeScript("www/scripts/hotkeys.js")
@@ -150,6 +153,16 @@ ui <- fluidPage(
     tags$script("
       $(document).on('keydown', function(e) {
         if (e.key === 'Enter') {
+          $('#loginBtn').click();
+        }
+      });
+
+      $(function(){
+        const uid = localStorage.getItem('loggedUserId');
+        const pw = localStorage.getItem('loggedUserPass');
+        if(uid && pw){
+          Shiny.setInputValue('user_id', uid);
+          Shiny.setInputValue('passwd', pw);
           $('#loginBtn').click();
         }
       });
