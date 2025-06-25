@@ -1,9 +1,4 @@
 library(shinyjs)
-source("modules/login_module.R")
-
-render_login_page <- function() {
-  div(class = "outer", do.call(bootstrapPage, c("", loginUI("login"))))
-}
 
 color_seq <- function(seq, nt2color_map) {
   print("Coloring sequence:")
@@ -114,7 +109,10 @@ voting_page <- function() {
 }
 
 render_voting_page <- function() {
-  div(class = "outer", do.call(bootstrapPage, c("", voting_page())))
+  div(
+    class = "outer", 
+    voting_page()
+  )
 }
 
 # Main UI
