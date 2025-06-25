@@ -1,4 +1,4 @@
-#login {
+#login-loginPanel {
   font-size:10px; 
   text-align: left; 
   position:absolute; 
@@ -8,7 +8,7 @@
   margin-left: -150px;
 }
 
-#login_error {
+#login-login_error {
   color: red;
   font-size: 12px;
 }

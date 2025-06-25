@@ -11,6 +11,7 @@ library(tibble)
 
 source("config.R")
 source("ui.R")
+source("modules/login_module.R")
 
 # Initialize the SQLite database
 if (!file.exists(cfg_sqlite_file)) {
@@ -56,33 +57,28 @@ server <- function(input, output, session) {
     render_login_page()
   }) 
 
-  observeEvent(input$loginBtn, {
+  login_data <- loginServer("login")
 
-    user_id <- input$user_id
-    if (input$passwd != passwords[user_id]) {
-      output$login_error <- renderText({
-        "Invalid username or password"
-      })
-      return()
-    }
+  observeEvent(login_data(), {
+    req(login_data())
+    user_id <- login_data()$user_id
+    voting_institute <- login_data()$voting_institute
 
     output$page <- renderUI({
       render_voting_page()
     })
     session$userData$userId <- user_id
-
-    voting_institute <- input$institutes_id
     session$userData$votingInstitute <- voting_institute
 
     user_dir <- file.path("user_data", voting_institute, user_id)
     session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
     session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
-    
+
     if (!dir.exists(user_dir)) {
       cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
       dir.create(user_dir, recursive = TRUE)
     }
-    
+
     if (file.exists(session$userData$userInfoFile)) {
       # Load existing user info
       user_info_file <- session$userData$userInfoFile
@@ -98,7 +94,7 @@ server <- function(input, output, session) {
       get_mutation_trigger_source("login")
       return()
     }
-    
+
     # Concatenate time and user_id
     combined <- paste0(user_id, as.numeric(Sys.time()))
 
@@ -107,7 +103,7 @@ server <- function(input, output, session) {
     print("Seed for randomization:")
     print(seed)
     "********"
-  
+
     # store user info in json file
     set.seed(seed)  # Use user_id to create a unique seed
 
@@ -128,9 +124,9 @@ server <- function(input, output, session) {
 
     # create user info file
     write_json(
-      user_info, 
-      session$userData$userInfoFile, 
-      auto_unbox = TRUE, 
+      user_info,
+      session$userData$userInfoFile,
+      auto_unbox = TRUE,
       pretty = TRUE
     )
 
@@ -141,7 +137,7 @@ server <- function(input, output, session) {
 
     coords_vec <- as.character(coords[[1]])
     randomised_coords <- sample(coords_vec, length(coords_vec), replace = FALSE)
-    
+
     # Initialize with empty strings except for coordinates
     annotations_df <- setNames(
       as.data.frame(
@@ -340,7 +336,7 @@ server <- function(input, output, session) {
 
   # Triggered when the user logs in, clicks the next button, 
   # or goes back (with the actionButton "Back" or browser back button)
-  get_mutation <- eventReactive(c(input$loginBtn, input$nextBtn, url_params()), {
+  get_mutation <- eventReactive(c(input[["login-loginBtn"]], input$nextBtn, url_params()), {
     user_annotations_file <- session$userData$userAnnotationsFile
 
     annotations_df <- read.table(

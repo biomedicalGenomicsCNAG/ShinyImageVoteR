@@ -1,33 +1,8 @@
 library(shinyjs)
-
-login_page <- function() {
-  tagList(
-    div(
-      id = "login",
-      wellPanel(
-        selectInput(
-          inputId = "institutes_id",
-          label = "Institute",
-          choices = cfg_institute_ids,
-          selected = cfg_selected_institute_id
-        ),
-        textInput(
-          inputId = "user_id",
-          label = "Username",
-          value = cfg_selected_user_id
-        ),
-        passwordInput("passwd", "Password", value = ""),
-        textOutput("login_error"),
-        br(),
-        actionButton("loginBtn", "Log in"),
-        br(),
-      )
-    )
-  )
-}
+source("modules/login_module.R")
 
 render_login_page <- function() {
-  div(class = "outer", do.call(bootstrapPage, c("", login_page())))
+  div(class = "outer", do.call(bootstrapPage, c("", loginUI("login"))))
 }
 
 color_seq <- function(seq, nt2color_map) {
@@ -150,7 +125,7 @@ ui <- fluidPage(
     tags$script("
       $(document).on('keydown', function(e) {
         if (e.key === 'Enter') {
-          $('#loginBtn').click();
+          $('#login-loginBtn').click();
         }
       });
     "),
