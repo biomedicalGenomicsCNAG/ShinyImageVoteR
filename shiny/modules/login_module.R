@@ -2,7 +2,7 @@ loginUI <- function(id) {
   ns <- NS(id)
   tagList(
     div(
-      id = ns("login"),
+      id = ns("loginPanel"),
       wellPanel(
         selectInput(
           inputId = ns("institutes_id"),
