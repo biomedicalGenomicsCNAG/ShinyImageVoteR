@@ -60,10 +60,10 @@ render_voting_questions_div <- function() {
   )
 }
 
-voting_page <- function() {
+main_page <- function() {
    tagList(
     navbarPage(
-      "Variant voter",
+      cfg_application_title,
       tabPanel(
         shiny::singleton(
           includeScript("www/scripts/hotkeys.js")
@@ -96,13 +96,6 @@ voting_page <- function() {
         fluidPage(aboutUI("about"))
       )
     )
-  )
-}
-
-render_voting_page <- function() {
-  div(
-    class = "outer", 
-    voting_page()
   )
 }
 

@@ -68,7 +68,8 @@ server <- function(input, output, session) {
     voting_institute <- login_data()$voting_institute
 
     output$page <- renderUI({
-      render_voting_page()
+      # only visible after login
+      main_page()
     })
     session$userData$userId <- user_id
     session$userData$votingInstitute <- voting_institute
@@ -518,4 +519,15 @@ server <- function(input, output, session) {
   leaderboardServer("leaderboard", login_data)
   userStatsServer("userstats", login_data)
   aboutServer("about")
+
+  # every 2 seconds, check for external shutdown file
+  observe({
+    invalidateLater(2000, session)
+    if (file.exists(cfg_shutdown_file)) {
+      print("External shutdown request received.")
+      file.remove(cfg_shutdown_file)
+      showNotification("External shutdown request received…", type="warning")
+      stopApp()
+    }
+  })
 }

@@ -1,5 +1,8 @@
 # Configuration file for the variant voting app
 
+# the application listenes to the existence of this file to gracefully shutdown
+cfg_shutdown_file <- "./server_data/STOP"
+
 ## Database configuration
 
 ### file paths
@@ -60,6 +63,8 @@ cfg_user_ids <- names(passwords)
 cfg_selected_user_id <- "Test"
 
 ## Voting UI
+
+cfg_application_title <- "B1MG Somatic Mutation Voting"
 
 cfg_radioBtns_label <- "Is the somatic mutation above correct? [num keys 1-4]"
 
