@@ -7,28 +7,21 @@ login_page <- function() {
       wellPanel(
         selectInput(
           inputId = "institutes_id",
-          label = "Institute ID",
+          label = "Institute",
           choices = cfg_institute_ids,
           selected = cfg_selected_institute_id
         ),
         textInput(
           inputId = "user_id",
-          label = "User ID",
+          label = "Username",
           value = cfg_selected_user_id
         ),
         passwordInput("passwd", "Password", value = ""),
-        div(
-          id = "login_error",
-          style = "color:red;"
-        ),
+        textOutput("login_error"),
         br(),
         actionButton("loginBtn", "Log in"),
         br(),
       )
-    ),
-    tags$style(
-      type = "text/css",
-      "#login {font-size:10px; text-align: left; position:absolute; top: 40%; left: 50%; margin-top: -100px; margin-left: -150px;}"
     )
   )
 }
@@ -53,9 +46,8 @@ color_seq <- function(seq, nt2color_map) {
 render_voting_image_div <- function(mut_df, nt2color_map) {
   div(
     img(
-      id = "variantImage",
+      id = "mutationImage",
       src = paste0(mut_df$path),
-      style = "max-width:100%; height:auto;"
     ),
     div(
       HTML(paste0(
@@ -153,6 +145,7 @@ render_voting_page <- function() {
 # Main UI
 ui <- fluidPage(
   useShinyjs(),  # Initialize shinyjs
+  includeCSS("www/css/styles.css"),  # Include custom CSS
   tags$head(
     tags$script("
       $(document).on('keydown', function(e) {

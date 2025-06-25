@@ -57,115 +57,116 @@ server <- function(input, output, session) {
   }) 
 
   observeEvent(input$loginBtn, {
-    submitted_password <- input$passwd
 
     user_id <- input$user_id
-    if (passwords[user_id] == submitted_password) {
-      shinyjs::html("login_error", "")
-      output$page <- renderUI({
-        render_voting_page()
+    if (input$passwd != passwords[user_id]) {
+      output$login_error <- renderText({
+        "Invalid username or password"
       })
-      session$userData$userId <- user_id
+      return()
+    }
 
-      voting_institute <- input$institutes_id
-      session$userData$votingInstitute <- voting_institute
+    output$page <- renderUI({
+      render_voting_page()
+    })
+    session$userData$userId <- user_id
 
-      user_dir <- file.path("user_data", voting_institute, user_id)
-      session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
-      session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
-      
-      if (!dir.exists(user_dir)) {
-        cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
-        dir.create(user_dir, recursive = TRUE)
-      }
-      
-      if (file.exists(session$userData$userInfoFile)) {
-        # Load existing user info
-        user_info_file <- session$userData$userInfoFile
-        user_info <- read_json(user_info_file)
+    voting_institute <- input$institutes_id
+    session$userData$votingInstitute <- voting_institute
 
-        session$userData$sessionInfo <- list(
-          start_time = Sys.time(),
-          end_time = NA  # to be updated when the session ends
-        )
-
-        user_info$sessions[[session$token]] <- session$userData$sessionInfo
-        write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
-        get_mutation_trigger_source("login")
-        return()
-      }
-      
-      # Concatenate time and user_id
-      combined <- paste0(user_id, as.numeric(Sys.time()))
-
-      # Create a numeric seed (e.g., using crc32 hash and convert to integer)
-      seed <- strtoi(substr(digest(combined, algo = "crc32"), 1, 7), base = 16)
-      print("Seed for randomization:")
-      print(seed)
-      "********"
+    user_dir <- file.path("user_data", voting_institute, user_id)
+    session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
+    session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
     
-      # store user info in json file
-      set.seed(seed)  # Use user_id to create a unique seed
-
-      user_info <- list(
-        user_id = user_id,
-        voting_institute = voting_institute,
-        images_randomisation_seed = seed
-      )
+    if (!dir.exists(user_dir)) {
+      cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
+      dir.create(user_dir, recursive = TRUE)
+    }
+    
+    if (file.exists(session$userData$userInfoFile)) {
+      # Load existing user info
+      user_info_file <- session$userData$userInfoFile
+      user_info <- read_json(user_info_file)
 
       session$userData$sessionInfo <- list(
         start_time = Sys.time(),
-        end_time = NA # to be updated when the session ends
+        end_time = NA  # to be updated when the session ends
       )
+
       user_info$sessions[[session$token]] <- session$userData$sessionInfo
-
-      print("User info:")
-      print(user_info)
-
-      # create user info file
-      write_json(
-        user_info, 
-        session$userData$userInfoFile, 
-        auto_unbox = TRUE, 
-        pretty = TRUE
-      )
-
-      # create user annotations file
-      # query the database for all coordinates
-      query <- "SELECT coordinates FROM annotations"
-      coords <- dbGetQuery(con, query)
-
-      coords_vec <- as.character(coords[[1]])
-      randomised_coords <- sample(coords_vec, length(coords_vec), replace = FALSE)
-      
-      # Initialize with empty strings except for coordinates
-      annotations_df <- setNames(
-        as.data.frame(
-          lapply(cfg_user_annotations_colnames, function(col) {
-            if (col == "coordinates") {
-              randomised_coords
-            } else {
-              rep("", length(randomised_coords))
-            }
-          }),
-          stringsAsFactors = FALSE
-        ),
-        cfg_user_annotations_colnames
-      )
-
-      # write annotations_df to a text file
-      write.table(
-        annotations_df,
-        file = session$userData$userAnnotationsFile,
-        sep = "\t",
-        row.names = FALSE,
-        col.names = TRUE,
-        quote = FALSE
-      )
+      write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
       get_mutation_trigger_source("login")
-    } else {
-      shinyjs::html("login_error", "Wrong password. Please try again.")
+      return()
     }
+    
+    # Concatenate time and user_id
+    combined <- paste0(user_id, as.numeric(Sys.time()))
+
+    # Create a numeric seed (e.g., using crc32 hash and convert to integer)
+    seed <- strtoi(substr(digest(combined, algo = "crc32"), 1, 7), base = 16)
+    print("Seed for randomization:")
+    print(seed)
+    "********"
+  
+    # store user info in json file
+    set.seed(seed)  # Use user_id to create a unique seed
+
+    user_info <- list(
+      user_id = user_id,
+      voting_institute = voting_institute,
+      images_randomisation_seed = seed
+    )
+
+    session$userData$sessionInfo <- list(
+      start_time = Sys.time(),
+      end_time = NA # to be updated when the session ends
+    )
+    user_info$sessions[[session$token]] <- session$userData$sessionInfo
+
+    print("User info:")
+    print(user_info)
+
+    # create user info file
+    write_json(
+      user_info, 
+      session$userData$userInfoFile, 
+      auto_unbox = TRUE, 
+      pretty = TRUE
+    )
+
+    # create user annotations file
+    # query the database for all coordinates
+    query <- "SELECT coordinates FROM annotations"
+    coords <- dbGetQuery(con, query)
+
+    coords_vec <- as.character(coords[[1]])
+    randomised_coords <- sample(coords_vec, length(coords_vec), replace = FALSE)
+    
+    # Initialize with empty strings except for coordinates
+    annotations_df <- setNames(
+      as.data.frame(
+        lapply(cfg_user_annotations_colnames, function(col) {
+          if (col == "coordinates") {
+            randomised_coords
+          } else {
+            rep("", length(randomised_coords))
+          }
+        }),
+        stringsAsFactors = FALSE
+      ),
+      cfg_user_annotations_colnames
+    )
+
+    # write annotations_df to a text file
+    write.table(
+      annotations_df,
+      file = session$userData$userAnnotationsFile,
+      sep = "\t",
+      row.names = FALSE,
+      col.names = TRUE,
+      quote = FALSE
+    )
+    get_mutation_trigger_source("login")
   })
 
   # Update end_time on session end
