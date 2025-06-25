@@ -1,4 +1,5 @@
 library(shinyjs)
+library(shinyauthr)
 
 login_page <- function() {
   tagList(
@@ -11,16 +12,7 @@ login_page <- function() {
           choices = cfg_institute_ids,
           selected = cfg_selected_institute_id
         ),
-        textInput(
-          inputId = "user_id",
-          label = "Username",
-          value = cfg_selected_user_id
-        ),
-        passwordInput("passwd", "Password", value = ""),
-        textOutput("login_error"),
-        br(),
-        actionButton("loginBtn", "Log in"),
-        br(),
+        shinyauthr::loginUI("auth")
       )
     )
   )
@@ -92,7 +84,7 @@ voting_page <- function() {
   navbarPage(
     "Variant voter",
     header = div(
-      actionButton("logoutBtn", "Logout", class = "navbar-btn pull-right")
+      shinyauthr::logoutUI("logout")
     ),
       tabPanel(
         shiny::singleton(
@@ -153,20 +145,10 @@ ui <- fluidPage(
     tags$script("
       $(document).on('keydown', function(e) {
         if (e.key === 'Enter') {
-          $('#loginBtn').click();
+          $('#auth-login_button').click();
         }
       });
-
-      $(function(){
-        const uid = localStorage.getItem('loggedUserId');
-        const pw = localStorage.getItem('loggedUserPass');
-        if(uid && pw){
-          Shiny.setInputValue('user_id', uid);
-          Shiny.setInputValue('passwd', pw);
-          $('#loginBtn').click();
-        }
-      });
-    "),
+    ")
   ),
-  htmlOutput("page"),
+  htmlOutput('page')
 )

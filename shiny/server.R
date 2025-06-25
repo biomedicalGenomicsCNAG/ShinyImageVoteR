@@ -7,6 +7,7 @@ library(jsonlite)
 library(RSQLite)
 library(shiny)
 library(shinyjs)
+library(shinyauthr)
 library(tibble)
 
 source("config.R")
@@ -25,9 +26,6 @@ lapply(cfg_institute_ids, function(institute) {
 })
 
 server <- function(input, output, session) {
-
-  jsCode <- "shinyjs.loginSuccessful = function(params){localStorage.setItem('loggedUserId', params.userId);localStorage.setItem('loggedUserPass', params.pass);}\nshinyjs.logout = function(){localStorage.removeItem('loggedUserId');localStorage.removeItem('loggedUserPass');location.reload();}"
-  shinyjs::extendShinyjs(text = jsCode)
 
   # Tracks the url parameters be they manually set in the URL or
   # set by the app when the user clicks on the "Back" button
@@ -57,19 +55,35 @@ server <- function(input, output, session) {
 
   output$page <- renderUI({
     render_login_page()
-  }) 
+  })
 
-  observeEvent(input$loginBtn, {
+  user_base <- data.frame(
+    user = names(passwords),
+    password = passwords,
+    stringsAsFactors = FALSE
+  )
 
-    user_id <- input$user_id
-    if (input$passwd != passwords[user_id]) {
-      output$login_error <- renderText({
-        "Invalid username or password"
-      })
+  credentials <- shinyauthr::loginServer(
+    id = "auth",
+    data = user_base,
+    user_col = user,
+    pwd_col = password,
+    log_out = reactive(logout_init()),
+    cookie_logins = TRUE
+  )
+
+  logout_init <- shinyauthr::logoutServer(
+    id = "logout",
+    active = reactive(credentials()$user_auth)
+  )
+
+  observeEvent(credentials()$user_auth, {
+    if (!credentials()$user_auth) {
+      output$page <- renderUI({ render_login_page() })
       return()
     }
 
-    shinyjs::js$loginSuccessful(list(userId = user_id, pass = input$passwd))
+    user_id <- credentials()$info$user
 
     output$page <- renderUI({
       render_voting_page()
@@ -172,13 +186,6 @@ server <- function(input, output, session) {
       quote = FALSE
     )
     get_mutation_trigger_source("login")
-  })
-
-  observeEvent(input$logoutBtn, {
-    output$page <- renderUI({
-      render_login_page()
-    })
-    shinyjs::js$logout()
   })
 
   # Update end_time on session end
@@ -350,9 +357,9 @@ server <- function(input, output, session) {
     get_mutation_trigger_source("url-params-change")
   })
 
-  # Triggered when the user logs in, clicks the next button, 
+  # Triggered when the user logs in, clicks the next button,
   # or goes back (with the actionButton "Back" or browser back button)
-  get_mutation <- eventReactive(c(input$loginBtn, input$nextBtn, url_params()), {
+  get_mutation <- eventReactive(c(credentials()$user_auth, input$nextBtn, url_params()), {
     user_annotations_file <- session$userData$userAnnotationsFile
 
     annotations_df <- read.table(
@@ -528,7 +535,7 @@ server <- function(input, output, session) {
     render_voting_questions_div()
   )
 
-  institutes_voting_counts <- eventReactive(c(input$Login, input$refresh_counts), {
+  institutes_voting_counts <- eventReactive(c(credentials()$user_auth, input$refresh_counts), {
     # loop through the cfg_institute_ids inside the folder user_dat
     counts_list <- lapply(cfg_institute_ids, function(institute) {
       institutes_dir <- file.path("user_data", institute)
@@ -577,7 +584,7 @@ server <- function(input, output, session) {
     institutes_voting_counts()
   })
 
-  user_stats_table <- eventReactive(c(input$Login, input$refresh_user_stats), {
+  user_stats_table <- eventReactive(c(credentials()$user_auth, input$refresh_user_stats), {
     user_info_file <- session$userData$userInfoFile
     user_annotations_file <- session$userData$userAnnotationsFile
     
