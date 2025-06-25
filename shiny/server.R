@@ -57,7 +57,7 @@ server <- function(input, output, session) {
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
   output$page <- renderUI({
-    render_login_page()
+    loginUI("login")
   }) 
 
   login_data <- loginServer("login")

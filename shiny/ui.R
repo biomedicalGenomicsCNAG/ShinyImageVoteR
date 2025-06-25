@@ -4,10 +4,6 @@ source("modules/leaderboard_module.R")
 source("modules/user_stats_module.R")
 source("modules/about_module.R")
 
-render_login_page <- function() {
-  div(class = "outer", do.call(bootstrapPage, c("", loginUI("login"))))
-}
-
 color_seq <- function(seq, nt2color_map) {
   print("Coloring sequence:")
   print(seq)
@@ -17,7 +13,6 @@ color_seq <- function(seq, nt2color_map) {
     unlist() %>%
     sapply(., function(x) sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)) %>%
     paste(collapse = "")
-
   colored_seq
 }
 
@@ -105,7 +100,10 @@ voting_page <- function() {
 }
 
 render_voting_page <- function() {
-  div(class = "outer", do.call(bootstrapPage, c("", voting_page())))
+  div(
+    class = "outer", 
+    voting_page()
+  )
 }
 
 # Main UI
