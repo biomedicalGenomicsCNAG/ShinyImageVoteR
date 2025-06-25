@@ -17,6 +17,10 @@ login_page <- function() {
           value = cfg_selected_user_id
         ),
         passwordInput("passwd", "Password", value = ""),
+        div(
+          id = "login_error",
+          style = "color:red;"
+        ),
         br(),
         actionButton("loginBtn", "Log in"),
         br(),
