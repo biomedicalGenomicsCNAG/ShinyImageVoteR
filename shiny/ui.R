@@ -19,7 +19,13 @@ login_page <- function() {
 }
 
 render_login_page <- function() {
-  div(class = "outer", do.call(bootstrapPage, c("", login_page())))
+  div(class = "outer", do.call(
+    bootstrapPage, 
+    c("", loginUI(
+      "Login",
+      id="login"
+    ))
+  ))
 }
 
 color_seq <- function(seq, nt2color_map) {
