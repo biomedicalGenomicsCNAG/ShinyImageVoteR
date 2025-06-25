@@ -1,4 +1,8 @@
 library(shinyjs)
+source("modules/login_module.R")
+source("modules/leaderboard_module.R")
+source("modules/user_stats_module.R")
+source("modules/about_module.R")
 
 color_seq <- function(seq, nt2color_map) {
   print("Coloring sequence:")
@@ -9,7 +13,6 @@ color_seq <- function(seq, nt2color_map) {
     unlist() %>%
     sapply(., function(x) sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)) %>%
     paste(collapse = "")
-
   colored_seq
 }
 
@@ -82,27 +85,15 @@ voting_page <- function() {
       ),
       tabPanel(
         "Leaderboard",
-        fluidPage(
-          tableOutput("institutes_voting_counts"),
-          actionButton("refresh_counts", "Refresh counts")
-        )
+        fluidPage(leaderboardUI("leaderboard"))
       ),
       tabPanel(
         "User stats",
-        fluidPage(
-         tableOutput("user_stats_table"),
-         actionButton("refresh_user_stats", "Refresh user stats"), 
-        )
+        fluidPage(userStatsUI("userstats"))
       ),
       tabPanel(
         "About",
-        fluidPage(
-          h3("About this app"),
-          p("This app allows users to vote on somatic mutations in images."),
-          p("Users can log in, view images, and provide their votes and comments."),
-          p("The app tracks user sessions and stores annotations in a SQLite database."),
-          p("Developed by Ivo Christopher Leist")
-        )
+        fluidPage(aboutUI("about"))
       )
     )
   )

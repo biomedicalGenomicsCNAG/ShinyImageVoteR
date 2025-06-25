@@ -12,6 +12,9 @@ library(tibble)
 source("config.R")
 source("ui.R")
 source("modules/login_module.R")
+source("modules/leaderboard_module.R")
+source("modules/user_stats_module.R")
+source("modules/about_module.R")
 
 # Initialize the SQLite database
 if (!file.exists(cfg_sqlite_file)) {
@@ -512,137 +515,7 @@ server <- function(input, output, session) {
     render_voting_questions_div()
   )
 
-  institutes_voting_counts <- eventReactive(c(input$Login, input$refresh_counts), {
-    # loop through the cfg_institute_ids inside the folder user_dat
-    counts_list <- lapply(cfg_institute_ids, function(institute) {
-      institutes_dir <- file.path("user_data", institute)
-      if (!dir.exists(institutes_dir)) {
-        return(data.frame(institute = institute, users = 0, total_images_voted = 0))
-      }
-
-      # Get all user directories in the institute folder
-      user_dirs <- list.dirs(institutes_dir, full.names = TRUE, recursive = FALSE)
-      institute_users_count <- length(user_dirs)
-      total_users <- institute_users_count
-      total_images <- 0
-
-      # Loop through each user directory and count the total images voted
-      for (user_dir in user_dirs) {
-        user_annotations_file <- file.path(user_dir, paste0(basename(user_dir), "_annotations.tsv"))
-        if (!file.exists(user_annotations_file)) {
-          next
-        }
-        # Read the user annotations file
-        user_annotations_df <- read.table(
-          user_annotations_file,
-          header = TRUE,
-          sep = "\t",
-          stringsAsFactors = FALSE
-        )
-        # Count the number of images voted by the user
-        user_voted_images <- sum(!is.na(user_annotations_df$shiny_session_id))
-        total_images <- total_images + user_voted_images
-      }
-      data.frame(institute = institute, users = total_users, total_images_voted = total_images)
-    })
-    counts_df <- do.call(rbind, counts_list)
-    counts_df <- counts_df %>%
-      mutate(
-        institute = factor(institute, levels = cfg_institute_ids)
-      ) %>%
-      arrange(desc(total_images_voted)) 
-
-    print("Counts DataFrame:")
-    print(counts_df)
-    counts_df
-  })
-
-  output$institutes_voting_counts <- renderTable({
-    institutes_voting_counts()
-  })
-
-  user_stats_table <- eventReactive(c(input$Login, input$refresh_user_stats), {
-    user_info_file <- session$userData$userInfoFile
-    user_annotations_file <- session$userData$userAnnotationsFile
-    
-    if (!file.exists(user_info_file)) {
-      return(data.frame())
-    }
-
-    # load user annotations file into a data frame
-    annotations_df <- read.table(
-      user_annotations_file,
-      header = TRUE,
-      sep = "\t",
-      stringsAsFactors = FALSE
-    )
-
-    # remove rows with empty shiny_session_id
-    annotations_df <- annotations_df[!is.na(annotations_df$shiny_session_id), ]
-
-    # groupby by shiny_session_id and count the number of images voted
-    session_counts_df <- annotations_df %>%
-      group_by(shiny_session_id) %>%
-      summarise(
-        images_voted = n(),
-        .groups = 'drop'
-      )
-    print("Session counts DataFrame:")
-    print(session_counts_df)
-
-    # get all the session times from the user info file
-    user_info <- read_json(user_info_file)
-    sessions <- user_info$sessions
-    session_times <- sapply(sessions, function(session) {
-      if (!is.null(session$start_time) && !is.null(session$end_time)) {
-        as.numeric(difftime(session$end_time, session$start_time, units = "mins"))
-      } else {
-        NA
-      }
-    })
-    session_times <- session_times[!is.na(session_times)]
-  
-    average_session_length <- NA
-    max_session_length <- NA
-    if (length(session_times) > 0) {
-      average_session_length <- mean(session_times)
-      max_session_length <- max(session_times)
-    }
-
-    time_vals <- as.numeric(annotations_df$time_till_vote_casted_in_seconds)
-    time_vals <- time_vals[!is.na(time_vals)]
-    
-    average_time_per_vote <- NA
-    max_time_per_vote <- NA
-    if (length(time_vals) >0) {
-      average_time_per_vote <- mean(time_vals)
-      max_time_per_vote <- max(time_vals)
-    }
-    
-    voting_stats_df <- data.frame(
-      user_id = session$userData$userId,
-      voting_institute = session$userData$votingInstitute,
-      total_votes = sum(session_counts_df$images_voted),
-      total_sessions = nrow(session_counts_df),
-      average_votes_per_session = mean(session_counts_df$images_voted),
-      max_votes_per_session =  max(session_counts_df$images_voted),
-      
-      average_session_length_in_minutes =  average_session_length,
-      max_session_length_in_minutes =  max_session_length,
-
-      average_time_per_vote_in_seconds = average_time_per_vote,
-      max_time_per_vote_in_seconds = max_time_per_vote
-    )
-
-    transposed_df <- as.data.frame(t(voting_stats_df))
-    colnames(transposed_df) <- "value"
-    transposed_df$metric <- rownames(transposed_df)
-    rownames(transposed_df) <- NULL
-    transposed_df <- transposed_df[, c("metric", "value")]
-    transposed_df
-  })
-
-  output$user_stats_table <- renderTable({
-    user_stats_table()
-  })
+  leaderboardServer("leaderboard", login_data)
+  userStatsServer("userstats", login_data)
+  aboutServer("about")
 }
