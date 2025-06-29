@@ -7,6 +7,7 @@ library(jsonlite)
 library(RSQLite)
 library(shiny)
 library(shinyjs)
+library(shinyauthr)
 library(tibble)
 
 source("config.R")

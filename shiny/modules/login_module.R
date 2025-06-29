@@ -1,53 +1,49 @@
 loginUI <- function(id) {
   ns <- NS(id)
-  tagList(
-    tags$script("
-      $(document).on('keydown', function(e) {
-        if (e.key === 'Enter') {
-          $('#login-loginBtn').click();
-        }
-      });
-    "),
-    div(
-      id = ns("loginPanel"),
-      wellPanel(
-        selectInput(
-          inputId = ns("institutes_id"),
-          label = "Institute",
-          choices = cfg_institute_ids,
-          selected = cfg_selected_institute_id
-        ),
-        textInput(
-          inputId = ns("user_id"),
-          label = "Username",
-          value = cfg_selected_user_id
-        ),
-        passwordInput(ns("passwd"), "Password", value = ""),
-        textOutput(ns("login_error")),
-        br(),
-        actionButton(ns("loginBtn"), "Log in"),
-        br()
-      )
+  div(
+    id = ns("loginPanel"),
+    wellPanel(
+      selectInput(
+        inputId = ns("institutes_id"),
+        label = "Institute",
+        choices = cfg_institute_ids,
+        selected = cfg_selected_institute_id
+      ),
+      shinyauthr::loginUI(ns("auth"))
     )
   )
 }
 
 loginServer <- function(id) {
   moduleServer(id, function(input, output, session) {
-    login_data <- eventReactive(input$loginBtn, {
-      user_id <- input$user_id
-      if (input$passwd != passwords[user_id]) {
-        output$login_error <- renderText({
-          "Invalid username or password"
-        })
-        return(NULL)
-      }
-      output$login_error <- renderText({ "" })
+    user_base <- data.frame(
+      user = cfg_user_ids,
+      password = unname(passwords),
+      stringsAsFactors = FALSE
+    )
+
+    credentials <- shinyauthr::loginServer(
+      id = "auth",
+      data = user_base,
+      user_col = user,
+      pwd_col = password,
+      sodium_hashed = FALSE,
+      log_out = reactive(logout_init())
+    )
+
+    logout_init <- shinyauthr::logoutServer(
+      id = "logout",
+      active = reactive(credentials()$user_auth)
+    )
+
+    login_data <- reactive({
+      req(credentials()$user_auth)
       list(
-        user_id = user_id,
+        user_id = credentials()$info$user,
         voting_institute = input$institutes_id
       )
     })
-    return(login_data)
+
+    login_data
   })
 }

@@ -2,6 +2,7 @@
 
 Voting application that allows users to vote on different B1MG variants.
 Users get presented a randomly picked image of a B1MG variant and can vote for it.
+Authentication is handled with [shinyauthr](https://github.com/PaulC91/shinyauthr).
 
 <!-- [![](docs/ui.gif)](docs/ui.gif) -->
 

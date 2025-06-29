@@ -5,23 +5,26 @@ source("modules/about_module.R")
 
 # main_page is only visible after login
 main_page <- function() {
-  navbarPage(
-    cfg_application_title,
-    tabPanel(
-      "Vote",
-      votingUI("voting")
-    ),
-    tabPanel(
-      "Leaderboard",
-      leaderboardUI("leaderboard")
-    ),
-    tabPanel(
-      "User stats",
-      userStatsUI("userstats")
-    ),
-    tabPanel(
-      "About",
-      aboutUI("about")
+  tagList(
+    div(class = "pull-right", shinyauthr::logoutUI("logout")),
+    navbarPage(
+      cfg_application_title,
+      tabPanel(
+        "Vote",
+        votingUI("voting")
+      ),
+      tabPanel(
+        "Leaderboard",
+        leaderboardUI("leaderboard")
+      ),
+      tabPanel(
+        "User stats",
+        userStatsUI("userstats")
+      ),
+      tabPanel(
+        "About",
+        aboutUI("about")
+      )
     )
   )
 }
