@@ -25,6 +25,7 @@ votingUI <- function(id) {
 votingServer <- function(id, login_trigger) {
   moduleServer(id, function(input, output, session) {
   observeEvent(input$nextBtn, {
+    req(login_trigger())
     get_mutation_trigger_source("next")
     showElement(session$ns("backBtn"))
     enable(session$ns("backBtn"))
@@ -176,12 +177,14 @@ votingServer <- function(id, login_trigger) {
   })
 
   observeEvent(url_params(), {
+    req(login_trigger())
     get_mutation_trigger_source("url-params-change")
   })
 
   # Triggered when the user logs in, clicks the next button, 
   # or goes back (with the actionButton "Back" or browser back button)
-  get_mutation <- eventReactive(c(input[["login-loginBtn"]], input$nextBtn, url_params()), {
+  get_mutation <- eventReactive(c(login_trigger(), input$nextBtn, url_params()), {
+    req(login_trigger())
     user_annotations_file <- session$userData$userAnnotationsFile
 
     annotations_df <- read.table(

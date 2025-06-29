@@ -16,7 +16,6 @@ source("modules/leaderboard_module.R")
 source("modules/user_stats_module.R")
 source("modules/about_module.R")
 
-source("modules/voting_module.R")
 # Initialize the SQLite database
 if (!file.exists(cfg_sqlite_file)) {
   source("init_db.R")
@@ -48,6 +47,10 @@ server <- function(input, output, session) {
 
   # Track when the current voting image was rendered
   vote_start_time <- reactiveVal(Sys.time())
+
+  # Load the voting module within this environment so it can
+  # access reactive values defined above
+  source("modules/voting_module.R", local = TRUE)
 
   # Connect to the annotations database
   con <- dbConnect(SQLite(), cfg_sqlite_file)
