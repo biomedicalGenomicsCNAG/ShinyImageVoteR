@@ -67,7 +67,7 @@ server <- function(input, output, session) {
   })
   outputOptions(output, "logged_in", suspendWhenHidden = FALSE)
 
-  login_data <- loginServer("login")
+  login_data <- loginServer("login", db_conn = con)
 
   observeEvent(login_data(), {
     req(login_data())

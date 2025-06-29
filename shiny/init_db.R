@@ -38,4 +38,21 @@ dbExecute(con, "
     WHERE rowid = NEW.rowid;
   END;
 ")
+
+# create sessionids only if missing
+if (!"sessionids" %in% dbListTables(con)) {
+  print("Creating sessionids table")
+  dbCreateTable(con,
+    "sessionids",
+    c(
+      user       = "TEXT",
+      sessionid  = "TEXT",
+      login_time = "TEXT"
+    )
+  )
+}
+
+# show the created tables
+print(dbListTables(con))
+
 dbDisconnect(con)
