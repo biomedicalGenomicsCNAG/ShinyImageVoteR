@@ -2,7 +2,7 @@ document.addEventListener("keydown", (e) => {
   console.log("Key pressed:", e.key);
   // ——— special buttons ———
   if (e.key === "Enter") {
-    document.getElementById("nextBtn")?.click();
+    document.getElementById("voting-nextBtn")?.click();
     return;
   }
 
@@ -11,18 +11,18 @@ document.addEventListener("keydown", (e) => {
     console.log("Backspace pressed");
     // if the comment box is focused, let Backspace delete text instead
     if (
-      document.activeElement.id === "comment" ||
-      document.activeElement.id === "passwd"
+      document.activeElement.id === "voting-comment" ||
+      document.activeElement.id === "login-passwd"
     ) {
       return;
     }
-    document.getElementById("backBtn")?.click();
+    document.getElementById("voting-backBtn")?.click();
     return;
   }
 
   // ——— don’t fire when typing ———
   const id = document.activeElement.id;
-  if (id === "comment") return;
+  if (id === "voting-comment") return;
 
   const groups = {
     // ——— radio buttons ———
@@ -52,7 +52,7 @@ document.addEventListener("keydown", (e) => {
     // document.querySelector('input[name="observation"][value="issues_with_coverage"]')
 
     // build a single selector for both radios & checkboxes:
-    const sel = `input[name="${groupId}"][value="${value}"]`;
+    const sel = `input[name=voting-${groupId}][value="${value}"]`;
     console.log(
       "Hotkey pressed:",
       e.key,
