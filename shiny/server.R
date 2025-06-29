@@ -6,12 +6,13 @@ library(dplyr)
 library(jsonlite)
 library(RSQLite)
 library(shiny)
+library(shinyauthr)
 library(shinyjs)
 library(tibble)
 
 source("config.R")
 source("ui.R")
-source("modules/login_module.R")
+# source("modules/login_module.R")
 source("modules/leaderboard_module.R")
 source("modules/user_stats_module.R")
 source("modules/about_module.R")
@@ -29,6 +30,30 @@ lapply(cfg_institute_ids, function(institute) {
 })
 
 server <- function(input, output, session) {
+
+  # call login module supplying data frame, 
+  # user and password cols and reactive trigger
+
+  # TODO
+  # login data needs extra info such as user_id, voting_institute etc.
+  login_data <- shinyauthr::loginServer(
+    id = "login",
+    data = tibble::as_tibble(data.frame(
+      user = c("user1", "user2"),
+      password = c("pass1", "pass2"),
+      permissions = c("admin", "standard"),
+      name = c("User One", "User Two")
+    )),
+    user_col = user,
+    pwd_col = password,
+    log_out = reactive(logout_init())
+  )
+
+  # call the logout module with reactive trigger to hide/show
+  logout_init <- shinyauthr::logoutServer(
+    id = "logout",
+    active = reactive(login_data()$user_auth)
+  )
 
   # Tracks the url parameters be they manually set in the URL or
   # set by the app when the user clicks on the "Back" button
@@ -64,7 +89,7 @@ server <- function(input, output, session) {
     loginUI("login")
   }) 
 
-  login_data <- loginServer("login")
+  # login_data <- loginServer("login")
 
   observeEvent(login_data(), {
     req(login_data())
