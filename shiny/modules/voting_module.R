@@ -5,7 +5,7 @@ votingUI <- function(id) {
     fluidPage(
       useShinyjs(),
       shiny::singleton(
-        includeScript("www/scripts/hotkeys.js")
+        includeScript("www/hotkeys.js")
       ),
       uiOutput(ns("voting_image_div")),
       div(
@@ -260,8 +260,11 @@ votingServer <- function(id, login_trigger) {
             REF = "-",
             ALT = "-",
             variant = NA,
-            path = "https://imgpile.com/images/Ud9lAi.jpg"
+            path = "images/done.png"
           )
+          # TODO
+          # Freepic attribution for done.png
+          # url: "https://www.flaticon.com/free-icon/done_14018771"
 
           session$onFlushed(function() {
             hideElement(session$ns("voting_questions_div"))
@@ -407,8 +410,8 @@ votingServer <- function(id, login_trigger) {
       }
       div(
         img(
-          id = "mutationImage",
           src = paste0(mut_df$path),
+          style = "max-width: 100%;"
         ),
         div(
           HTML(paste0(

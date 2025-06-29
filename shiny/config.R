@@ -54,11 +54,18 @@ cfg_selected_institute_id <- cfg_test_institute
 cfg_selected_institute_id <- "CNAG"
 
 passwords <- c(
-  "Test" = "1234",
-  "Test2" = "1plusmg",
-  "Training (answers won't be saved)" = "1plusmg"
+  "test" = "1234",
+  "test2" = "1234"
 )
+
 cfg_user_ids <- names(passwords)
+
+# credentials data frame for shinyauthr
+cfg_credentials_df <- data.frame(
+  user = cfg_user_ids,
+  password = unname(passwords[cfg_user_ids]),
+  stringsAsFactors = FALSE
+)
 
 cfg_selected_user_id <- "Test"
 

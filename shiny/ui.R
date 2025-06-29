@@ -6,8 +6,6 @@ source("modules/about_module.R")
 
 # Main UI
 ui <- fluidPage(
-  includeCSS("www/css/styles.css"), 
-
   conditionalPanel(
     condition = "!output.logged_in",
     loginUI("login")

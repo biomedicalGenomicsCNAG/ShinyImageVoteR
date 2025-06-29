@@ -1,58 +1,58 @@
 source("config.R")
+library(shinyauthr)
 
 loginUI <- function(id) {
   ns <- NS(id)
-  tagList(
-    tags$script("
-      $(document).on('keydown', function(e) {
-        if (e.key === 'Enter') {
-          $('#login-loginBtn').click();
-        }
-      });
-    "),
-    div(
-      id = ns("loginPanel"),
-      wellPanel(
-        selectInput(
-          inputId = ns("institutes_id"),
-          label = "Institute",
-          choices = cfg_institute_ids,
-          selected = cfg_selected_institute_id
-        ),
-        textInput(
-          inputId = ns("user_id"),
-          label = "Username",
-          value = cfg_selected_user_id
-        ),
-        passwordInput(ns("passwd"), "Password", value = ""),
-        textOutput(ns("login_error")),
-        br(),
-        actionButton(ns("loginBtn"), "Log in"),
-        br()
-      )
-    )
+  wellPanel(
+    id = ns("loginPanel"),
+    h3(paste0("Welcome to ", cfg_application_title)),
+    br(),
+    h4("First select your institute"),
+    selectInput(
+      inputId = ns("institutes_id"),
+      label = "Institute",
+      choices = cfg_institute_ids,
+      selected = cfg_selected_institute_id
+    ),
+    h4("Then enter your user name and password"),
+    shinyauthr::loginUI(
+      ns("auth"),
+      ""
+    ),
+    style = "
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 400px;
+      width: 90%;
+    "
   )
 }
 
 loginServer <- function(id) {
   moduleServer(id, function(input, output, session) {
 
-    login_data <- eventReactive(input$loginBtn, {
-      user_id <- input$user_id
+    print("cfg_credentials_df:")
+    print(cfg_credentials_df)
 
-      if (input$passwd != passwords[user_id]) {
-        output$login_error <- renderText({
-          "Invalid username or password"
-        })
-        return(NULL)
-      }
+    credentials <- shinyauthr::loginServer(
+      id = "auth",
+      data = cfg_credentials_df,
+      user_col = user,
+      pwd_col = password,
+      sodium_hashed = FALSE
+      # log_out = reactive(FALSE) for what is this?
+    )
 
-      output$login_error <- renderText({ "" })
+    login_data <- reactive({
+      req(credentials()$user_auth)
       list(
-        user_id = user_id,
+        user_id = credentials()$info$user,
         voting_institute = input$institutes_id
       )
     })
+
     return(login_data)
   })
 }
+
