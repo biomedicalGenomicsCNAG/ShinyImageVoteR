@@ -1,3 +1,5 @@
+source("config.R")
+
 loginUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -34,14 +36,17 @@ loginUI <- function(id) {
 
 loginServer <- function(id) {
   moduleServer(id, function(input, output, session) {
+
     login_data <- eventReactive(input$loginBtn, {
       user_id <- input$user_id
+
       if (input$passwd != passwords[user_id]) {
         output$login_error <- renderText({
           "Invalid username or password"
         })
         return(NULL)
       }
+
       output$login_error <- renderText({ "" })
       list(
         user_id = user_id,

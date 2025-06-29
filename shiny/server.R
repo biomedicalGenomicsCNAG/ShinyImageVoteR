@@ -60,9 +60,12 @@ server <- function(input, output, session) {
   total_images <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
-  output$page <- renderUI({
-    loginUI("login")
-  }) 
+  logged_in <- reactiveVal(FALSE)
+
+  output$logged_in <- reactive({
+    logged_in()
+  })
+  outputOptions(output, "logged_in", suspendWhenHidden = FALSE)
 
   login_data <- loginServer("login")
 
@@ -71,10 +74,8 @@ server <- function(input, output, session) {
     user_id <- login_data()$user_id
     voting_institute <- login_data()$voting_institute
 
-    output$page <- renderUI({
-      # only visible after login
-      main_page()
-    })
+    logged_in(TRUE)
+
     session$userData$userId <- user_id
     session$userData$votingInstitute <- voting_institute
 

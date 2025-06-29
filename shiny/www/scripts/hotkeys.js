@@ -1,4 +1,10 @@
 document.addEventListener("keydown", (e) => {
+  // only fire if the questions div is on-screen
+  const questionsDiv = document.getElementById("voting-voting_questions_div");
+  if (!questionsDiv || questionsDiv.offsetParent === null) {
+    return;
+  }
+
   console.log("Key pressed:", e.key);
   // ——— special buttons ———
   if (e.key === "Enter") {

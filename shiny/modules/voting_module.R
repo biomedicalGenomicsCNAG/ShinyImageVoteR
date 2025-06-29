@@ -1,3 +1,5 @@
+library(shinyjs)
+
 votingUI <- function(id) {
   ns <- NS(id)
     fluidPage(
@@ -13,7 +15,7 @@ votingUI <- function(id) {
           label   = cfg_radioBtns_label,
           choices = cfg_radio_options2val_map
         ),
-
+        
         conditionalPanel(
           condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
           checkboxGroupInput(
