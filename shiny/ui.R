@@ -4,6 +4,7 @@ source("modules/leaderboard_module.R")
 source("modules/user_stats_module.R")
 source("modules/about_module.R")
 
+source("modules/voting_module.R")
 color_seq <- function(seq, nt2color_map) {
   print("Coloring sequence:")
   print(seq)
@@ -64,25 +65,7 @@ main_page <- function() {
    tagList(
     navbarPage(
       cfg_application_title,
-      tabPanel(
-        shiny::singleton(
-          includeScript("www/scripts/hotkeys.js")
-        ),
-        title = "Vote",
-        fluidPage(
-          uiOutput("voting_image_div"),
-          uiOutput("voting_questions_div"),
-        ),
-        hidden(
-          disabled(
-            actionButton(
-              "backBtn",  
-              "Back (press Backspace)",
-              onclick="history.back(); return false;")
-            )
-        ),
-        actionButton("nextBtn",  "Next (press Enter)")
-      ),
+        votingUI("voting"),
       tabPanel(
         "Leaderboard",
         fluidPage(leaderboardUI("leaderboard"))
