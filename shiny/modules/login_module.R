@@ -1,6 +1,13 @@
 loginUI <- function(id) {
   ns <- NS(id)
   tagList(
+    tags$script("
+      $(document).on('keydown', function(e) {
+        if (e.key === 'Enter') {
+          $('#login-loginBtn').click();
+        }
+      });
+    "),
     div(
       id = ns("loginPanel"),
       wellPanel(

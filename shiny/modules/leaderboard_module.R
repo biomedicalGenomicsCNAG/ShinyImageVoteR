@@ -1,6 +1,6 @@
 leaderboardUI <- function(id) {
   ns <- NS(id)
-  tagList(
+  fluidPage(
     tableOutput(ns("institutes_voting_counts")),
     actionButton(ns("refresh_counts"), "Refresh counts")
   )

@@ -1,6 +1,6 @@
 aboutUI <- function(id) {
   ns <- NS(id)
-  tagList(
+  fluidPage(
     h3("About this app"),
     p("This app allows users to vote on somatic mutations in images."),
     p("Users can log in, view images, and provide their votes and comments."),

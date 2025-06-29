@@ -1,6 +1,6 @@
 userStatsUI <- function(id) {
   ns <- NS(id)
-  tagList(
+  fluidPage(
     tableOutput(ns("user_stats_table")),
     actionButton(ns("refresh_user_stats"), "Refresh user stats")
   )

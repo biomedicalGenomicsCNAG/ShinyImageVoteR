@@ -19,15 +19,11 @@ This file guides OpenAI's Codex on project structure and coding conventions
   - `server/*.R`: server logic modules
 
   - `/www/`: static resources (JS, CSS)
-    - `css/`: custom styles for the app
-    - `scripts/`: custom JavaScript for the app
 
 ---
 
 ## Coding Conventions
 
-- Use Shiny modules consistently: each in UI (`mod_x_ui`) + server (`mod_x_server`)
-- Modules files named `mod_*_ui.R` and `mod_*_server.R`
+- Use Shiny modules consistently: both in one file UI (`<module>UI`) + server (`<module>Server`)
+- Modules files named `<module>_module.R`
 - Indent code with 2 spaces
-
----

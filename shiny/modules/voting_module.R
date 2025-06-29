@@ -1,6 +1,7 @@
 votingUI <- function(id) {
   ns <- NS(id)
-    tagList(
+    fluidPage(
+      useShinyjs(),
       shiny::singleton(
         includeScript("www/scripts/hotkeys.js")
       ),
@@ -48,6 +49,19 @@ votingUI <- function(id) {
 }
 
 votingServer <- function(id, login_trigger) {
+  
+  color_seq <- function(seq, nt2color_map) {
+    print("Coloring sequence:")
+    print(seq)
+
+    colored_seq <- seq %>%
+      strsplit(., split = "") %>%
+      unlist() %>%
+      sapply(., function(x) sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)) %>%
+      paste(collapse = "")
+    colored_seq
+  }
+
   moduleServer(id, function(input, output, session) {
 
     observeEvent(input$nextBtn, {
@@ -389,7 +403,21 @@ votingServer <- function(id, login_trigger) {
       if (is.null(mut_df)) {
         return(NULL)
       }
-      render_voting_image_div(mut_df, cfg_nt2color_map)
+      div(
+        img(
+          id = "mutationImage",
+          src = paste0(mut_df$path),
+        ),
+        div(
+          HTML(paste0(
+            "Somatic mutation: ", 
+            color_seq(mut_df$REF, cfg_nt2color_map),
+            " > ", 
+            color_seq(mut_df$ALT, cfg_nt2color_map)
+          ))
+        ),
+        br()
+      )
     })
   })
 }
