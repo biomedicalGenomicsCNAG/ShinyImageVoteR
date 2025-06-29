@@ -3,7 +3,7 @@ source("modules/leaderboard_module.R")
 source("modules/user_stats_module.R")
 source("modules/about_module.R")
 
-
+# main_page is only visible after login
 main_page <- function() {
   navbarPage(
     cfg_application_title,
