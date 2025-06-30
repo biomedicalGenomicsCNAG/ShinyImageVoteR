@@ -67,6 +67,8 @@ cfg_credentials_df <- data.frame(
   stringsAsFactors = FALSE
 )
 
+cfg_cookie_expiry <- 7 # Days until session expires
+
 cfg_selected_user_id <- "Test"
 
 ## Voting UI

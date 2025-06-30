@@ -29,8 +29,24 @@ loginUI <- function(id) {
   )
 }
 
-loginServer <- function(id) {
+loginServer <- function(id, db_conn = NULL) {
   moduleServer(id, function(input, output, session) {
+
+    add_sessionid_to_db <- function(user, sessionid, conn = db_conn) {
+      tibble(
+        user = user, 
+        sessionid = sessionid, 
+        login_time = as.character(lubridate::now())
+      ) %>%
+      dbWriteTable(conn, "sessionids", ., append = TRUE)
+    }
+
+    get_sessionids_from_db <- function(conn = db_conn, expiry = cfg_cookie_expiry) {
+      dbReadTable(conn, "sessionids") %>%
+        mutate(login_time = lubridate::ymd_hms(login_time)) %>%
+        as_tibble() %>%
+        filter(login_time > lubridate::now() - lubridate::days(expiry))
+    }
 
     print("cfg_credentials_df:")
     print(cfg_credentials_df)
@@ -40,8 +56,11 @@ loginServer <- function(id) {
       data = cfg_credentials_df,
       user_col = user,
       pwd_col = password,
-      sodium_hashed = FALSE
-      # log_out = reactive(FALSE) for what is this?
+      sodium_hashed = FALSE,
+      cookie_logins = TRUE,
+      sessionid_col = sessionid,
+      cookie_getter = get_sessionids_from_db,
+      cookie_setter = add_sessionid_to_db,
     )
 
     login_data <- reactive({
@@ -52,7 +71,11 @@ loginServer <- function(id) {
       )
     })
 
-    return(login_data)
+    # return(login_data)
+    return(list(
+      login_data = login_data,
+      credentials = credentials
+    ))
   })
 }
 

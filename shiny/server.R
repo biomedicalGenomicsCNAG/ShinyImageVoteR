@@ -60,21 +60,20 @@ server <- function(input, output, session) {
   total_images <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
-  logged_in <- reactiveVal(FALSE)
-
+  # Initialize the login module
+  login_return <- loginServer("login", db_conn = con)
+  
   output$logged_in <- reactive({
-    logged_in()
+    login_return$credentials()$user_auth
   })
   outputOptions(output, "logged_in", suspendWhenHidden = FALSE)
 
-  login_data <- loginServer("login")
+  login_data <- login_return$login_data
 
   observeEvent(login_data(), {
     req(login_data())
     user_id <- login_data()$user_id
     voting_institute <- login_data()$voting_institute
-
-    logged_in(TRUE)
 
     session$userData$userId <- user_id
     session$userData$votingInstitute <- voting_institute
