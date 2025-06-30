@@ -254,9 +254,9 @@ votingServer <- function(id, login_trigger) {
 
         if (coords == "done") {
           print("All variants have been voted on.")
-          res <- tibble(
+          res <- tibble( # duplicated code
             rowid = NA,
-            coordinates = "You have already voted on all variants in this category!",
+            coordinates = "done",
             REF = "-",
             ALT = "-",
             variant = NA,
@@ -337,19 +337,25 @@ votingServer <- function(id, login_trigger) {
       }
 
       if (all(!is.na(annotations_df$agreement))) {
-        res <- tibble(
+        res <- tibble( #duplicated code
           rowid = NA,
-          coordinates = "You have already voted on all variants in this category!",
+          coordinates = "done",
           REF = "-",
           ALT = "-",
           variant = NA,
-          path = "https://imgpile.com/images/Ud9lAi.jpg"
+          path = "images/done.png"
         )
         updateQueryString(
           "?coords=done",
           mode = "push",
           session = session
         )
+
+        session$onFlushed(function() {
+          hideElement(session$ns("voting_questions_div"))
+          hideElement(session$ns("nextBtn"))
+          disable(session$ns("nextBtn"))
+        })
         current_mutation(res)
         vote_start_time(Sys.time())
         return(res)
