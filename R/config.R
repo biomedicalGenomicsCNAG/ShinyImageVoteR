@@ -7,7 +7,7 @@ cfg_shutdown_file <- "./server_data/STOP"
 
 ### file paths
 cfg_to_be_voted_images_file <- "./screenshots/uro003_paths_mock.txt"
-cfg_sqlite_file <- "./screenshots/annotations.sqlite"
+cfg_sqlite_file <- "./db.sqlite"
 
 ### database columns
 cfg_db_general_cols <- c("coordinates", "REF", "ALT", "variant", "path")
@@ -67,7 +67,7 @@ cfg_credentials_df <- data.frame(
   stringsAsFactors = FALSE
 )
 
-cfg_cookie_expiry <- 7 # Days until session expires
+cfg_cookie_expiry <- 1 # Days until session expires
 
 cfg_selected_user_id <- "Test"
 

@@ -1,3 +1,5 @@
 # quarto preview files
 AGENTS.html
 AGENTS_files/
+
+db.sqlite
