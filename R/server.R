@@ -98,17 +98,6 @@ server <- function(input, output, session) {
     }
 
     if (file.exists(session$userData$userInfoFile)) {
-      # Load existing user info
-      user_info_file <- session$userData$userInfoFile
-      user_info <- read_json(user_info_file)
-
-      session$userData$sessionInfo <- list(
-        start_time = Sys.time(),
-        end_time = NA  # to be updated when the session ends
-      )
-
-      user_info$sessions[[session$token]] <- session$userData$sessionInfo
-      write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
       get_mutation_trigger_source("login")
       return()
     }
@@ -135,7 +124,6 @@ server <- function(input, output, session) {
       start_time = Sys.time(),
       end_time = NA # to be updated when the session ends
     )
-    user_info$sessions[[session$token]] <- session$userData$sessionInfo
 
     print("User info:")
     print(user_info)
@@ -184,18 +172,18 @@ server <- function(input, output, session) {
   })
 
   # Update end_time on session end
-  session$onSessionEnded(function() {
-    cat(sprintf("Session ended"))
-    user_info_file <- session$userData$userInfoFile
-    print(paste("User info file:", user_info_file))
-    if (is.null(user_info_file)) {
-      print("No user info file found.")
-      return()
-    }
-    user_info <- read_json(user_info_file)
-    user_info$sessions[[session$token]]$end_time <- Sys.time()
-    write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
-  })
+  # session$onSessionEnded(function() {
+  #   cat(sprintf("Session ended"))
+  #   user_info_file <- session$userData$userInfoFile
+  #   print(paste("User info file:", user_info_file))
+  #   if (is.null(user_info_file)) {
+  #     print("No user info file found.")
+  #     return()
+  #   }
+  #   user_info <- read_json(user_info_file)
+  #   user_info$sessions[[session$token]]$end_time <- Sys.time()
+  #   write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
+  # })
 
 
   votingServer("voting", login_data)
