@@ -34,11 +34,20 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
 
     add_sessionid_to_db <- function(user, sessionid, conn = db_conn) {
       tibble(
-        user = user, 
-        sessionid = sessionid, 
-        login_time = as.character(lubridate::now())
+        user = user,
+        sessionid = sessionid,
+        login_time = as.character(lubridate::now()),
+        logout_time = NA_character_
       ) %>%
       dbWriteTable(conn, "sessionids", ., append = TRUE)
+    }
+
+    update_logout_time_in_db <- function(sessionid, conn = db_conn) {
+      dbExecute(
+        conn,
+        "UPDATE sessionids SET logout_time = ? WHERE sessionid = ? AND logout_time IS NULL",
+        params = list(as.character(lubridate::now()), sessionid)
+      )
     }
 
     get_sessionids_from_db <- function(conn = db_conn, expiry = cfg_cookie_expiry) {
@@ -76,7 +85,8 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
     # return(login_data)
     return(list(
       login_data = login_data,
-      credentials = credentials
+      credentials = credentials,
+      update_logout_time = update_logout_time_in_db
     ))
   })
 }

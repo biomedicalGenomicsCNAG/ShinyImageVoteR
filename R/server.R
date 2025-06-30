@@ -57,6 +57,7 @@ server <- function(input, output, session) {
   onStop(function() {
     dbDisconnect(con)
   })
+
   total_images <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
@@ -172,20 +173,19 @@ server <- function(input, output, session) {
     get_mutation_trigger_source("login")
   })
 
-  # Update end_time on session end
-  # session$onSessionEnded(function() {
-  #   cat(sprintf("Session ended"))
-  #   user_info_file <- session$userData$userInfoFile
-  #   print(paste("User info file:", user_info_file))
-  #   if (is.null(user_info_file)) {
-  #     print("No user info file found.")
-  #     return()
-  #   }
-  #   user_info <- read_json(user_info_file)
-  #   user_info$sessions[[session$token]]$end_time <- Sys.time()
-  #   write_json(user_info, user_info_file, auto_unbox = TRUE, pretty = TRUE)
-  # })
+  observeEvent(logout_init(), {
+    if (!is.null(session$userData$shinyauthr_session_id)) {
+      login_return$update_logout_time(session$userData$shinyauthr_session_id)
+    }
+  })
 
+  session$onSessionEnded(function() {
+    # gets triggrered when the tab is closed but runs into:
+    # Error in : Invalid or closed connection
+    if (!is.null(session$userData$shinyauthr_session_id)) {
+      login_return$update_logout_time(session$userData$shinyauthr_session_id)
+    }
+  })
 
   votingServer("voting", login_data)
   leaderboardServer("leaderboard", login_data)

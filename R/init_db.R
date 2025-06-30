@@ -45,9 +45,10 @@ if (!"sessionids" %in% dbListTables(con)) {
   dbCreateTable(con,
     "sessionids",
     c(
-      user       = "TEXT",
-      sessionid  = "TEXT",
-      login_time = "TEXT"
+      user        = "TEXT",
+      sessionid   = "TEXT",
+      login_time  = "TEXT",
+      logout_time = "TEXT"
     )
   )
 }

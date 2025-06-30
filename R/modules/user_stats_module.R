@@ -10,10 +10,9 @@ userStatsServer <- function(id, login_trigger) {
   moduleServer(id, function(input, output, session) {
     stats <- eventReactive(c(login_trigger(), input$refresh_user_stats), {
       req(login_trigger())
-      user_info_file <- session$userData$userInfoFile
       user_annotations_file <- session$userData$userAnnotationsFile
 
-      if (!file.exists(user_info_file)) {
+      if (!file.exists(user_annotations_file)) {
         return(data.frame())
       }
 
@@ -29,16 +28,20 @@ userStatsServer <- function(id, login_trigger) {
         group_by(shinyauthr_session_id) %>%
         summarise(images_voted = n(), .groups = 'drop')
 
-      user_info <- read_json(user_info_file)
-      sessions <- user_info$sessions
-      session_times <- sapply(sessions, function(s) {
-        if (!is.null(s$start_time) && !is.null(s$end_time)) {
-          as.numeric(difftime(s$end_time, s$start_time, units = "mins"))
-        } else {
-          NA
-        }
-      })
-      session_times <- session_times[!is.na(session_times)]
+      con <- dbConnect(RSQLite::SQLite(), cfg_sqlite_file)
+      on.exit(dbDisconnect(con), add = TRUE)
+
+      session_df <- dbReadTable(con, "sessionids") %>%
+        filter(user == session$userData$userId) %>%
+        mutate(
+          login_time = lubridate::ymd_hms(login_time),
+          logout_time = lubridate::ymd_hms(logout_time)
+        ) %>%
+        filter(!is.na(logout_time)) %>%
+        mutate(
+          session_length = as.numeric(difftime(logout_time, login_time, units = "mins"))
+        )
+      session_times <- session_df$session_length
 
       average_session_length <- NA
       max_session_length <- NA
