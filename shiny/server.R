@@ -61,7 +61,17 @@ server <- function(input, output, session) {
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
   # Initialize the login module
-  login_return <- loginServer("login", db_conn = con)
+  login_return <- loginServer(
+    "login",
+    db_conn = con,
+    log_out = reactive(logout_init())
+  )
+
+  # Initialize the logout module
+  logout_init <- shinyauthr::logoutServer(
+    id = "logout",
+    active = reactive(login_return$credentials()$user_auth)
+  )
   
   output$logged_in <- reactive({
     login_return$credentials()$user_auth

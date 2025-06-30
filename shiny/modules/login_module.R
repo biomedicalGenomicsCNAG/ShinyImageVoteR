@@ -29,7 +29,7 @@ loginUI <- function(id) {
   )
 }
 
-loginServer <- function(id, db_conn = NULL) {
+loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
 
     add_sessionid_to_db <- function(user, sessionid, conn = db_conn) {
@@ -61,6 +61,7 @@ loginServer <- function(id, db_conn = NULL) {
       sessionid_col = sessionid,
       cookie_getter = get_sessionids_from_db,
       cookie_setter = add_sessionid_to_db,
+      log_out = log_out,
     )
 
     login_data <- reactive({

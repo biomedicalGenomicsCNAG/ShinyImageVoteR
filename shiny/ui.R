@@ -20,6 +20,8 @@ ui <- fluidPage(
         tabPanel("Leaderboard",leaderboardUI("leaderboard")),
         tabPanel("User stats", userStatsUI("userstats")),
         tabPanel("About",aboutUI("about")),
+        tabPanel("FAQ",includeMarkdown("docs/faq.md")),
+        tabPanel("Logout", shinyauthr::logoutUI("logout"))
       )
     )
   )
