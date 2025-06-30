@@ -68,7 +68,8 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
       req(credentials()$user_auth)
       list(
         user_id = credentials()$info$user,
-        voting_institute = input$institutes_id
+        voting_institute = input$institutes_id,
+        session_id = credentials()$info$sessionid
       )
     })
 

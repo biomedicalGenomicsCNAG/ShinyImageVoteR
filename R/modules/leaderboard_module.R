@@ -29,7 +29,7 @@ leaderboardServer <- function(id, login_trigger) {
             sep = "\t",
             stringsAsFactors = FALSE
           )
-          user_voted_images <- sum(!is.na(user_annotations_df$shiny_session_id))
+          user_voted_images <- sum(!is.na(user_annotations_df$shinyauthr_session_id))
           total_images <- total_images + user_voted_images
         }
         data.frame(institute = institute, users = total_users, total_images_voted = total_images)

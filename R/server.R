@@ -84,6 +84,7 @@ server <- function(input, output, session) {
     req(login_data())
     user_id <- login_data()$user_id
     voting_institute <- login_data()$voting_institute
+    session$userData$shinyauthr_session_id <- login_data()$session_id
 
     session$userData$userId <- user_id
     session$userData$votingInstitute <- voting_institute

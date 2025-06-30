@@ -107,9 +107,9 @@ votingServer <- function(id, login_trigger) {
       already_voted <- !is.na(previous_agreement) && previous_agreement != ""
       new_agreement <- input$agreement
 
-      # always update the agreement and the shiny_session_id
-      annotations_df[rowIdx, "agreement"] <- input$agreement 
-      annotations_df[rowIdx, "shinyauthr_session_id"] <- session$token
+      # always update the agreement and the shinyauthr_session_id
+      annotations_df[rowIdx, "agreement"] <- input$agreement
+      annotations_df[rowIdx, "shinyauthr_session_id"] <- session$userData$shinyauthr_session_id
 
       # only update if provided
       if (!is.null(input$alternative_vartype)) {
@@ -303,7 +303,7 @@ votingServer <- function(id, login_trigger) {
 
           # filter the annotations_df to only show the rows with the same session ID
           session_annotations_df <- annotations_df %>%
-            filter(shinyauthr_session_id == session$token)
+            filter(shinyauthr_session_id == session$userData$shinyauthr_session_id)
 
           print("Filtered Annotations DataFrame for the current session:")
           print(session_annotations_df)
