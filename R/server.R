@@ -57,6 +57,7 @@ server <- function(input, output, session) {
   onStop(function() {
     dbDisconnect(con)
   })
+
   total_images <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
@@ -170,6 +171,18 @@ server <- function(input, output, session) {
       quote = FALSE
     )
     get_mutation_trigger_source("login")
+  })
+
+  observeEvent(logout_init(), {
+    if (!is.null(session$userData$shinyauthr_session_id)) {
+      login_return$update_logout_time(session$userData$shinyauthr_session_id)
+    }
+  })
+
+  session$onSessionEnded(function() {
+    if (!is.null(session$userData$shinyauthr_session_id)) {
+      login_return$update_logout_time(session$userData$shinyauthr_session_id)
+    }
   })
 
   # Update end_time on session end
