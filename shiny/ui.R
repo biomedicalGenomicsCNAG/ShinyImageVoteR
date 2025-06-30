@@ -14,13 +14,14 @@ ui <- fluidPage(
   conditionalPanel(
     condition = "output.logged_in",
     tagList(
-      div(class = "pull-right", shinyauthr::logoutUI("logout")),
       navbarPage(
         cfg_application_title,
         tabPanel("Vote",votingUI("voting")),
         tabPanel("Leaderboard",leaderboardUI("leaderboard")),
         tabPanel("User stats", userStatsUI("userstats")),
         tabPanel("About",aboutUI("about")),
+        tabPanel("FAQ",includeMarkdown("docs/faq.md")),
+        tabPanel("Logout", shinyauthr::logoutUI("logout"))
       )
     )
   )
