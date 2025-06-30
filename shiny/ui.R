@@ -13,12 +13,14 @@ ui <- fluidPage(
 
   conditionalPanel(
     condition = "output.logged_in",
-    navbarPage(
-      cfg_application_title,
-      tabPanel("Vote",          votingUI("voting")),
-      tabPanel("Leaderboard",   leaderboardUI("leaderboard")),
-      tabPanel("User stats",    userStatsUI("userstats")),
-      tabPanel("About",         aboutUI("about"))
+    tagList(
+      navbarPage(
+        cfg_application_title,
+        tabPanel("Vote",votingUI("voting")),
+        tabPanel("Leaderboard",leaderboardUI("leaderboard")),
+        tabPanel("User stats", userStatsUI("userstats")),
+        tabPanel("About",aboutUI("about")),
+      )
     )
   )
 )
