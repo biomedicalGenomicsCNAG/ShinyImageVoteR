@@ -14,6 +14,7 @@ ui <- fluidPage(
   conditionalPanel(
     condition = "output.logged_in",
     tagList(
+      div(class = "pull-right", shinyauthr::logoutUI("logout")),
       navbarPage(
         cfg_application_title,
         tabPanel("Vote",votingUI("voting")),
