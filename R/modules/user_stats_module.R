@@ -23,10 +23,10 @@ userStatsServer <- function(id, login_trigger) {
         sep = "\t",
         stringsAsFactors = FALSE
       )
-      annotations_df <- annotations_df[!is.na(annotations_df$shiny_session_id), ]
+      annotations_df <- annotations_df[!is.na(annotations_df$shinyauthr_session_id), ]
 
       session_counts_df <- annotations_df %>%
-        group_by(shiny_session_id) %>%
+        group_by(shinyauthr_session_id) %>%
         summarise(images_voted = n(), .groups = 'drop')
 
       user_info <- read_json(user_info_file)

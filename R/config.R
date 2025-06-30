@@ -125,6 +125,6 @@ cfg_user_annotations_colnames <- c(
    "alternative_vartype",
    "observation",
    "comment",
-   "shiny_session_id",
+   "shinyauthr_session_id",
    "time_till_vote_casted_in_seconds"
 )
