@@ -4,6 +4,7 @@ library(data.table)
 library(digest)
 library(dplyr)
 library(jsonlite)
+library(pool)
 library(RSQLite)
 library(shiny)
 library(shinyjs)
@@ -52,10 +53,12 @@ server <- function(input, output, session) {
   # access reactive values defined above
   source("modules/voting_module.R", local = TRUE)
 
-  # Connect to the annotations database
-  con <- dbConnect(SQLite(), cfg_sqlite_file)
+  con <- dbPool(
+    RSQLite::SQLite(),
+    dbname = cfg_sqlite_file
+  )
   onStop(function() {
-    dbDisconnect(con)
+    poolClose(con)
   })
 
   total_images <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
@@ -175,6 +178,13 @@ server <- function(input, output, session) {
 
   observeEvent(logout_init(), {
     if (!is.null(session$userData$shinyauthr_session_id)) {
+      print("Logging out user:")
+      print("Updating logout time in database")
+      print(paste("Session ID:", session$userData$shinyauthr_session_id))
+      print("login_return:")
+      print(login_return)
+      print("login_return$update_logout_time:")
+      print(login_return$update_logout_time)
       login_return$update_logout_time(session$userData$shinyauthr_session_id)
     }
   })
