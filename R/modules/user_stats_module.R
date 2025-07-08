@@ -61,7 +61,7 @@ userStatsServer <- function(id, login_trigger, db_pool) {
         user_id = session$userData$userId,
         voting_institute = session$userData$votingInstitute,
         total_votes = sum(session_counts_df$images_voted),
-        total_sessions = nrow(session_counts_df),
+        total_sessions_with_at_least_1_vote = nrow(session_counts_df),
         average_votes_per_session = mean(session_counts_df$images_voted),
         max_votes_per_session = max(session_counts_df$images_voted),
         average_session_length_in_minutes = average_session_length,

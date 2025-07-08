@@ -54,7 +54,10 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
       dbReadTable(conn, "sessionids") %>%
         mutate(login_time = lubridate::ymd_hms(login_time)) %>%
         as_tibble() %>%
-        filter(login_time > lubridate::now() - lubridate::days(expiry))
+        filter(
+          is.na(logout_time),
+          login_time > lubridate::now() - lubridate::days(expiry)
+        )
     }
 
     print("cfg_credentials_df:")
