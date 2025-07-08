@@ -117,7 +117,7 @@ votingServer <- function(id, login_trigger) {
       }
 
       if (!is.null(input$observation)) {
-        annotations_df[rowIdx, "observation"] <- input$observation
+        annotations_df[rowIdx, "observation"] <- paste(input$observation, collapse = ";")
       }
 
       # handle comment (default NA)
