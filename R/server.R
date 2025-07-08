@@ -17,11 +17,6 @@ source("modules/leaderboard_module.R")
 source("modules/user_stats_module.R")
 source("modules/about_module.R")
 
-# Initialize the SQLite database
-if (!file.exists(cfg_sqlite_file)) {
-  source("init_db.R")
-}
-
 # create folders for all institutes
 lapply(cfg_institute_ids, function(institute) {
   # replace spaces with underscores in institute names
@@ -53,13 +48,13 @@ server <- function(input, output, session) {
   # access reactive values defined above
   source("modules/voting_module.R", local = TRUE)
 
-  db_pool <- dbPool(
-    RSQLite::SQLite(),
-    dbname = cfg_sqlite_file
-  )
-  onStop(function() {
-    poolClose(db_pool)
-  })
+  # db_pool <- dbPool(
+  #   RSQLite::SQLite(),
+  #   dbname = cfg_sqlite_file
+  # )
+  # onStop(function() {
+  #   poolClose(db_pool)
+  # })
 
   total_images <- dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_images))
@@ -190,19 +185,24 @@ server <- function(input, output, session) {
   })
 
   session$onSessionEnded(function() {
-    # gets triggrered when the tab is closed but runs into:
-    # Error in : Invalid or closed connection
+    print("Session ended")
+    print("Updating logout time in database")
+    print(paste("Session ID:", session$userData$shinyauthr_session_id))
+
     if (!is.null(session$userData$shinyauthr_session_id)) {
       conn <- poolCheckout(db_pool)
       on.exit(poolReturn(conn))
+      print("login_return$update_logout_time:")
+      print(login_return$update_logout_time)
+      print("conn:")
+      print(conn)
       login_return$update_logout_time(
         session$userData$shinyauthr_session_id,
         conn = conn
       )
-      # login_return$update_logout_time(session$userData$shinyauthr_session_id)
     }
   })
-
+  
   votingServer("voting", login_data)
   leaderboardServer("leaderboard", login_data)
   userStatsServer("userstats", login_data, db_pool)
