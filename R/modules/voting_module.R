@@ -142,7 +142,7 @@ votingServer <- function(id, login_trigger) {
         vote_col <- cfg_vote2dbcolumn_map[[input$agreement]]
 
         dbExecute(
-          con,
+          db_pool,
           paste0(
             "UPDATE annotations SET ", 
             vote_col, 
@@ -207,7 +207,7 @@ votingServer <- function(id, login_trigger) {
           vote_col <- vote2dbcolumn_map[[agreement]]
           if (!is.null(vote_col)) {
             dbExecute(
-              con,
+              db_pool,
               paste0(
                 "UPDATE annotations SET ", 
                 vote_col, 
@@ -289,7 +289,7 @@ votingServer <- function(id, login_trigger) {
 
         # Query the database for the variant with these coordinates
         query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coords, "'")
-        df <- dbGetQuery(con, query)
+        df <- dbGetQuery(db_pool, query)
         # assert that the query returns only one row
         if (nrow(df) > 1) {
           stop("Query returned more than one row. Check the DB.")
@@ -374,7 +374,7 @@ votingServer <- function(id, login_trigger) {
             " FROM annotations WHERE coordinates = '", coordinates, "'"
           )
           # Execute the query to get the variant that has not been voted on
-          df <- dbGetQuery(con, query)
+          df <- dbGetQuery(db_pool, query)
           print("Query result:")
           print(df)
 

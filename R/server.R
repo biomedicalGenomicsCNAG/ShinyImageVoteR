@@ -53,21 +53,21 @@ server <- function(input, output, session) {
   # access reactive values defined above
   source("modules/voting_module.R", local = TRUE)
 
-  con <- dbPool(
+  db_pool <- dbPool(
     RSQLite::SQLite(),
     dbname = cfg_sqlite_file
   )
   onStop(function() {
-    poolClose(con)
+    poolClose(db_pool)
   })
 
-  total_images <- dbGetQuery(con, "SELECT COUNT(*) as n FROM annotations")$n
+  total_images <- dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
   # Initialize the login module
   login_return <- loginServer(
     "login",
-    db_conn = con,
+    db_conn = db_pool,
     log_out = reactive(logout_init())
   )
 
@@ -144,7 +144,7 @@ server <- function(input, output, session) {
     # create user annotations file
     # query the database for all coordinates
     query <- "SELECT coordinates FROM annotations"
-    coords <- dbGetQuery(con, query)
+    coords <- dbGetQuery(db_pool, query)
 
     coords_vec <- as.character(coords[[1]])
     randomised_coords <- sample(coords_vec, length(coords_vec), replace = FALSE)
@@ -193,13 +193,19 @@ server <- function(input, output, session) {
     # gets triggrered when the tab is closed but runs into:
     # Error in : Invalid or closed connection
     if (!is.null(session$userData$shinyauthr_session_id)) {
-      login_return$update_logout_time(session$userData$shinyauthr_session_id)
+      conn <- poolCheckout(db_pool)
+      on.exit(poolReturn(conn))
+      login_return$update_logout_time(
+        session$userData$shinyauthr_session_id,
+        conn = conn
+      )
+      # login_return$update_logout_time(session$userData$shinyauthr_session_id)
     }
   })
 
   votingServer("voting", login_data)
   leaderboardServer("leaderboard", login_data)
-  userStatsServer("userstats", login_data)
+  userStatsServer("userstats", login_data, db_pool)
   aboutServer("about")
 
   # every 2 seconds, check for external shutdown file

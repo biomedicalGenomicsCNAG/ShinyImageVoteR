@@ -6,7 +6,7 @@ userStatsUI <- function(id) {
   )
 }
 
-userStatsServer <- function(id, login_trigger) {
+userStatsServer <- function(id, login_trigger, db_pool) {
   moduleServer(id, function(input, output, session) {
     stats <- eventReactive(c(login_trigger(), input$refresh_user_stats), {
       req(login_trigger())
@@ -28,10 +28,7 @@ userStatsServer <- function(id, login_trigger) {
         group_by(shinyauthr_session_id) %>%
         summarise(images_voted = n(), .groups = 'drop')
 
-      con <- dbConnect(RSQLite::SQLite(), cfg_sqlite_file)
-      on.exit(dbDisconnect(con), add = TRUE)
-
-      session_df <- dbReadTable(con, "sessionids") %>%
+      session_df <- dbReadTable(db_pool, "sessionids") %>%
         filter(user == session$userData$userId) %>%
         mutate(
           login_time = lubridate::ymd_hms(login_time),
