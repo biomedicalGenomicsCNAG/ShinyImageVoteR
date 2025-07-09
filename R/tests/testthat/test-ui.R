@@ -7,6 +7,7 @@ source("../../config.R")
 
 # Create temporary www directory and hotkeys.js file for testing
 temp_www_dir <- file.path(getwd(), "www")
+# write www_dir to file for debugging
 dir.create(temp_www_dir, showWarnings = FALSE)
 
 # Create temporary docs directory and faq.md file for testing
@@ -29,24 +30,6 @@ source("../../modules/about_module.R")
 
 source("../../ui.R")
 
-# Clean up function to remove temporary files
-cleanup_test_files <- function() {
-  if (dir.exists(temp_www_dir)) {
-    unlink(temp_www_dir, recursive = TRUE)
-  }
-  if (dir.exists(temp_docs_dir)) {
-    unlink(temp_docs_dir, recursive = TRUE)
-  }
-}
-
-# Register cleanup to run after tests
-if (requireNamespace("withr", quietly = TRUE)) {
-  withr::defer(cleanup_test_files(), testthat::teardown_env())
-} else {
-  # Fallback cleanup - will run at end of file
-  on.exit(cleanup_test_files(), add = TRUE)
-}
-
 test_that("Main UI structure is correct", {
   # Test that UI function exists and returns a valid UI
   ui_result <- ui
@@ -57,7 +40,7 @@ test_that("Main UI structure is correct", {
   
   # Check for essential UI components
   expect_true(grepl("fluidPage", ui_html))
-  expect_true(grepl("conditionalPanel", ui_html))
+  expect_true(grepl("shiny-panel-conditional", ui_html))
   
   # Check for module UIs
   expect_true(grepl("login", ui_html))
@@ -96,8 +79,8 @@ test_that("Navigation structure is present", {
   # You might look for specific classes or IDs that indicate navigation
   
   # Example checks (adjust based on your actual UI structure):
-  expect_true(grepl("tabPanel", ui_html) || grepl("navbarPage", ui_html) || 
-              grepl("sidebarMenu", ui_html))
+  expect_true(grepl("bslib-page-navbar", ui_html))
+  expect_true(grepl("shiny-tab-input", ui_html)) 
 })
 
 test_that("Required CSS and JavaScript dependencies are included", {
@@ -150,6 +133,3 @@ test_that("Full app integration test", {
   # Clean up
   app$stop()
 })
-
-# Final cleanup of temporary files
-cleanup_test_files()

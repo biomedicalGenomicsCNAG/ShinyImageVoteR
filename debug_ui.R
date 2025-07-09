@@ -32,9 +32,9 @@ cat("\n\n=== ANALYSIS ===\n")
 # Check specific patterns
 patterns <- c(
   "fluidPage",
-  "conditionalPanel", 
+  "shiny-panel-conditional", 
   "navbarPage",
-  "tabPanel",
+  "tab-pane",
   "about",
   "login",
   "voting",
