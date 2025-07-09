@@ -2,16 +2,39 @@ library(testthat)
 library(shiny)
 library(shinytest2)
 
+# Source the necessary files
+source("../../config.R")
+
+# Create temporary www directory and hotkeys.js file for testing
+temp_www_dir <- file.path(getwd(), "www")
+dir.create(temp_www_dir, showWarnings = FALSE)
+
+# Create a minimal hotkeys.js file for testing
+hotkeys_content <- "// Mock hotkeys.js for testing\nconsole.log('Hotkeys loaded');"
+writeLines(hotkeys_content, file.path(temp_www_dir, "hotkeys.js"))
+
 source("../../modules/login_module.R")
 source("../../modules/voting_module.R")
 source("../../modules/leaderboard_module.R")
 source("../../modules/user_stats_module.R")
 source("../../modules/about_module.R")
 
-
-# Source the necessary files
-source("../../config.R")
 source("../../ui.R")
+
+# Clean up function to remove temporary files
+cleanup_test_files <- function() {
+  if (dir.exists(temp_www_dir)) {
+    unlink(temp_www_dir, recursive = TRUE)
+  }
+}
+
+# Register cleanup to run after tests
+if (requireNamespace("withr", quietly = TRUE)) {
+  withr::defer(cleanup_test_files(), testthat::teardown_env())
+} else {
+  # Fallback cleanup - will run at end of file
+  on.exit(cleanup_test_files(), add = TRUE)
+}
 
 test_that("Main UI structure is correct", {
   # Test that UI function exists and returns a valid UI
@@ -74,8 +97,8 @@ test_that("Required CSS and JavaScript dependencies are included", {
   expect_true(grepl("shinyjs", ui_html))
   
   # Check for any custom CSS/JS files
-  # This depends on what you've included in your UI
-  # Example: expect_true(grepl("hotkeys.js", ui_html))
+  # Since we created the hotkeys.js file, it should be included
+  expect_true(grepl("hotkeys.js", ui_html))
 })
 
 test_that("Module UIs are properly namespaced", {
@@ -116,3 +139,6 @@ test_that("Full app integration test", {
   # Clean up
   app$stop()
 })
+
+# Final cleanup of temporary files
+cleanup_test_files()
