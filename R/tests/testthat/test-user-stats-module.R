@@ -82,11 +82,9 @@ test_that("User stats reactive triggers correctly", {
     tab_trigger = tab_trigger
   ), {
     # Set up session userData
-    session$userData <- list(
-      userId = "test_user",
-      votingInstitute = "CNAG",
-      userAnnotationsFile = tempfile(fileext = ".tsv")
-    )
+    session$userData$userId <- "test_user"
+    session$userData$votingInstitute <- "CNAG"
+session$userData$userAnnotationsFile <- tempfile(fileext = ".tsv")
     
     # Create annotations file with some data
     write.table(
@@ -150,11 +148,9 @@ test_that("User stats server works without tab trigger (backward compatibility)"
     # Note: no tab_trigger parameter - testing backward compatibility
   ), {
     # Set up session userData
-    session$userData <- list(
-      userId = "test_user",
-      votingInstitute = "CNAG",
-      userAnnotationsFile = tempfile(fileext = ".tsv")
-    )
+    session$userData$userId <- "test_user"
+    session$userData$votingInstitute <- "CNAG"
+    session$userData$userAnnotationsFile <- tempfile(fileext = ".tsv")
     
     # Create minimal annotations file
     write.table(
