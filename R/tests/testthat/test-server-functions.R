@@ -5,6 +5,7 @@ library(digest)
 library(DBI)
 library(RSQLite)
 library(pool)
+library(later)
 
 # Source the necessary files
 source("../../config.R")
@@ -56,18 +57,38 @@ test_that("Logout scheduling functions work correctly", {
   # Test cancel_pending_logout with non-existent session
   expect_silent(cancel_pending_logout("non_existent_session"))
   
+  # Debug: Check if functions exist
+  expect_true(exists("schedule_logout_update"))
+  expect_true(exists("cancel_pending_logout"))
+  expect_true(exists("pending_logout_tasks"))
+  
   # Test schedule_logout_update
   callback_executed <- FALSE
-  callback <- function() { callback_executed <<- TRUE }
+  callback <- function() { 
+    cat("Callback executed!\n")
+    callback_executed <<- TRUE 
+  }
+  
+  # Debug: Print environment before scheduling
+  cat("Environment before scheduling:", ls(envir = pending_logout_tasks), "\n")
   
   # Schedule with very short delay for testing
   schedule_logout_update("test_session", callback, delay = 0.1)
   
+  # Debug: Print environment after scheduling
+  cat("Environment after scheduling:", ls(envir = pending_logout_tasks), "\n")
+  
   # Check that task was scheduled
+  if (!exists("test_session", envir = pending_logout_tasks)) {
+    cat("ERROR: test_session not found in pending_logout_tasks\n")
+    cat("Available sessions:", ls(envir = pending_logout_tasks), "\n")
+  }
   expect_true(exists("test_session", envir = pending_logout_tasks))
   
   # Wait for callback execution
+  cat("Waiting for callback...\n")
   Sys.sleep(0.2)
+  cat("Callback executed status:", callback_executed, "\n")
   expect_true(callback_executed)
   
   # Check that task was cleaned up
