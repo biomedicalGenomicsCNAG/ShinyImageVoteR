@@ -2,6 +2,13 @@ library(testthat)
 library(shiny)
 library(shinytest2)
 
+source("../../modules/login_module.R")
+source("../../modules/voting_module.R")
+source("../../modules/leaderboard_module.R")
+source("../../modules/user_stats_module.R")
+source("../../modules/about_module.R")
+
+
 # Source the necessary files
 source("../../config.R")
 source("../../ui.R")
