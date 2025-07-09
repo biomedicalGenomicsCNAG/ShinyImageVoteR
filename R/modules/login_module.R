@@ -1,4 +1,3 @@
-source("config.R")
 library(shinyauthr)
 
 loginUI <- function(id) {

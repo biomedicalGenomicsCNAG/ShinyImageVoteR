@@ -42,5 +42,9 @@ dev:
 	# R -e "renv::restore()" && \
 	Rscript run.R
 
+test:
+	make -f Makefile.test test
+
 stop:
 	fuser -k 8000/tcp
+

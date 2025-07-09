@@ -1,4 +1,5 @@
 
+
 library(DBI)
 library(data.table)
 library(digest)
@@ -10,12 +11,6 @@ library(shiny)
 library(shinyjs)
 library(tibble)
 library(later)
-
-# TODO
-# add library later
-# to delay logout update to ignore page refresh 
-# see PR
-# https://github.com/biomedicalGenomicsCNAG/B1MG-variant-voting/pull/15/commits/65f371a3463735deef3e4ca07b761eedf3a9245a
 
 source("config.R")
 source("ui.R")
@@ -51,6 +46,7 @@ lapply(cfg_institute_ids, function(institute) {
 })
 
 server <- function(input, output, session) {
+
   # Tracks the url parameters be they manually set in the URL or
   # set by the app when the user clicks on the "Back" button
   # or presses "Go back one page" in the browser
