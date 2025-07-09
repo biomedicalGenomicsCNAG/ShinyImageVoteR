@@ -12,7 +12,7 @@ source("../../modules/user_stats_module.R")
 
 test_that("User stats module UI renders correctly", {
   ui_result <- userStatsUI("test")
-  expect_s3_class(ui_result, "shiny.tag")
+  expect_s3_class(ui_result, "shiny.tag.list")
   
   ui_html <- as.character(ui_result)
   expect_true(grepl("user_stats_table", ui_html))
