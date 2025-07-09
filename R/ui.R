@@ -10,6 +10,7 @@ ui <- fluidPage(
     tagList(
       navbarPage(
         cfg_application_title,
+        id = "main_navbar",
         tabPanel("Vote", votingUI("voting")),
         tabPanel("Leaderboard", leaderboardUI("leaderboard")),
         tabPanel("User stats", userStatsUI("userstats")),

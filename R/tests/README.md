@@ -88,6 +88,7 @@ make -f Makefile.test test
 # Run specific test suites
 make -f Makefile.test test-config
 make -f Makefile.test test-login
+make -f Makefile.test test-user-stats
 make -f Makefile.test test-database
 # etc.
 ```
@@ -100,6 +101,9 @@ test_file("tests/testthat/test-config.R")
 
 # Test login module
 test_file("tests/testthat/test-login-module.R")
+
+# Test user stats module  
+test_file("tests/testthat/test-user-stats-module.R")
 
 # Test database functionality
 test_file("tests/testthat/test-database.R")
@@ -120,6 +124,18 @@ The test suite covers:
 - Session ID generation and tracking
 - Database session storage and cleanup
 - Session expiry handling
+
+✅ **User Interface & Navigation**
+- Tab-based navigation system
+- Automatic refresh on tab selection
+- Conditional panel display
+- Module UI integration and namespacing
+
+✅ **User Statistics**
+- Statistics calculation and aggregation
+- Automatic refresh when navigating to stats page
+- Session-based data tracking
+- Vote timing and frequency analysis
 
 ✅ **Database Operations**
 - Connection management and pooling

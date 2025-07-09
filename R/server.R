@@ -226,9 +226,20 @@ server <- function(input, output, session) {
     }
   })
   
+  # Track when the User stats tab is selected to trigger automatic refresh
+  user_stats_tab_trigger <- reactive({
+    req(input$main_navbar)
+    if (input$main_navbar == "User stats") {
+      # Return a timestamp to ensure the reactive fires each time the tab is selected
+      Sys.time()
+    } else {
+      NULL
+    }
+  })
+  
   votingServer("voting", login_data)
   leaderboardServer("leaderboard", login_data)
-  userStatsServer("userstats", login_data, db_pool)
+  userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
   aboutServer("about")
 
   # every 2 seconds, check for external shutdown file

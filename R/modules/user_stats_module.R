@@ -6,9 +6,30 @@ userStatsUI <- function(id) {
   )
 }
 
-userStatsServer <- function(id, login_trigger, db_pool) {
+#' User Stats Server Module
+#' 
+#' This module provides user statistics functionality with automatic refresh
+#' when navigating to the user stats tab.
+#' 
+#' @param id Module namespace ID
+#' @param login_trigger Reactive that triggers when user logs in
+#' @param db_pool Database connection pool
+#' @param tab_trigger Optional reactive that triggers when the user stats tab is selected
+#'                   This enables automatic refresh of stats when navigating to the page
+#' @return Reactive containing user statistics data frame
+userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
-    stats <- eventReactive(c(login_trigger(), input$refresh_user_stats), {
+    # Create a reactive that triggers when the user stats tab is selected
+    # This allows automatic refresh when navigating to the stats page
+    tab_change_trigger <- reactive({
+      if (!is.null(tab_trigger)) {
+        tab_trigger()
+      } else {
+        NULL
+      }
+    })
+    
+    stats <- eventReactive(c(login_trigger(), input$refresh_user_stats, tab_change_trigger()), {
       req(login_trigger())
       user_annotations_file <- session$userData$userAnnotationsFile
 

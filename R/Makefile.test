@@ -19,6 +19,10 @@ test-login:
 	@echo "Running login module tests..."
 	Rscript -e "library(testthat); test_file('tests/testthat/test-login-module.R')"
 
+test-user-stats:
+	@echo "Running user stats module tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-user-stats-module.R')"
+
 test-server:
 	@echo "Running server function tests..."
 	Rscript -e "library(testthat); test_file('tests/testthat/test-server-functions.R')"
@@ -55,14 +59,15 @@ test-coverage:
 # Help
 help:
 	@echo "Available targets:"
-	@echo "  test          - Run all tests"
-	@echo "  test-config   - Run configuration tests"
-	@echo "  test-login    - Run login module tests"
-	@echo "  test-server   - Run server function tests"
-	@echo "  test-ui       - Run UI tests"
-	@echo "  test-database - Run database tests"
-	@echo "  test-utils    - Run utility function tests"
-	@echo "  clean         - Clean up test artifacts"
-	@echo "  install-deps  - Install test dependencies"
-	@echo "  test-coverage - Run tests with coverage"
-	@echo "  help          - Show this help message"
+	@echo "  test            - Run all tests"
+	@echo "  test-config     - Run configuration tests"
+	@echo "  test-login      - Run login module tests"
+	@echo "  test-user-stats - Run user stats module tests"
+	@echo "  test-server     - Run server function tests"
+	@echo "  test-ui         - Run UI tests"
+	@echo "  test-database   - Run database tests"
+	@echo "  test-utils      - Run utility function tests"
+	@echo "  clean           - Clean up test artifacts"
+	@echo "  install-deps    - Install test dependencies"
+	@echo "  test-coverage   - Run tests with coverage"
+	@echo "  help            - Show this help message"
