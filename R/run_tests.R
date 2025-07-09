@@ -31,6 +31,10 @@ test_file("tests/testthat/test-database.R")
 cat("\nTesting login module...\n")
 test_file("tests/testthat/test-login-module.R")
 
+# Test leaderboard module
+cat("\nTesting leaderboard module...\n")
+test_file("tests/testthat/test-leaderboard-module.R")
+
 # Test user stats module
 cat("\nTesting user stats module...\n")
 test_file("tests/testthat/test-user-stats-module.R")

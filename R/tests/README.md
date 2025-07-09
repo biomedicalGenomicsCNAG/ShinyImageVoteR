@@ -1,4 +1,17 @@
-# Testing Suite for B1MG Variant Voting Application
+# Testing Suite for B1MG Variant V5. **`test-server-functions.R`** - Server-side functionality tests
+   - User directory creation and management
+   - User info and annotations file creation
+   - Randomization seed generation and consistency
+   - Logout scheduling and task management
+   - External shutdown mechanism
+
+6. **`test-database.R`** - Database operations tests
+   - Database connection and query functionality
+   - Vote counting and updates
+   - Schema validation against configuration
+   - Connection pool management
+
+7. **`test-ui.R`** - User interface testsion
 
 This directory contains comprehensive test cases for the B1MG Variant Voting application.
 
@@ -19,7 +32,20 @@ The test suite is organized into several files, each focusing on different aspec
    - Session filtering and validation
    - Logout time updates
 
-3. **`test-server-functions.R`** - Server-side functionality tests
+3. **`test-leaderboard-module.R`** - Leaderboard module functionality tests
+   - Tests leaderboard UI rendering
+   - Tab trigger functionality for auto-refresh
+   - Institute vote counting and aggregation
+   - File system data processing
+   - Backward compatibility testing
+
+4. **`test-user-stats-module.R`** - User stats module functionality tests
+   - Tests user stats UI rendering
+   - Tab trigger functionality for auto-refresh
+   - Stats calculation and reactive updates
+   - Database integration for session tracking
+
+5. **`test-server-functions.R`** - Server-side functionality tests
    - User directory creation and management
    - User info and annotations file creation
    - Randomization seed generation and consistency
@@ -39,7 +65,7 @@ The test suite is organized into several files, each focusing on different aspec
    - Module UI namespacing
    - Integration tests (optional, requires `shinytest2`)
 
-6. **`test-utils.R`** - Utility function tests
+8. **`test-utils.R`** - Utility function tests
    - JSON and TSV file operations
    - Directory utilities and path construction
    - Hash and seed generation
@@ -88,6 +114,7 @@ make -f Makefile.test test
 # Run specific test suites
 make -f Makefile.test test-config
 make -f Makefile.test test-login
+make -f Makefile.test test-leaderboard
 make -f Makefile.test test-user-stats
 make -f Makefile.test test-database
 # etc.
@@ -101,6 +128,9 @@ test_file("tests/testthat/test-config.R")
 
 # Test login module
 test_file("tests/testthat/test-login-module.R")
+
+# Test leaderboard module
+test_file("tests/testthat/test-leaderboard-module.R")
 
 # Test user stats module  
 test_file("tests/testthat/test-user-stats-module.R")
@@ -130,6 +160,12 @@ The test suite covers:
 - Automatic refresh on tab selection
 - Conditional panel display
 - Module UI integration and namespacing
+
+✅ **Leaderboard & Voting Statistics**
+- Institute-level vote aggregation
+- File system data processing
+- Automatic refresh when navigating to leaderboard
+- User and vote count tracking across institutes
 
 ✅ **User Statistics**
 - Statistics calculation and aggregation

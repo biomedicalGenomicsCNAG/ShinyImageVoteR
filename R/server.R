@@ -237,8 +237,19 @@ server <- function(input, output, session) {
     }
   })
   
+  # Track when the Leaderboard tab is selected to trigger automatic refresh
+  leaderboard_tab_trigger <- reactive({
+    req(input$main_navbar)
+    if (input$main_navbar == "Leaderboard") {
+      # Return a timestamp to ensure the reactive fires each time the tab is selected
+      Sys.time()
+    } else {
+      NULL
+    }
+  })
+  
   votingServer("voting", login_data)
-  leaderboardServer("leaderboard", login_data)
+  leaderboardServer("leaderboard", login_data, leaderboard_tab_trigger)
   userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
   aboutServer("about")
 

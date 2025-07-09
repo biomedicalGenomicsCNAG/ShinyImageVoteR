@@ -6,9 +6,29 @@ leaderboardUI <- function(id) {
   )
 }
 
-leaderboardServer <- function(id, login_trigger) {
+#' Leaderboard Server Module
+#' 
+#' This module provides leaderboard functionality with automatic refresh
+#' when navigating to the leaderboard tab.
+#' 
+#' @param id Module namespace ID
+#' @param login_trigger Reactive that triggers when user logs in
+#' @param tab_trigger Optional reactive that triggers when the leaderboard tab is selected
+#'                   This enables automatic refresh of counts when navigating to the page
+#' @return Reactive containing leaderboard data frame
+leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
-    counts <- eventReactive(c(login_trigger(), input$refresh_counts), {
+    # Create a reactive that triggers when the leaderboard tab is selected
+    # This allows automatic refresh when navigating to the leaderboard page
+    tab_change_trigger <- reactive({
+      if (!is.null(tab_trigger)) {
+        tab_trigger()
+      } else {
+        NULL
+      }
+    })
+    
+    counts <- eventReactive(c(login_trigger(), input$refresh_counts, tab_change_trigger()), {
       req(login_trigger())
       counts_list <- lapply(cfg_institute_ids, function(institute) {
         institutes_dir <- file.path("user_data", institute)
