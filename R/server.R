@@ -9,6 +9,7 @@ library(RSQLite)
 library(shiny)
 library(shinyjs)
 library(tibble)
+library(later)
 
 # TODO
 # add library later
@@ -22,6 +23,25 @@ source("modules/login_module.R")
 source("modules/leaderboard_module.R")
 source("modules/user_stats_module.R")
 source("modules/about_module.R")
+
+pending_logout_tasks <- new.env(parent = emptyenv())
+
+schedule_logout_update <- function(sessionid, callback, delay = 5) {
+  cancel_pending_logout(sessionid)
+  handle <- later::later(function() {
+    callback()
+    rm(list = sessionid, envir = pending_logout_tasks)
+  }, delay)
+  assign(sessionid, handle, envir = pending_logout_tasks)
+}
+
+cancel_pending_logout <- function(sessionid) {
+  if (exists(sessionid, envir = pending_logout_tasks)) {
+    handle <- get(sessionid, envir = pending_logout_tasks)
+    later::cancel(handle)
+    rm(list = sessionid, envir = pending_logout_tasks)
+  }
+}
 
 # create folders for all institutes
 lapply(cfg_institute_ids, function(institute) {
@@ -89,6 +109,7 @@ server <- function(input, output, session) {
     user_id <- login_data()$user_id
     voting_institute <- login_data()$voting_institute
     session$userData$shinyauthr_session_id <- login_data()$session_id
+    cancel_pending_logout(session$userData$shinyauthr_session_id)
 
     session$userData$userId <- user_id
     session$userData$votingInstitute <- voting_institute
@@ -185,25 +206,26 @@ server <- function(input, output, session) {
       print(login_return)
       print("login_return$update_logout_time:")
       print(login_return$update_logout_time)
+      cancel_pending_logout(session$userData$shinyauthr_session_id)
       login_return$update_logout_time(session$userData$shinyauthr_session_id)
     }
   })
 
   session$onSessionEnded(function() {
     print("Session ended")
-    print("Updating logout time in database")
     print(paste("Session ID:", session$userData$shinyauthr_session_id))
 
     if (!is.null(session$userData$shinyauthr_session_id)) {
-      conn <- poolCheckout(db_pool)
-      on.exit(poolReturn(conn))
-      print("login_return$update_logout_time:")
-      print(login_return$update_logout_time)
-      print("conn:")
-      print(conn)
-      login_return$update_logout_time(
+      schedule_logout_update(
         session$userData$shinyauthr_session_id,
-        conn = conn
+        function() {
+          conn <- poolCheckout(db_pool)
+          on.exit(poolReturn(conn))
+          login_return$update_logout_time(
+            session$userData$shinyauthr_session_id,
+            conn = conn
+          )
+        }
       )
     }
   })
