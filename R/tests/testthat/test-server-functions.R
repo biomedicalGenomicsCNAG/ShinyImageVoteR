@@ -8,6 +8,7 @@ library(pool)
 
 # Source the necessary files
 source("../../config.R")
+source("../../server_utils.R")
 
 # Helper function to create test database pool
 create_test_pool <- function() {
