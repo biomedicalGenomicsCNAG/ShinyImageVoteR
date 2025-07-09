@@ -9,9 +9,17 @@ source("../../config.R")
 temp_www_dir <- file.path(getwd(), "www")
 dir.create(temp_www_dir, showWarnings = FALSE)
 
+# Create temporary docs directory and faq.md file for testing
+temp_docs_dir <- file.path(getwd(), "docs")
+dir.create(temp_docs_dir, showWarnings = FALSE)
+
 # Create a minimal hotkeys.js file for testing
 hotkeys_content <- "// Mock hotkeys.js for testing\nconsole.log('Hotkeys loaded');"
 writeLines(hotkeys_content, file.path(temp_www_dir, "hotkeys.js"))
+
+# Create a minimal faq.md file for testing
+faq_content <- "# Frequently Asked Questions\n\nThis is a mock FAQ file for testing purposes.\n\n## Question 1\nAnswer 1\n\n## Question 2\nAnswer 2"
+writeLines(faq_content, file.path(temp_docs_dir, "faq.md"))
 
 source("../../modules/login_module.R")
 source("../../modules/voting_module.R")
@@ -25,6 +33,9 @@ source("../../ui.R")
 cleanup_test_files <- function() {
   if (dir.exists(temp_www_dir)) {
     unlink(temp_www_dir, recursive = TRUE)
+  }
+  if (dir.exists(temp_docs_dir)) {
+    unlink(temp_docs_dir, recursive = TRUE)
   }
 }
 
