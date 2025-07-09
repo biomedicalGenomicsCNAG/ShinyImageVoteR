@@ -39,7 +39,7 @@ test_that("Main UI structure is correct", {
   ui_html <- as.character(ui_result)
   
   # Check for essential UI components
-  expect_true(grepl("fluidPage", ui_html))
+  expect_true(grepl("container-fluid", ui_html))
   expect_true(grepl("shiny-panel-conditional", ui_html))
   
   # Check for module UIs
@@ -47,7 +47,7 @@ test_that("Main UI structure is correct", {
   expect_true(grepl("voting", ui_html))
   expect_true(grepl("leaderboard", ui_html))
   expect_true(grepl("userstats", ui_html))
-  expect_true(grepl("about", ui_html))
+  expect_true(grepl("About", ui_html))
 })
 
 test_that("Conditional panels are properly configured", {
