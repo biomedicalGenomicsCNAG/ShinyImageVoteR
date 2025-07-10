@@ -51,9 +51,9 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
 
     get_sessionids_from_db <- function(conn = db_conn, expiry = cfg_cookie_expiry) {
       dbReadTable(conn, "sessionids") %>%
-        mutate(login_time = lubridate::ymd_hms(login_time)) %>%
+        dplyr::mutate(login_time = lubridate::ymd_hms(login_time)) %>%
         as_tibble() %>%
-        filter(
+        dplyr::filter(
           is.na(logout_time),
           login_time > lubridate::now() - lubridate::days(expiry)
         )

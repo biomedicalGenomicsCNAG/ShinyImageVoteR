@@ -50,13 +50,13 @@ userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
         summarise(images_voted = n(), .groups = 'drop')
 
       session_df <- dbReadTable(db_pool, "sessionids") %>%
-        filter(user == session$userData$userId) %>%
-        mutate(
+        dplyr::filter(user == session$userData$userId) %>%
+        dplyr::mutate(
           login_time = lubridate::ymd_hms(login_time),
           logout_time = lubridate::ymd_hms(logout_time)
         ) %>%
-        filter(!is.na(logout_time)) %>%
-        mutate(
+        dplyr::filter(!is.na(logout_time)) %>%
+        dplyr::mutate(
           session_length = as.numeric(difftime(logout_time, login_time, units = "mins"))
         )
       session_times <- session_df$session_length

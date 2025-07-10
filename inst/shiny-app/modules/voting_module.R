@@ -299,7 +299,7 @@ votingServer <- function(id, login_trigger) {
 
           # filter the annotations_df to only show the rows with the same session ID
           session_annotations_df <- annotations_df %>%
-            filter(shinyauthr_session_id == session$userData$shinyauthr_session_id)
+            dplyr::filter(shinyauthr_session_id == session$userData$shinyauthr_session_id)
 
           print("Filtered Annotations DataFrame for the current session:")
           print(session_annotations_df)
