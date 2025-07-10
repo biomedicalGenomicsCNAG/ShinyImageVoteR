@@ -62,37 +62,51 @@ test_that("Logout scheduling functions work correctly", {
   expect_true(exists("cancel_pending_logout"))
   expect_true(exists("pending_logout_tasks"))
   
-  # Test schedule_logout_update
+  # Test schedule_logout_update with longer delay to check scheduling
   callback_executed <- FALSE
   callback <- function() { 
     cat("Callback executed!\n")
     callback_executed <<- TRUE 
   }
   
-  # Debug: Print environment before scheduling
-  cat("Environment before scheduling:", ls(envir = pending_logout_tasks), "\n")
+  # Schedule with longer delay to test that it gets scheduled
+  schedule_logout_update("test_session", callback, delay = 0.5)
   
-  # Schedule with very short delay for testing
-  schedule_logout_update("test_session", callback, delay = 0.1)
-  
-  # Debug: Print environment after scheduling
-  cat("Environment after scheduling:", ls(envir = pending_logout_tasks), "\n")
-  
-  # Check that task was scheduled
-  if (!exists("test_session", envir = pending_logout_tasks)) {
-    cat("ERROR: test_session not found in pending_logout_tasks\n")
-    cat("Available sessions:", ls(envir = pending_logout_tasks), "\n")
-  }
+  # Check that task was scheduled (should exist immediately after scheduling)
   expect_true(exists("test_session", envir = pending_logout_tasks))
   
-  # Wait for callback execution
-  cat("Waiting for callback...\n")
-  Sys.sleep(0.2)
-  cat("Callback executed status:", callback_executed, "\n")
-  expect_true(callback_executed)
-  
-  # Check that task was cleaned up
+  # Cancel it before execution
+  cancel_pending_logout("test_session")
   expect_false(exists("test_session", envir = pending_logout_tasks))
+  
+  # Test actual execution with shorter delay
+  callback_executed_2 <- FALSE
+  callback_2 <- function() { 
+    cat("Callback 2 executed!\n")
+    callback_executed_2 <<- TRUE 
+  }
+  
+  # Schedule with very short delay for testing execution
+  schedule_logout_update("test_session_2", callback_2, delay = 0.1)
+  
+  # Wait for callback execution and process the event loop
+  cat("Waiting for callback 2...\n")
+  
+  # Process the later event loop to execute scheduled tasks
+  start_time <- Sys.time()
+  while (!callback_executed_2 && difftime(Sys.time(), start_time, units = "secs") < 1) {
+    later::run_now(timeoutSecs = 0.01)
+    Sys.sleep(0.01)
+  }
+  
+  cat("Callback 2 executed status:", callback_executed_2, "\n")
+  expect_true(callback_executed_2)
+  
+  # Check that task was cleaned up after execution
+  expect_false(exists("test_session_2", envir = pending_logout_tasks))
+  
+  # Verify first callback was NOT executed (since it was cancelled)
+  expect_false(callback_executed)
 })
 
 test_that("User directory creation works", {
