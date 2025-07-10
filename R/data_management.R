@@ -11,23 +11,12 @@ NULL
 #' The directory is located outside the package installation.
 #'
 #' @param base_dir Character. Base directory where user_data should be located. 
-#'   If NULL, uses the current working directory or a system-appropriate location.
+#'   If NULL, uses the current working directory.
 #' @return Character path to the user_data directory
 #' @export
 get_user_data_dir <- function(base_dir = NULL) {
   if (is.null(base_dir)) {
-    # Try to use a reasonable default location
-    if (.Platform$OS.type == "windows") {
-      base_dir <- file.path(Sys.getenv("USERPROFILE"), "Documents", "B1MG-variant-voting")
-    } else {
-      # Unix-like systems
-      base_dir <- file.path(Sys.getenv("HOME"), "B1MG-variant-voting")
-    }
-    
-    # If that doesn't work, use current working directory
-    if (!dir.exists(dirname(base_dir))) {
-      base_dir <- getwd()
-    }
+    base_dir <- getwd()
   }
   
   user_data_dir <- file.path(base_dir, "user_data")

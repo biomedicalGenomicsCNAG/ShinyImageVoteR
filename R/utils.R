@@ -79,6 +79,9 @@ generate_user_seed <- function(user_id, timestamp = NULL) {
 #' @return Character path to the created user_data directory
 #' @export
 init_user_data_structure <- function(base_dir = getwd()) {
+  print("Initializing user data structure...")
+  print("base_dir:")
+  print(base_dir)
   user_data_dir <- file.path(base_dir, "user_data")
   
   # Create main user_data directory

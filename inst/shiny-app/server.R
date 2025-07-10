@@ -115,14 +115,17 @@ server <- function(input, output, session) {
 
     print(paste("User directory:", user_dir))
     print(paste("User ID:", user_id)) 
-    
 
     session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
     session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
 
+    print(paste("User Annotations File:", session$userData$userAnnotationsFile))
+
     if (!dir.exists(user_dir)) {
       cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
       dir.create(user_dir, recursive = TRUE)
+    } else {
+      cat(sprintf("Directory for user: %s already exists at %s\n", user_id, user_dir))
     }
 
     if (file.exists(session$userData$userInfoFile)) {

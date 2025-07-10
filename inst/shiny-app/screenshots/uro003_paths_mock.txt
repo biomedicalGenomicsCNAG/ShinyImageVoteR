@@ -1,3 +1,3 @@
 chrY:10935390	A	G	SNV	/vol/b1mg/screenshot_URO_003_mutations_varSorted_redoBAQ/0a0b53acbf9fac0f45dfcf77a8c6baae.png
 chr9:43866755	CT	TG	indel	/vol/b1mg/screenshot_URO_003_mutations_varSorted_redoBAQ/0a1ccf233c0aaf2fd0a27a28091cfde5.png
-chr19:18420026	T	A	SNV	/vol/b1mg/screenshot_URO_003_mutations_varSorted_redoBAQ/00659831c12b28754cfab0ef89ef647c.png
+chr19:18420026	T	A	SNV	/vol/b1mg/screenshot_URO_003_mutations_varSorted_redoBAQ/0a1e38c956edd03b8af61fb6db250346.png
