@@ -263,29 +263,71 @@ setup_external_environment <- function(base_dir = getwd()) {
 
 #' Initialize external environment for the application
 #'
-#' Sets up the external directory structure and database for the application.
+#' Sets up the external directory structure, database, and configuration for the application.
 #'
 #' @param base_dir Character. Base directory for external files. 
 #'   Defaults to current working directory.
-#' @return List with paths to user_data directory and database file
+#' @return List with paths to user_data directory, database file, and config file
 #' @export
 init_external_environment <- function(base_dir = getwd()) {
+  cat("Initializing external environment in:", base_dir, "\n")
+  
   # Initialize user data structure
   user_data_dir <- init_user_data_structure(base_dir)
   
-  # Set up database path
-  db_file <- file.path(base_dir, "db.sqlite")
+  # Initialize database
+  db_file <- init_external_database(base_dir)
   
-  # Create database if it doesn't exist
-  if (!file.exists(db_file)) {
-    cat("Database file will be created at:", db_file, "\n")
-    init_external_database()
-  } else {
-    cat("Using existing database at:", db_file, "\n")
-  }
+  # Initialize configuration
+  config_file <- init_external_config(base_dir)
+  
+  # Set environment variables for the application to use
+  Sys.setenv(B1MG_USER_DATA_DIR = user_data_dir)
+  Sys.setenv(B1MG_DATABASE_PATH = db_file)
+  Sys.setenv(B1MG_CONFIG_PATH = config_file)
+  
+  cat("\nExternal environment initialized successfully!\n")
+  cat("Environment variables set:\n")
+  cat("  B1MG_USER_DATA_DIR =", Sys.getenv("B1MG_USER_DATA_DIR"), "\n")
+  cat("  B1MG_DATABASE_PATH =", Sys.getenv("B1MG_DATABASE_PATH"), "\n")
+  cat("  B1MG_CONFIG_PATH =", Sys.getenv("B1MG_CONFIG_PATH"), "\n")
   
   return(list(
     user_data_dir = user_data_dir,
-    db_file = db_file
+    db_file = db_file,
+    config_file = config_file
   ))
+}
+
+#' Initialize external configuration
+#'
+#' Creates and sources external configuration file for the B1MG Variant Voting application.
+#'
+#' @param base_dir Character. Base directory for configuration (default: current working directory)
+#' @param config_name Character. Name of the configuration file (default: "config.R")
+#' @return Character path to the configuration file
+#' @export
+init_external_config <- function(base_dir = getwd(), config_name = "config.R") {
+  config_path <- file.path(base_dir, config_name)
+  
+  # Check if config already exists
+  if (file.exists(config_path)) {
+    cat("Configuration file already exists at:", config_path, "\n")
+    return(config_path)
+  }
+  
+  # Get the template config from the package
+  package_config <- system.file("shiny-app", "config.R", package = "B1MGVariantVoting")
+  
+  if (package_config == "") {
+    stop("Could not find template configuration file in package")
+  }
+  
+  # Copy template to external location
+  file.copy(package_config, config_path, overwrite = FALSE)
+  
+  cat("Configuration file created at:", config_path, "\n")
+  cat("You can edit this file to customize the application settings.\n")
+  
+  return(config_path)
 }

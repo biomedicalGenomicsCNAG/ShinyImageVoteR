@@ -31,3 +31,7 @@
 ^AGENTS_files$
 ^B1MGVariantVoting_.*\.tar\.gz$
 ^codex_setup\.sh$
+^user_data$
+^db\.sqlite$
+^config\.R$
+^test_package_coverage\.R$

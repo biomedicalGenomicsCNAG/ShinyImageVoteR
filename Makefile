@@ -25,7 +25,7 @@ help:
 	@echo "  coverage     - Generate test coverage report"
 	@echo "  clean        - Clean build artifacts"
 	@echo "  rebuild      - Clean, build, and install"
-	@echo "  setup-userdata  - Setup external user_data directory structure"
+	@echo "  setup-userdata  - Setup external environment (user_data, database, config)"
 	@echo "  run          - Install package, setup user_data, and run the Shiny app"
 	@echo "  document     - Generate documentation with roxygen2"
 	@echo "  deps         - Install package dependencies"
@@ -65,10 +65,10 @@ coverage: install
 	@echo "Generating test coverage report..."
 	$(RSCRIPT) -e "library(covr); library($(PACKAGE_NAME)); cov <- package_coverage(); print(cov); covr::report(cov)"
 
-# Setup external user_data directory and database
+# Setup external environment (user_data, database, and config)
 .PHONY: setup-userdata
 setup-userdata: install
-	@echo "Setting up external user_data directory and database..."
+	@echo "Setting up external environment (user_data, database, and config)..."
 	$(RSCRIPT) -e "library($(PACKAGE_NAME)); init_external_environment(); cat('External environment setup complete\n')"
 
 # Run the Shiny application with external user_data
