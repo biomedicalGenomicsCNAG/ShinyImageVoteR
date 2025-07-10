@@ -57,7 +57,7 @@ check: build
 .PHONY: test
 test: install
 	@echo "Running package tests..."
-	$(RSCRIPT) -e "library(testthat); library($(PACKAGE_NAME)); test_check('$(PACKAGE_NAME)')"
+	$(RSCRIPT) -e "testthat::test_dir('tests/testthat')"
 
 # Generate test coverage
 .PHONY: coverage
