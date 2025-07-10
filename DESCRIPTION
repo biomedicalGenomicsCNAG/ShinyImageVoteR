@@ -1,0 +1,11 @@
+Package: B1MGVariantVoting
+Type: Package
+Title: B1MG Variant Voting Shiny App
+Version: 0.1.0
+Authors@R: c(person(given = "Ivo Christopher", family = "Leist", role = c("aut", "cre")))
+Description: A Shiny application for voting on B1MG variants. Packaged for easier testing and deployment.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1

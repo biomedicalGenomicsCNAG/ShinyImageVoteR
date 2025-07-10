@@ -5,8 +5,13 @@
 
 library(testthat)
 
-# Set working directory to the R directory
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# Set working directory to the directory containing this script
+args <- commandArgs(trailingOnly = FALSE)
+file_arg <- grep("--file=", args, value = TRUE)
+if (length(file_arg) == 1) {
+  script_path <- sub("--file=", "", file_arg)
+  setwd(dirname(normalizePath(script_path)))
+}
 
 # Source configuration and required libraries
 source("config.R")

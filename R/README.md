@@ -4,7 +4,7 @@
 
 ```bash
 R -e "renv::restore()"
-Rscript run.R
+R -e "B1MGVariantVoting::run_app()"
 ```
 
 # Note for gcloud users
