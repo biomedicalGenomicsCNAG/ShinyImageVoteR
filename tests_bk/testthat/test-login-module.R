@@ -39,7 +39,6 @@ test_that("Login UI renders correctly", {
 })
 
 test_that("Database session management functions work", {
-  skip_if_not_installed("lubridate")
   
   # Create test database
   test_db <- create_test_db()
@@ -75,7 +74,6 @@ test_that("Database session management functions work", {
 })
 
 test_that("Logout time update works correctly", {
-  skip_if_not_installed("lubridate")
   
   # Create test database
   test_db <- create_test_db()
@@ -103,7 +101,6 @@ test_that("Logout time update works correctly", {
 })
 
 test_that("Session filtering works correctly", {
-  skip_if_not_installed("lubridate")
   
   # Create test database
   test_db <- create_test_db()
