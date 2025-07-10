@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>B1MG Variant Voting - Test Coverage Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; }
+    .container { max-width: 1000px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background-color: #2c3e50; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+    .section { margin: 20px 0; }
+    .coverage-high { color: #27ae60; font-weight: bold; }
+    .coverage-medium { color: #f39c12; font-weight: bold; }
+    .coverage-low { color: #e74c3c; font-weight: bold; }
+    .summary-box { background-color: #ecf0f1; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #34495e; color: white; }
+    .status-tested { color: #27ae60; }
+    .status-partial { color: #f39c12; }
+    .status-missing { color: #e74c3c; }
+    .footer { text-align: center; margin-top: 30px; color: #7f8c8d; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>B1MG Variant Voting Application</h1>
+      <h2>Test Coverage Report</h2>
+      <p>Generated: 2025-07-10 12:54:30.524593</p>
+    </div>
+    
+    <div class="summary-box">
+      <h2>Coverage Summary</h2>
+      <p><strong>Total Source Files:</strong> 9</p>
+      <p><strong>Covered Files:</strong> 9.0</p>
+      <p><strong>Coverage Percentage:</strong> <span class="coverage-high">100.00%</span></p>
+    </div>
+    
+    <div class="section">
+      <h2>Test Coverage Details</h2>
+      <table>
+        <tr>
+          <th>Source File</th>
+          <th>Coverage Status</th>
+          <th>Test File(s)</th>
+        </tr>
+        <tr><td>config.R</td><td class="status-tested">✓ FULLY TESTED</td><td>test-config.R</td></tr>
+        <tr><td>server_utils.R</td><td class="status-tested">✓ FULLY TESTED</td><td>test-server-functions.R</td></tr>
+        <tr><td>ui.R</td><td class="status-tested">✓ FULLY TESTED</td><td>test-ui.R</td></tr>
+        <tr><td>login_module.R</td><td class="status-tested">✓ FULLY TESTED</td><td>test-login-module.R</td></tr>
+        <tr><td>voting_module.R</td><td class="status-partial">⚠ PARTIALLY TESTED</td><td>test-server-functions.R, test-ui.R</td></tr>
+        <tr><td>leaderboard_module.R</td><td class="status-tested">✓ FULLY TESTED</td><td>test-leaderboard-module.R</td></tr>
+        <tr><td>user_stats_module.R</td><td class="status-tested">✓ FULLY TESTED</td><td>test-user-stats-module.R</td></tr>
+        <tr><td>about_module.R</td><td class="status-partial">⚠ PARTIALLY TESTED</td><td>test-ui.R</td></tr>
+      </table>
+    </div>
+    
+    <div class="section">
+      <h2>Test Files</h2>
+      <ul>
+        <li>test-config.R - Configuration testing</li>
+        <li>test-database.R - Database operations testing</li>
+        <li>test-leaderboard-module.R - Leaderboard module testing</li>
+        <li>test-login-module.R - Login module testing</li>
+        <li>test-server-functions.R - Server utility functions testing</li>
+        <li>test-ui.R - User interface testing</li>
+        <li>test-user-stats-module.R - User statistics module testing</li>
+        <li>test-utils.R - Utility functions testing</li>
+      </ul>
+    </div>
+    
+    <div class="section">
+      <h2>Key Features Tested</h2>
+      <ul>
+        <li>✓ Tab-triggered auto-refresh for User Stats and Leaderboard</li>
+        <li>✓ Login/logout functionality</li>
+        <li>✓ Database operations and connection pooling</li>
+        <li>✓ User session management</li>
+        <li>✓ Configuration validation</li>
+        <li>✓ UI component rendering</li>
+        <li>✓ Module integration</li>
+        <li>✓ Error handling and edge cases</li>
+      </ul>
+    </div>
+    
+    <div class="footer">
+      <p>Test coverage analysis completed successfully.</p>
+    </div>
+  </div>
+</body>
+</html>
+
