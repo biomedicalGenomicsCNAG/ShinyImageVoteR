@@ -109,7 +109,7 @@ init_user_data_structure <- function(base_dir = getwd()) {
 
 #' Initialize external database
 #'
-#' Sets up the SQLite database file outside the package.
+#' Sets up the SQLite database file outside the package using the same logic as init_db.R.
 #'
 #' @param base_dir Character. Base directory for database (default: current working directory)
 #' @param db_name Character. Name of the database file (default: "db.sqlite")
@@ -124,24 +124,22 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     return(db_path)
   }
   
-  # Check if there's a database in the package to copy
-  app_dir <- get_app_dir()
-  package_db <- file.path(app_dir, db_name)
+  cat("Creating new database:", db_path, "\n")
   
-  if (file.exists(package_db)) {
-    # Copy database from package
-    file.copy(package_db, db_path)
-    cat("Copied database from package to:", db_path, "\n")
-  } else {
-    # Create new empty database
-    cat("Creating new database:", db_path, "\n")
+  # Get the app directory to access the data file
+  app_dir <- get_app_dir()
+  data_file <- file.path(app_dir, "screenshots", "uro003_paths_mock.txt")
+  
+  # Check if data file exists
+  if (!file.exists(data_file)) {
+    cat("Warning: Data file not found at", data_file, "\n")
+    cat("Creating database with minimal structure...\n")
     
-    # Create a minimal database structure
+    # Create minimal database structure
     con <- DBI::dbConnect(RSQLite::SQLite(), db_path)
     
-    # Create basic tables (you may need to adjust this based on your schema)
     DBI::dbExecute(con, "
-      CREATE TABLE IF NOT EXISTS annotations (
+      CREATE TABLE annotations (
         coordinates TEXT,
         REF TEXT,
         ALT TEXT,
@@ -156,7 +154,7 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     ")
     
     DBI::dbExecute(con, "
-      CREATE TABLE IF NOT EXISTS sessionids (
+      CREATE TABLE sessionids (
         user TEXT,
         sessionid TEXT,
         login_time TEXT,
@@ -165,7 +163,77 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     ")
     
     DBI::dbDisconnect(con)
+    return(db_path)
   }
+  
+  # Load data following init_db.R logic
+  df <- read.table(
+    data_file, 
+    sep = "\t", 
+    header = FALSE, 
+    stringsAsFactors = FALSE
+  )
+  
+  # Define column names (from config.R)
+  cfg_db_general_cols <- c("coordinates", "REF", "ALT", "variant", "path")
+  cfg_vote_counts_cols <- c(
+    "vote_count_correct",
+    "vote_count_no_variant", 
+    "vote_count_different_variant",
+    "vote_count_not_sure",
+    "vote_count_total"
+  )
+  
+  colnames(df) <- cfg_db_general_cols
+  df[cfg_vote_counts_cols] <- lapply(cfg_vote_counts_cols, function(x) 0L)
+  
+  # Point the path to symlinked images directory
+  df$path <- gsub("/vol/b1mg/", "images/", df$path)
+  
+  # Create database connection
+  con <- DBI::dbConnect(RSQLite::SQLite(), db_path)
+  
+  # Write annotations table
+  DBI::dbWriteTable(con, "annotations", df, overwrite = TRUE)
+  
+  # Create trigger for vote total updates
+  DBI::dbExecute(con, "
+    CREATE TRIGGER update_vote_total_update
+    AFTER UPDATE ON annotations
+    FOR EACH ROW
+    BEGIN
+      UPDATE annotations
+      SET vote_count_total = 
+          vote_count_correct +
+          vote_count_no_variant +
+          vote_count_different_variant +
+          vote_count_not_sure
+      WHERE rowid = NEW.rowid;
+    END;
+  ")
+  
+  # Create sessionids table if missing
+  if (!"sessionids" %in% DBI::dbListTables(con)) {
+    cat("Creating sessionids table\n")
+    DBI::dbExecute(con, "
+      CREATE TABLE sessionids (
+        user TEXT,
+        sessionid TEXT,
+        login_time TEXT,
+        logout_time TEXT
+      )
+    ")
+  }
+  
+  # Show created tables
+  tables <- DBI::dbListTables(con)
+  cat("Created tables:", paste(tables, collapse = ", "), "\n")
+  
+  # Get row count for annotations
+  row_count <- DBI::dbGetQuery(con, "SELECT COUNT(*) as count FROM annotations")
+  cat("Loaded", row_count$count, "annotations into database\n")
+  
+  DBI::dbDisconnect(con)
   
   return(db_path)
 }
@@ -211,6 +279,7 @@ init_external_environment <- function(base_dir = getwd()) {
   # Create database if it doesn't exist
   if (!file.exists(db_file)) {
     cat("Database file will be created at:", db_file, "\n")
+    init_external_database()
   } else {
     cat("Using existing database at:", db_file, "\n")
   }
