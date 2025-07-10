@@ -1,0 +1,96 @@
+#' Data Directory Management Functions
+#'
+#' Functions to manage user data directories outside the package
+#'
+#' @name data_management
+NULL
+
+#' Get or create the user data directory
+#'
+#' This function returns the path to the user_data directory, creating it if necessary.
+#' The directory is located outside the package installation.
+#'
+#' @param base_dir Character. Base directory where user_data should be located. 
+#'   If NULL, uses the current working directory or a system-appropriate location.
+#' @return Character path to the user_data directory
+#' @export
+get_user_data_dir <- function(base_dir = NULL) {
+  if (is.null(base_dir)) {
+    # Try to use a reasonable default location
+    if (.Platform$OS.type == "windows") {
+      base_dir <- file.path(Sys.getenv("USERPROFILE"), "Documents", "B1MG-variant-voting")
+    } else {
+      # Unix-like systems
+      base_dir <- file.path(Sys.getenv("HOME"), "B1MG-variant-voting")
+    }
+    
+    # If that doesn't work, use current working directory
+    if (!dir.exists(dirname(base_dir))) {
+      base_dir <- getwd()
+    }
+  }
+  
+  user_data_dir <- file.path(base_dir, "user_data")
+  
+  # Create the directory if it doesn't exist
+  if (!dir.exists(user_data_dir)) {
+    dir.create(user_data_dir, recursive = TRUE, showWarnings = FALSE)
+    message("Created user_data directory at: ", user_data_dir)
+  }
+  
+  return(user_data_dir)
+}
+
+#' Initialize user data directory structure
+#'
+#' Creates the necessary subdirectories for all institutes in the user_data directory
+#'
+#' @param institute_ids Character vector of institute IDs
+#' @param base_dir Character. Base directory for user_data. If NULL, uses get_user_data_dir()
+#' @return Character path to the user_data directory
+#' @export
+init_user_data_structure <- function(institute_ids = NULL, base_dir = NULL) {
+  user_data_dir <- get_user_data_dir(base_dir)
+  
+  # Default institute IDs if not provided
+  if (is.null(institute_ids)) {
+    institute_ids <- c(
+      "Training_answers_not_saved",
+      "CNAG", "DKFZ", "DNGC", "FPGMX", "Hartwig", "ISCIII", "KU_Leuven",
+      "Latvian_BRSC", "MOMA", "SciLifeLab", "Universidade_de_Aveiro",
+      "University_of_Helsinki", "University_of_Oslo", "University_of_Verona"
+    )
+  }
+  
+  # Create subdirectories for each institute
+  for (institute in institute_ids) {
+    # Replace spaces with underscores in institute names
+    institute_clean <- gsub(" ", "_", institute)
+    institute_dir <- file.path(user_data_dir, institute_clean)
+    
+    if (!dir.exists(institute_dir)) {
+      dir.create(institute_dir, recursive = TRUE, showWarnings = FALSE)
+      message("Created institute directory: ", institute_dir)
+    }
+  }
+  
+  return(user_data_dir)
+}
+
+#' Get configuration with external user_data path
+#'
+#' Returns a configuration object with the correct user_data path
+#'
+#' @param base_dir Character. Base directory for user_data
+#' @return List with configuration including user_data_path
+#' @export
+get_external_config <- function(base_dir = NULL) {
+  user_data_dir <- get_user_data_dir(base_dir)
+  
+  config <- list(
+    user_data_path = user_data_dir,
+    app_dir = get_app_dir()
+  )
+  
+  return(config)
+}

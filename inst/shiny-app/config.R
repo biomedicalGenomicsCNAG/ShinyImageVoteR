@@ -1,5 +1,21 @@
 # Configuration file for the variant voting app
 
+# Check if external user_data directory is set
+external_user_data_dir <- Sys.getenv("B1MG_USER_DATA_DIR", unset = NA)
+
+if (!is.na(external_user_data_dir) && dir.exists(external_user_data_dir)) {
+  # Use external user_data directory
+  cfg_user_data_dir <- external_user_data_dir
+  message("Using external user_data directory: ", cfg_user_data_dir)
+} else {
+  # Fallback to local user_data directory (for development)
+  cfg_user_data_dir <- "./user_data"
+  if (!dir.exists(cfg_user_data_dir)) {
+    dir.create(cfg_user_data_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  message("Using local user_data directory: ", cfg_user_data_dir)
+}
+
 # the application listenes to the existence of this file to gracefully shutdown
 cfg_shutdown_file <- "./server_data/STOP"
 

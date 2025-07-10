@@ -25,9 +25,12 @@ help:
 	@echo "  coverage     - Generate test coverage report"
 	@echo "  clean        - Clean build artifacts"
 	@echo "  rebuild      - Clean, build, and install"
-	@echo "  run          - Run the Shiny application"
+	@echo "  setup-userdata  - Setup external user_data directory structure"
+	@echo "  run          - Install package, setup user_data, and run the Shiny app"
 	@echo "  document     - Generate documentation with roxygen2"
 	@echo "  deps         - Install package dependencies"
+	@echo "  setup-userdata - Setup user_data directory outside package"
+	@echo "  setup-dev    - Setup development environment"
 	@echo "  all          - Build the package (default)"
 
 # Build the package
@@ -62,10 +65,16 @@ coverage: install
 	@echo "Generating test coverage report..."
 	$(RSCRIPT) -e "library(covr); library($(PACKAGE_NAME)); cov <- package_coverage(); print(cov); covr::report(cov)"
 
-# Run the Shiny application
+# Setup external user_data directory
+.PHONY: setup-userdata
+setup-userdata:
+	@echo "Setting up external user_data directory..."
+	$(RSCRIPT) -e "library($(PACKAGE_NAME)); init_user_data_structure(); cat('User data directory setup complete\n')"
+
+# Run the Shiny application with external user_data
 .PHONY: run
-run: install
-	@echo "Starting Shiny application..."
+run: install setup-userdata
+	@echo "Starting Shiny application with external user_data..."
 	$(RSCRIPT) -e "library($(PACKAGE_NAME)); run_voting_app()"
 
 # Generate documentation
@@ -126,3 +135,13 @@ info:
 package-info: install
 	@echo "Showing installed package information..."
 	$(RSCRIPT) -e "library($(PACKAGE_NAME)); cat('Package path:', find.package('$(PACKAGE_NAME)'), '\n'); cat('App directory:', get_app_dir(), '\n')"
+
+# Setup development environment
+.PHONY: setup-dev
+setup-dev: setup-userdata
+	@echo "Setting up development environment..."
+	@if [ -d "inst/shiny-app/db.sqlite" ]; then \
+		echo "Moving database file..."; \
+		mv inst/shiny-app/db.sqlite . || true; \
+	fi
+	@echo "Development environment setup complete"

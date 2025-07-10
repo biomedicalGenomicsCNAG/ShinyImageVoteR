@@ -19,6 +19,13 @@
 ^inst/shiny-app/coverage_.*\.csv$
 ^inst/shiny-app/simple_coverage_.*\.html$
 ^inst/shiny-app/test_coverage_.*\.html$
+^user_data$
+^db\.sqlite$
+^\.Rhistory$
+^coverage_.*\.html$
+^coverage_.*\.csv$
+^simple_coverage_.*\.html$
+^test_coverage_.*\.html$
 ^AGENTS\.html$
 ^AGENTS\.md$
 ^AGENTS_files$

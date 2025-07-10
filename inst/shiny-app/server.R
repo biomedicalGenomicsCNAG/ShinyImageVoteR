@@ -43,7 +43,7 @@ source("server_utils.R")
 lapply(cfg_institute_ids, function(institute) {
   # replace spaces with underscores in institute names
   institute <- gsub(" ", "_", institute)
-  dir.create(file.path("user_data", institute), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(cfg_user_data_dir, institute), recursive = TRUE, showWarnings = FALSE)
 })
 
 server <- function(input, output, session) {
@@ -111,7 +111,7 @@ server <- function(input, output, session) {
     session$userData$userId <- user_id
     session$userData$votingInstitute <- voting_institute
 
-    user_dir <- file.path("user_data", voting_institute, user_id)
+    user_dir <- file.path(cfg_user_data_dir, voting_institute, user_id)
     session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
     session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
 
