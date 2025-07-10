@@ -13,7 +13,7 @@ schedule_logout_update <- function(sessionid, callback, delay = 5) {
 cancel_pending_logout <- function(sessionid) {
   if (exists(sessionid, envir = pending_logout_tasks)) {
     handle <- get(sessionid, envir = pending_logout_tasks)
-    later::cancel(handle)
+    handle()                      
     rm(list = sessionid, envir = pending_logout_tasks)
   }
 }
