@@ -1,5 +1,0 @@
-gsheets_config.json
-.Renviron
-*.env
-.gcloud.env
-renv
