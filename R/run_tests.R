@@ -5,9 +5,6 @@
 
 library(testthat)
 
-# Set working directory to the R directory
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-
 # Source configuration and required libraries
 source("config.R")
 
@@ -56,5 +53,13 @@ test_results <- test_dir("tests/testthat")
 cat("\n", paste(rep("=", 50), collapse = ""))
 cat("\nTest Summary:\n")
 print(test_results)
+
+if (requireNamespace("covr", quietly = TRUE)) {
+  cat("\nCalculating coverage...\n")
+  cov <- covr::package_coverage()
+  print(cov)
+} else {
+  cat("\nPackage 'covr' not installed; skipping coverage.\n")
+}
 
 cat("\nTests completed!\n")

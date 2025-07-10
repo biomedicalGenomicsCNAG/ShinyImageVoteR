@@ -93,6 +93,19 @@ make -f Makefile.test test-database
 # etc.
 ```
 
+### Generating Coverage Reports
+
+You can generate coverage metrics using the Makefile or the test runner script
+if the **covr** package is installed:
+
+```bash
+# Using the Makefile
+make -f Makefile.test test-coverage
+
+# Using the helper script
+Rscript run_tests.R
+```
+
 ### Running Individual Test Files
 
 ```r
