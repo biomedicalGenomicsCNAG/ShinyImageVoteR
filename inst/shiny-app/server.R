@@ -265,6 +265,8 @@ server <- function(input, output, session) {
   # every 2 seconds, check for external shutdown file
   observe({
     invalidateLater(2000, session)
+    print("Checking for external shutdown request…")
+    print(cfg_shutdown_file)
     if (file.exists(cfg_shutdown_file)) {
       print("External shutdown request received.")
       file.remove(cfg_shutdown_file)

@@ -44,7 +44,7 @@ if (!is.na(external_db_path) && file.exists(external_db_path)) {
   message("Using local database: ", cfg_sqlite_file)
 }
 
-# the application listenes to the existence of this file to gracefully shutdown
+# the application listens to the existence of this file to gracefully shutdown
 cfg_shutdown_file <- "./server_data/STOP"
 
 ## Database configuration

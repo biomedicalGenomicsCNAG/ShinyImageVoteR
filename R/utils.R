@@ -299,11 +299,15 @@ init_external_environment <- function(base_dir = getwd()) {
   # Initialize images with symlinks
   images_dir <- init_external_images(base_dir)
   
+  # Initialize server_data directory
+  server_data_dir <- init_external_server_data(base_dir)
+  
   # Set environment variables for the application to use
   Sys.setenv(B1MG_USER_DATA_DIR = user_data_dir)
   Sys.setenv(B1MG_DATABASE_PATH = db_file)
   Sys.setenv(B1MG_CONFIG_PATH = config_file)
   Sys.setenv(B1MG_IMAGES_DIR = images_dir)
+  Sys.setenv(B1MG_SERVER_DATA_DIR = server_data_dir)
   
   cat("\nExternal environment initialized successfully!\n")
   cat("Environment variables set:\n")
@@ -311,12 +315,14 @@ init_external_environment <- function(base_dir = getwd()) {
   cat("  B1MG_DATABASE_PATH =", Sys.getenv("B1MG_DATABASE_PATH"), "\n")
   cat("  B1MG_CONFIG_PATH =", Sys.getenv("B1MG_CONFIG_PATH"), "\n")
   cat("  B1MG_IMAGES_DIR =", Sys.getenv("B1MG_IMAGES_DIR"), "\n")
+  cat("  B1MG_SERVER_DATA_DIR =", Sys.getenv("B1MG_SERVER_DATA_DIR"), "\n")
   
   return(list(
     user_data_dir = user_data_dir,
     db_file = db_file,
     config_file = config_file,
-    images_dir = images_dir
+    images_dir = images_dir,
+    server_data_dir = server_data_dir
   ))
 }
 
@@ -482,4 +488,40 @@ file.symlink.exists <- function(path) {
   # Use Sys.readlink to check if it's a symlink
   link_target <- Sys.readlink(path)
   return(!is.na(link_target) && link_target != "")
+}
+
+#' Initialize external server_data directory
+#'
+#' Creates and sets up the external server_data directory structure.
+#'
+#' @param base_dir Character. Base directory where server_data should be created
+#' @return Character. Path to the created server_data directory
+#' @export
+init_external_server_data <- function(base_dir = getwd()) {
+  server_data_dir <- file.path(base_dir, "server_data")
+  
+  if (!dir.exists(server_data_dir)) {
+    dir.create(server_data_dir, recursive = TRUE)
+    cat("Created external server_data directory at:", server_data_dir, "\n")
+    
+    # Create README for server_data
+    readme_content <- "# Server Data Directory
+
+This directory contains runtime server data for the B1MG Variant Voting application.
+
+## Contents:
+- Runtime logs
+- Temporary files
+- Session data
+- Other server-side generated content
+
+This directory is automatically created when the application starts.
+"
+    writeLines(readme_content, file.path(server_data_dir, "README.md"))
+    
+  } else {
+    cat("External server_data directory already exists at:", server_data_dir, "\n")
+  }
+  
+  return(server_data_dir)
 }
