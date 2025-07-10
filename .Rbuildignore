@@ -34,4 +34,6 @@
 ^user_data$
 ^db\.sqlite$
 ^config\.R$
+^images$
+^inst/shiny-app/www/images$
 ^test_package_coverage\.R$

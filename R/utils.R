@@ -281,21 +281,27 @@ init_external_environment <- function(base_dir = getwd()) {
   # Initialize configuration
   config_file <- init_external_config(base_dir)
   
+  # Initialize images with symlinks
+  images_dir <- init_external_images(base_dir)
+  
   # Set environment variables for the application to use
   Sys.setenv(B1MG_USER_DATA_DIR = user_data_dir)
   Sys.setenv(B1MG_DATABASE_PATH = db_file)
   Sys.setenv(B1MG_CONFIG_PATH = config_file)
+  Sys.setenv(B1MG_IMAGES_DIR = images_dir)
   
   cat("\nExternal environment initialized successfully!\n")
   cat("Environment variables set:\n")
   cat("  B1MG_USER_DATA_DIR =", Sys.getenv("B1MG_USER_DATA_DIR"), "\n")
   cat("  B1MG_DATABASE_PATH =", Sys.getenv("B1MG_DATABASE_PATH"), "\n")
   cat("  B1MG_CONFIG_PATH =", Sys.getenv("B1MG_CONFIG_PATH"), "\n")
+  cat("  B1MG_IMAGES_DIR =", Sys.getenv("B1MG_IMAGES_DIR"), "\n")
   
   return(list(
     user_data_dir = user_data_dir,
     db_file = db_file,
-    config_file = config_file
+    config_file = config_file,
+    images_dir = images_dir
   ))
 }
 
@@ -330,4 +336,67 @@ init_external_config <- function(base_dir = getwd(), config_name = "config.R") {
   cat("You can edit this file to customize the application settings.\n")
   
   return(config_path)
+}
+
+#' Setup external images directory with symlinks
+#'
+#' Creates an external images directory and symlinks it to the Shiny app's www/images folder
+#' so images can be served by the Shiny server while being stored outside the package.
+#'
+#' @param base_dir Character. Base directory for external files (default: current working directory)
+#' @param images_subdir Character. Subdirectory name for images (default: "images")
+#' @return Character path to the external images directory
+#' @export
+init_external_images <- function(base_dir = getwd(), images_subdir = "images") {
+  # Create external images directory
+  external_images_dir <- file.path(base_dir, images_subdir)
+  if (!dir.exists(external_images_dir)) {
+    dir.create(external_images_dir, recursive = TRUE, showWarnings = FALSE)
+    cat("Created external images directory:", external_images_dir, "\n")
+  }
+  
+  # Get the app directory
+  app_dir <- get_app_dir()
+  if (app_dir == "") {
+    warning("Could not find app directory. Symlink setup skipped.")
+    return(external_images_dir)
+  }
+  
+  # Define the www/images path in the app
+  www_images_path <- file.path(app_dir, "www", "images")
+  
+  # Remove existing www/images if it's a directory (not a symlink)
+  if (dir.exists(www_images_path) && !file.symlink.exists(www_images_path)) {
+    cat("Removing existing www/images directory...\n")
+    unlink(www_images_path, recursive = TRUE)
+  }
+  
+  # Remove existing symlink if it exists
+  if (file.symlink.exists(www_images_path)) {
+    cat("Removing existing www/images symlink...\n")
+    unlink(www_images_path)
+  }
+  
+  # Create symlink from external images to www/images
+  if (file.symlink(external_images_dir, www_images_path)) {
+    cat("Created symlink: www/images ->", external_images_dir, "\n")
+  } else {
+    warning("Failed to create symlink. Images may not be accessible to Shiny server.")
+  }
+  
+  # Set environment variable for configuration
+  Sys.setenv(B1MG_IMAGES_DIR = external_images_dir)
+  
+  return(external_images_dir)
+}
+
+#' Check if a file is a symlink
+#'
+#' @param path Character. Path to check
+#' @return Logical. TRUE if path is a symlink, FALSE otherwise
+file.symlink.exists <- function(path) {
+  if (!file.exists(path)) return(FALSE)
+  # Use Sys.readlink to check if it's a symlink
+  link_target <- Sys.readlink(path)
+  return(!is.na(link_target) && link_target != "")
 }
