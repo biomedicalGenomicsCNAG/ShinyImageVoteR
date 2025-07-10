@@ -41,42 +41,6 @@ get_user_data_dir <- function(base_dir = NULL) {
   return(user_data_dir)
 }
 
-#' Initialize user data directory structure
-#'
-#' Creates the necessary subdirectories for all institutes in the user_data directory
-#'
-#' @param institute_ids Character vector of institute IDs
-#' @param base_dir Character. Base directory for user_data. If NULL, uses get_user_data_dir()
-#' @return Character path to the user_data directory
-#' @export
-init_user_data_structure <- function(institute_ids = NULL, base_dir = NULL) {
-  user_data_dir <- get_user_data_dir(base_dir)
-  
-  # Default institute IDs if not provided
-  if (is.null(institute_ids)) {
-    institute_ids <- c(
-      "Training_answers_not_saved",
-      "CNAG", "DKFZ", "DNGC", "FPGMX", "Hartwig", "ISCIII", "KU_Leuven",
-      "Latvian_BRSC", "MOMA", "SciLifeLab", "Universidade_de_Aveiro",
-      "University_of_Helsinki", "University_of_Oslo", "University_of_Verona"
-    )
-  }
-  
-  # Create subdirectories for each institute
-  for (institute in institute_ids) {
-    # Replace spaces with underscores in institute names
-    institute_clean <- gsub(" ", "_", institute)
-    institute_dir <- file.path(user_data_dir, institute_clean)
-    
-    if (!dir.exists(institute_dir)) {
-      dir.create(institute_dir, recursive = TRUE, showWarnings = FALSE)
-      message("Created institute directory: ", institute_dir)
-    }
-  }
-  
-  return(user_data_dir)
-}
-
 #' Get configuration with external user_data path
 #'
 #' Returns a configuration object with the correct user_data path
