@@ -307,19 +307,29 @@ init_external_environment <- function(base_dir = getwd()) {
 
 #' Initialize external configuration
 #'
-#' Creates and sources external configuration file for the B1MG Variant Voting application.
+#' Initialize external configuration directory and file
 #'
-#' @param base_dir Character. Base directory for configuration (default: current working directory)
-#' @param config_name Character. Name of the configuration file (default: "config.R")
+#' Creates a config directory and configuration file for the B1MG Variant Voting application.
+#'
+#' @param base_dir Character. Base directory where config directory should be created (default: current working directory)
 #' @return Character path to the configuration file
 #' @export
-init_external_config <- function(base_dir = getwd(), config_name = "config.R") {
-  config_path <- file.path(base_dir, config_name)
+init_external_config <- function(base_dir = getwd()) {
+  config_dir <- file.path(base_dir, "config")
+  config_file <- file.path(config_dir, "config.R")
+  
+  # Create config directory if it doesn't exist
+  if (!dir.exists(config_dir)) {
+    dir.create(config_dir, recursive = TRUE, showWarnings = FALSE)
+    cat("Created config directory:", config_dir, "\n")
+  }
   
   # Check if config already exists
-  if (file.exists(config_path)) {
-    cat("Configuration file already exists at:", config_path, "\n")
-    return(config_path)
+  if (file.exists(config_file)) {
+    cat("Configuration file already exists at:", config_file, "\n")
+    # Set environment variable
+    Sys.setenv(B1MG_CONFIG_PATH = config_file)
+    return(config_file)
   }
   
   # Get the template config from the package
@@ -329,13 +339,47 @@ init_external_config <- function(base_dir = getwd(), config_name = "config.R") {
     stop("Could not find template configuration file in package")
   }
   
-  # Copy template to external location
-  file.copy(package_config, config_path, overwrite = FALSE)
+  # Read the package config and modify it for external use
+  config_content <- readLines(package_config)
   
-  cat("Configuration file created at:", config_path, "\n")
+  # Remove the external config check section since this IS the external config
+  start_idx <- which(grepl("Check if external configuration is set", config_content))
+  end_idx <- which(grepl("Using package configuration", config_content))
+  
+  if (length(start_idx) > 0 && length(end_idx) > 0) {
+    # Find the end of the external config checking block
+    for (i in end_idx[1]:length(config_content)) {
+      if (grepl("^\\s*}\\s*$", config_content[i])) {
+        end_idx <- i
+        break
+      }
+    }
+    # Remove the external config checking section
+    config_content <- config_content[-(start_idx[1]:end_idx)]
+  }
+  
+  # Add header comment
+  header <- c(
+    "# External Configuration for B1MG Variant Voting",
+    "# This file was created automatically and can be customized",
+    "# as needed for your deployment",
+    "",
+    paste("# Created:", Sys.time()),
+    ""
+  )
+  
+  config_content <- c(header, config_content)
+  
+  # Write the modified config
+  writeLines(config_content, config_file)
+  cat("Configuration file created at:", config_file, "\n")
   cat("You can edit this file to customize the application settings.\n")
   
-  return(config_path)
+  # Set environment variable
+  Sys.setenv(B1MG_CONFIG_PATH = config_file)
+  cat("Set B1MG_CONFIG_PATH to:", config_file, "\n")
+  
+  return(config_file)
 }
 
 #' Setup external images directory with symlinks

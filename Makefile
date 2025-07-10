@@ -25,7 +25,7 @@ help:
 	@echo "  coverage     - Generate test coverage report"
 	@echo "  clean        - Clean build artifacts"
 	@echo "  rebuild      - Clean, build, and install"
-	@echo "  setup-userdata  - Setup external environment (user_data, database, config)"
+	@echo "  setup-userdata  - Setup external environment (config/, user_data/, database, images/)"
 	@echo "  run          - Install package, setup user_data, and run the Shiny app"
 	@echo "  document     - Generate documentation with roxygen2"
 	@echo "  deps         - Install package dependencies"

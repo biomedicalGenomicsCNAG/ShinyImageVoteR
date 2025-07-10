@@ -3,13 +3,34 @@
 # Check if external configuration is set
 external_config_path <- Sys.getenv("B1MG_CONFIG_PATH", unset = NA)
 
-if (!is.na(external_config_path) && file.exists(external_config_path) && external_config_path != normalizePath("config.R", mustWork = FALSE)) {
-  # Source external configuration if it exists and is not this file
+if (!is.na(external_config_path) && file.exists(external_config_path)) {
+  # Source external configuration if it exists
   cat("Loading external configuration from:", external_config_path, "\n")
   source(external_config_path, local = TRUE)
   return() # Exit early to prevent loading this config
 } else {
-  cat("Using package configuration\n")
+  # Try to find config in parent directory structure
+  possible_config_paths <- c(
+    "../../config/config.R",  # From inst/shiny-app to root/config
+    "../../../config/config.R", # Alternative path
+    "./config/config.R"       # Local config
+  )
+  
+  config_found <- FALSE
+  for (config_path in possible_config_paths) {
+    if (file.exists(config_path)) {
+      cat("Loading configuration from:", config_path, "\n")
+      source(config_path, local = TRUE)
+      config_found <- TRUE
+      break
+    }
+  }
+  
+  if (!config_found) {
+    cat("Using package configuration\n")
+  } else {
+    return() # Exit early if external config was loaded
+  }
 }
 
 # Check if external user_data directory is set
