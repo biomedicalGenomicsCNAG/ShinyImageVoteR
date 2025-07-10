@@ -44,14 +44,45 @@ if (!is.na(external_db_path) && file.exists(external_db_path)) {
   message("Using local database: ", cfg_sqlite_file)
 }
 
+# Check if external server_data directory is set
+external_server_data_dir <- Sys.getenv("B1MG_SERVER_DATA_DIR", unset = NA)
+
+if (!is.na(external_server_data_dir) && dir.exists(external_server_data_dir)) {
+  # Use external server_data directory
+  cfg_server_data_dir <- external_server_data_dir
+  message("Using external server_data directory: ", cfg_server_data_dir)
+} else {
+  # Fallback to local server_data directory (for development)
+  cfg_server_data_dir <- "./server_data"
+  if (!dir.exists(cfg_server_data_dir)) {
+    dir.create(cfg_server_data_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  message("Using local server_data directory: ", cfg_server_data_dir)
+}
+
+# Check if external images directory is set
+external_images_dir <- Sys.getenv("B1MG_IMAGES_DIR", unset = NA)
+
+if (!is.na(external_images_dir) && dir.exists(external_images_dir)) {
+  # Use external images directory
+  cfg_images_dir <- external_images_dir
+  message("Using external images directory: ", cfg_images_dir)
+} else {
+  # Fallback to local images directory (for development)
+  cfg_images_dir <- "./images"
+  if (!dir.exists(cfg_images_dir)) {
+    dir.create(cfg_images_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  message("Using local images directory: ", cfg_images_dir)
+}
+
 # the application listens to the existence of this file to gracefully shutdown
-cfg_shutdown_file <- "./server_data/STOP"
+cfg_shutdown_file <- file.path(cfg_server_data_dir, "STOP")
 
 ## Database configuration
 
 ### file paths
 cfg_to_be_voted_images_file <- "./screenshots/uro003_paths_mock.txt"
-cfg_sqlite_file <- "./db.sqlite"
 
 ### database columns
 cfg_db_general_cols <- c("coordinates", "REF", "ALT", "variant", "path")
