@@ -49,7 +49,7 @@ attr(combined_cov, "class") <- attr(cov_r, "class")
 attr(combined_cov, "package") <- attr(cov_r, "package")
 attr(combined_cov, "relative") <- attr(cov_r, "relative")
 
-covr::codecov(coverage = combined_cov)
+# covr::codecov(coverage = combined_cov)
 
 # 4. Write HTML report to project root
 report(combined_cov, file = file.path(getwd(), "coverage.html"))
