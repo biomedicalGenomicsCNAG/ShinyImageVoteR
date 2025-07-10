@@ -16,6 +16,22 @@ if (!is.na(external_user_data_dir) && dir.exists(external_user_data_dir)) {
   message("Using local user_data directory: ", cfg_user_data_dir)
 }
 
+# Check if external database path is set
+external_db_path <- Sys.getenv("B1MG_DATABASE_PATH", unset = NA)
+
+if (!is.na(external_db_path) && file.exists(external_db_path)) {
+  # Use external database
+  cfg_sqlite_file <- external_db_path
+  message("Using external database: ", cfg_sqlite_file)
+} else {
+  # Fallback to local database (for development)
+  cfg_sqlite_file <- "./db.sqlite"
+  if (!file.exists(cfg_sqlite_file)) {
+    message("Warning: Database file not found at ", cfg_sqlite_file)
+  }
+  message("Using local database: ", cfg_sqlite_file)
+}
+
 # the application listenes to the existence of this file to gracefully shutdown
 cfg_shutdown_file <- "./server_data/STOP"
 

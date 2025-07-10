@@ -21,7 +21,7 @@
 ^inst/shiny-app/test_coverage_.*\.html$
 ^user_data$
 ^db\.sqlite$
-^\.Rhistory$
+^test_package_coverage\.R$
 ^coverage_.*\.html$
 ^coverage_.*\.csv$
 ^simple_coverage_.*\.html$

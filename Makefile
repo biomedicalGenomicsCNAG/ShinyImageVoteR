@@ -65,11 +65,11 @@ coverage: install
 	@echo "Generating test coverage report..."
 	$(RSCRIPT) -e "library(covr); library($(PACKAGE_NAME)); cov <- package_coverage(); print(cov); covr::report(cov)"
 
-# Setup external user_data directory
+# Setup external user_data directory and database
 .PHONY: setup-userdata
-setup-userdata:
-	@echo "Setting up external user_data directory..."
-	$(RSCRIPT) -e "library($(PACKAGE_NAME)); init_user_data_structure(); cat('User data directory setup complete\n')"
+setup-userdata: install
+	@echo "Setting up external user_data directory and database..."
+	$(RSCRIPT) -e "library($(PACKAGE_NAME)); init_external_environment(); cat('External environment setup complete\n')"
 
 # Run the Shiny application with external user_data
 .PHONY: run
