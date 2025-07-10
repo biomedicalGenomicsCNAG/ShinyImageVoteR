@@ -77,10 +77,9 @@ cfg_credentials_df <- data.frame(
   stringsAsFactors = FALSE
 )
 
-cfg_selected_user_id <- "Test"
-
 cfg_cookie_expiry <- 1 # Days until session expires
 
+cfg_selected_user_id <- "Test"
 
 ## Voting UI
 cfg_radioBtns_label <- "Is the somatic mutation above correct? [num keys 1-4]"
