@@ -126,9 +126,21 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
   
   cat("Creating new database:", db_path, "\n")
   
-  # Get the app directory to access the data file
+  # Look for data file in config/annotation_screenshots_paths first
+  config_data_file <- file.path(base_dir, "config", "annotation_screenshots_paths", "uro003_paths_mock.txt")
+  
+  # If not found externally, try the package location as fallback
   app_dir <- get_app_dir()
-  data_file <- file.path(app_dir, "screenshots", "uro003_paths_mock.txt")
+  package_data_file <- file.path(app_dir, "screenshots", "uro003_paths_mock.txt")
+  
+  data_file <- NULL
+  if (file.exists(config_data_file)) {
+    data_file <- config_data_file
+    cat("Using external data file:", data_file, "\n")
+  } else if (file.exists(package_data_file)) {
+    data_file <- package_data_file
+    cat("Using package data file:", data_file, "\n")
+  }
   
   # Check if data file exists
   if (!file.exists(data_file)) {
@@ -373,6 +385,30 @@ init_external_config <- function(base_dir = getwd()) {
   # Write the modified config
   writeLines(config_content, config_file)
   cat("Configuration file created at:", config_file, "\n")
+  
+  # Copy annotation_screenshots_paths directory if it doesn't exist
+  annotation_dir <- file.path(config_dir, "annotation_screenshots_paths")
+  if (!dir.exists(annotation_dir)) {
+    # Get the template annotation directory from the package
+    package_annotation_dir <- system.file("shiny-app", "config", "annotation_screenshots_paths", package = "B1MGVariantVoting")
+    
+    if (package_annotation_dir != "" && dir.exists(package_annotation_dir)) {
+      # Copy the entire directory
+      file.copy(package_annotation_dir, config_dir, recursive = TRUE)
+      cat("Copied annotation_screenshots_paths directory to:", annotation_dir, "\n")
+    } else {
+      # Create the directory and copy just the uro003 file if it exists
+      dir.create(annotation_dir, recursive = TRUE, showWarnings = FALSE)
+      
+      # Try to copy the uro003 file from the package screenshots directory
+      package_uro003 <- system.file("shiny-app", "screenshots", "uro003_paths_mock.txt", package = "B1MGVariantVoting")
+      if (package_uro003 != "") {
+        file.copy(package_uro003, file.path(annotation_dir, "uro003_paths_mock.txt"))
+        cat("Copied uro003_paths_mock.txt to:", file.path(annotation_dir, "uro003_paths_mock.txt"), "\n")
+      }
+    }
+  }
+  
   cat("You can edit this file to customize the application settings.\n")
   
   # Set environment variable

@@ -38,3 +38,4 @@
 ^inst/shiny-app/www/images$
 ^test_package_coverage\.R$
 ^config$
+^annotation_screenshots_paths$

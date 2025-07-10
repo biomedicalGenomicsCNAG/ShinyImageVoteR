@@ -112,6 +112,11 @@ server <- function(input, output, session) {
     session$userData$votingInstitute <- voting_institute
 
     user_dir <- file.path(cfg_user_data_dir, voting_institute, user_id)
+
+    print(paste("User directory:", user_dir))
+    print(paste("User ID:", user_id)) 
+    
+
     session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
     session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
 
