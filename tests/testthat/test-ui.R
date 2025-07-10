@@ -1,9 +1,13 @@
 library(testthat)
 library(shiny)
 library(shinytest2)
+library(B1MGVariantVoting)
 
-# Source the necessary files
-source("../../config.R")
+# locate the directory where inst/shiny-app was installed
+app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+
+# source necessary files
+source(file.path(app_dir, "config.R"))
 
 # Create temporary www directory and hotkeys.js file for testing
 temp_www_dir <- file.path(getwd(), "www")

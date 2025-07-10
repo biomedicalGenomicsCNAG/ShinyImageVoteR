@@ -3,9 +3,13 @@ library(shiny)
 library(DBI)
 library(RSQLite)
 library(pool)
+library(B1MGVariantVoting)
 
-# Source the necessary files
-source("../../config.R")
+# locate the directory where inst/shiny-app was installed
+app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+
+# source necessary files
+source(file.path(app_dir, "config.R"))
 
 # Mock database setup for testing
 create_mock_db <- function() {

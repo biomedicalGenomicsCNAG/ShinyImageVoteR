@@ -1,3 +1,6 @@
+library(testthat)
+library(B1MGVariantVoting)
+
 test_that("Package functions work correctly", {
   # Test server utilities
   expect_true(exists("schedule_logout_update"))

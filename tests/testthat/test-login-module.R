@@ -5,10 +5,14 @@ library(RSQLite)
 library(pool)
 library(tibble)
 library(lubridate)
+library(B1MGVariantVoting)
 
-# Source the necessary files
-source("../../config.R")
-source("../../modules/login_module.R")
+# locate the directory where inst/shiny-app was installed
+app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+
+# source necessary files
+source(file.path(app_dir, "config.R"))
+source(file.path(app_dir, "modules", "login_module.R"))
 
 # Helper function to create a test database
 create_test_db <- function() {

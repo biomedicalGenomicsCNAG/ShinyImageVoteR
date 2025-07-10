@@ -1,9 +1,13 @@
 library(testthat)
 library(shiny)
+library(B1MGVariantVoting)
 
-# Source the necessary files
-source("../../config.R")
-source("../../modules/leaderboard_module.R")
+# locate the directory where inst/shiny-app was installed
+app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+
+# source necessary files
+source(file.path(app_dir, "config.R"))
+source(file.path(app_dir, "modules", "leaderboard_module.R"))
 
 test_that("Leaderboard module UI renders correctly", {
   ui_result <- leaderboardUI("test")

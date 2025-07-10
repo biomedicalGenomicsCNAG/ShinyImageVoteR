@@ -4,10 +4,14 @@ library(DBI)
 library(RSQLite)
 library(pool)
 library(shinytest2)
+library(B1MGVariantVoting)
 
-# Source the necessary files
-source("../../config.R")
-source("../../modules/login_module.R")
+# locate the directory where inst/shiny-app was installed
+app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+
+# source necessary files
+source(file.path(app_dir, "config.R"))
+source(file.path(app_dir, "modules", "login_module.R"))
 
 test_that("Configuration values are loaded correctly", {
   expect_true(exists("cfg_shutdown_file"))

@@ -1,9 +1,13 @@
 library(testthat)
 library(shiny)
+library(B1MGVariantVoting)
 
-# Source config and module
-source("../../config.R")
-source("../../modules/voting_module.R")
+# locate the directory where inst/shiny-app was installed
+app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+
+# source config and module
+source(file.path(app_dir, "config.R"))
+source(file.path(app_dir, "modules", "voting_module.R"))
 
 
 test_that("color_seq colors nucleotides correctly", {
