@@ -31,7 +31,7 @@ leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
     counts <- eventReactive(c(login_trigger(), input$refresh_counts, tab_change_trigger()), {
       req(login_trigger())
       counts_list <- lapply(cfg_institute_ids, function(institute) {
-        institutes_dir <- file.path(cfg_user_data_dir, institute)
+        institutes_dir <- file.path(cfg_base_dir,cfg_user_data_dir, institute)
         if (!dir.exists(institutes_dir)) {
           return(data.frame(institute = institute, users = 0, total_images_voted = 0))
         }

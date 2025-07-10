@@ -2,18 +2,19 @@
 # This is the external configuration file that overrides package defaults
 
 ## Directory paths (will be set by package functions)
-cfg_user_data_dir <- "../user_data"
-cfg_server_data_dir <- "../server_data" 
-cfg_images_dir <- "../images"
+cfg_base_dir <- getwd() # Base directory for the app
+cfg_user_data_dir <- "user_data"
+cfg_server_data_dir <- "server_data" 
+cfg_images_dir <- "images"
 
 ## Database configuration
-cfg_sqlite_file <- "../db.sqlite"
+cfg_sqlite_file <- "db.sqlite"
 
 ## Application configuration
 cfg_application_title <- "B1MG Somatic Mutation Voting"
 
 ## External shutdown configuration
-cfg_shutdown_file <- file.path(cfg_server_data_dir, "STOP")
+cfg_shutdown_file <- "STOP"
 
 ## Database configuration
 ### file paths

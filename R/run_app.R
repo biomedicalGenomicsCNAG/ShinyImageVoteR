@@ -29,7 +29,7 @@ run_voting_app <- function(host = "127.0.0.1", port = NULL, launch.browser = TRU
   if (is.null(user_data_dir)) {
     user_data_dir <- get_user_data_dir()
   }
-  
+
   # Initialize the user_data structure
   init_user_data_structure(base_dir = dirname(user_data_dir))
   

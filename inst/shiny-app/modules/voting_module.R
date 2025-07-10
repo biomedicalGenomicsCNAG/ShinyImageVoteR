@@ -230,12 +230,18 @@ votingServer <- function(id, login_trigger) {
       req(login_trigger())
       user_annotations_file <- session$userData$userAnnotationsFile
 
+      print("user_annotations_file:")
+      print(user_annotations_file)
+
       annotations_df <- read.table(
         user_annotations_file,
         header = TRUE,
         sep = "\t",
         stringsAsFactors = FALSE
       )
+
+      print("Annotations DataFrame:")
+      print(annotations_df)
 
       # actionButton "Back" or Go back one page in browser pressed
       print("Checking if the user pressed the Back button or went back in the browser...")

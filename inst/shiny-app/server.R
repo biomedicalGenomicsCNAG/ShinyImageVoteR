@@ -20,32 +20,6 @@ source("modules/user_stats_module.R")
 source("modules/about_module.R")
 source("server_utils.R")
 
-# pending_logout_tasks <- new.env(parent = emptyenv())
-
-# cancel_pending_logout <- function(sessionid) {
-#   if (exists(sessionid, envir = pending_logout_tasks)) {
-#     handle <- get(sessionid, envir = pending_logout_tasks)
-#     later::cancel(handle)
-#     rm(list = sessionid, envir = pending_logout_tasks)
-#   }
-# }
-
-# schedule_logout_update <- function(sessionid, callback, delay = 5) {
-#   cancel_pending_logout(sessionid)
-#   handle <- later::later(function() {
-#     callback()
-#     rm(list = sessionid, envir = pending_logout_tasks)
-#   }, delay)
-#   assign(sessionid, handle, envir = pending_logout_tasks)
-# }
-
-# create folders for all institutes
-lapply(cfg_institute_ids, function(institute) {
-  # replace spaces with underscores in institute names
-  institute <- gsub(" ", "_", institute)
-  dir.create(file.path(cfg_user_data_dir, institute), recursive = TRUE, showWarnings = FALSE)
-})
-
 server <- function(input, output, session) {
 
   # Tracks the url parameters be they manually set in the URL or
@@ -111,7 +85,11 @@ server <- function(input, output, session) {
     session$userData$userId <- user_id
     session$userData$votingInstitute <- voting_institute
 
-    user_dir <- file.path(cfg_user_data_dir, voting_institute, user_id)
+    user_dir <- file.path(
+      cfg_base_dir,
+      cfg_user_data_dir, 
+      voting_institute, user_id
+    )
 
     print(paste("User directory:", user_dir))
     print(paste("User ID:", user_id)) 
@@ -124,6 +102,7 @@ server <- function(input, output, session) {
     if (!dir.exists(user_dir)) {
       cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
       dir.create(user_dir, recursive = TRUE)
+      print(normalizePath(user_dir))  # Print the normalized path for debugging
     } else {
       cat(sprintf("Directory for user: %s already exists at %s\n", user_id, user_dir))
     }
@@ -265,11 +244,12 @@ server <- function(input, output, session) {
   # every 2 seconds, check for external shutdown file
   observe({
     invalidateLater(2000, session)
-    print("Checking for external shutdown request…")
-    print(cfg_shutdown_file)
-    if (file.exists(cfg_shutdown_file)) {
+    # print("Checking for external shutdown request…")
+    shutdown_file <- file.path(cfg_base_dir, cfg_server_data_dir, cfg_shutdown_file)
+    print(paste("Shutdown file path:", shutdown_file))
+    if (file.exists(shutdown_file)) {
       print("External shutdown request received.")
-      file.remove(cfg_shutdown_file)
+      file.remove(shutdown_file)
       showNotification("External shutdown request received…", type="warning")
       stopApp()
     }

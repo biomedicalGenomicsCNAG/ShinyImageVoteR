@@ -544,6 +544,8 @@ load_config <- function(config_env = globalenv(), app_dir = NULL) {
   
   # Check for external config via environment variable
   external_config_path <- Sys.getenv("B1MG_CONFIG_PATH", unset = NA)
+  print("External config path from environment variable:")
+  print(external_config_path)
   
   config_loaded <- FALSE
   
