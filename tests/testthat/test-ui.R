@@ -8,6 +8,12 @@ app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 
 # source necessary files
 source(file.path(app_dir, "config.R"))
+source(file.path(app_dir, "modules", "about_module.R"))
+source(file.path(app_dir, "modules", "login_module.R"))
+source(file.path(app_dir, "modules", "voting_module.R"))
+source(file.path(app_dir, "modules", "leaderboard_module.R"))
+source(file.path(app_dir, "modules", "user_stats_module.R"))
+source(file.path(app_dir, "ui.R"))
 
 # Create temporary www directory and hotkeys.js file for testing
 temp_www_dir <- file.path(getwd(), "www")
@@ -25,14 +31,6 @@ writeLines(hotkeys_content, file.path(temp_www_dir, "hotkeys.js"))
 # Create a minimal faq.md file for testing
 faq_content <- "# Frequently Asked Questions\n\nThis is a mock FAQ file for testing purposes.\n\n## Question 1\nAnswer 1\n\n## Question 2\nAnswer 2"
 writeLines(faq_content, file.path(temp_docs_dir, "faq.md"))
-
-source("../../modules/login_module.R")
-source("../../modules/voting_module.R")
-source("../../modules/leaderboard_module.R")
-source("../../modules/user_stats_module.R")
-source("../../modules/about_module.R")
-
-source("../../ui.R")
 
 test_that("Main UI structure is correct", {
   # Test that UI function exists and returns a valid UI
