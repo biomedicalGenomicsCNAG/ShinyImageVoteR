@@ -56,8 +56,8 @@ leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
       })
       counts_df <- do.call(rbind, counts_list)
       counts_df <- counts_df %>%
-        mutate(institute = factor(institute, levels = cfg_institute_ids)) %>%
-        arrange(desc(total_images_voted))
+        dplyr::mutate(institute = factor(institute, levels = cfg_institute_ids)) %>%
+        dplyr::arrange(desc(total_images_voted))
       counts_df
     })
 
