@@ -62,8 +62,8 @@ test: install
 # Generate test coverage
 .PHONY: coverage
 cov: install
-	@echo "Generating test coverage report..."
-	$(RSCRIPT) -e 'covr::package_coverage(path=".", type="tests") -> cov; covr::report(cov)'
+	@echo "Generating test coverage report at $(CURDIR)/coverage.html…"
+	@$(RSCRIPT) scripts/coverage.R
 
 # Setup external environment (user_data, database, and config)
 .PHONY: setup-userdata
