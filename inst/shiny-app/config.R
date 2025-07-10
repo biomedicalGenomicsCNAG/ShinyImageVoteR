@@ -1,124 +1,21 @@
 # Configuration file for the variant voting app
+# Package default configuration - used when no external config is found
 
-# Check if externa# Check if external server_data directory is set
-external_server_data_dir <- Sys.getenv("B1MG_SERVER_DATA_DIR", unset = NA)
+## Directory paths (package defaults for development/testing)
+cfg_user_data_dir <- "./user_data"
+cfg_server_data_dir <- "./server_data" 
+cfg_images_dir <- "./images"
 
-if (!is.na(external_server_data_dir) && dir.exists(external_server_data_dir)) {
-  # Use external server_data directory
-  cfg_server_data_dir <- external_server_data_dir
-  message("Using external server_data directory: ", cfg_server_data_dir)
-} else {
-  # Fallback to local server_data directory (for development)
-  cfg_server_data_dir <- "./server_data"
-  if (!dir.exists(cfg_server_data_dir)) {
-    dir.create(cfg_server_data_dir, recursive = TRUE, showWarnings = FALSE)
-  }
-  message("Using local server_data directory: ", cfg_server_data_dir)
-}
+## Database configuration
+cfg_sqlite_file <- "./db.sqlite"
 
-# Check if external images directory is set
-external_images_dir <- Sys.getenv("B1MG_IMAGES_DIR", unset = NA)
+## Application configuration
+cfg_application_title <- "B1MG Somatic Mutation Voting"
 
-if (!is.na(external_images_dir) && dir.exists(external_images_dir)) {
-  # Use external images directory
-  cfg_images_dir <- external_images_dir
-  message("Using external images directory: ", cfg_images_dir)
-} else {
-  # Fallback to local images directory (for development)
-  cfg_images_dir <- "./images"
-  if (!dir.exists(cfg_images_dir)) {
-    dir.create(cfg_images_dir, recursive = TRUE, showWarnings = FALSE)
-  }
-  message("Using local images directory: ", cfg_images_dir)
-}
-
-# the application listens to the existence of this file to gracefully shutdown
-cfg_shutdown_file <- file.path(cfg_server_data_dir, "STOP")
-external_config_path <- Sys.getenv("B1MG_CONFIG_PATH", unset = NA)
-
-if (!is.na(external_config_path) && file.exists(external_config_path)) {
-  # Source external configuration if it exists
-  cat("Loading external configuration from:", external_config_path, "\n")
-  source(external_config_path, local = TRUE)
-  return() # Exit early to prevent loading this config
-} else {
-  # Try to find config in parent directory structure
-  possible_config_paths <- c(
-    "../../config/config.R",  # From inst/shiny-app to root/config
-    "../../../config/config.R", # Alternative path
-    "./config/config.R"       # Local config
-  )
-  
-  config_found <- FALSE
-  for (config_path in possible_config_paths) {
-    if (file.exists(config_path)) {
-      cat("Loading configuration from:", config_path, "\n")
-      source(config_path, local = TRUE)
-      config_found <- TRUE
-      break
-    }
-  }
-  
-  if (!config_found) {
-    cat("Using package configuration\n")
-  } else {
-    return() # Exit early if external config was loaded
-  }
-}
-
-# Check if external user_data directory is set
-external_user_data_dir <- Sys.getenv("B1MG_USER_DATA_DIR", unset = NA)
-
-if (!is.na(external_user_data_dir) && dir.exists(external_user_data_dir)) {
-  # Use external user_data directory
-  cfg_user_data_dir <- external_user_data_dir
-  message("Using external user_data directory: ", cfg_user_data_dir)
-} else {
-  # Fallback to local user_data directory (for development)
-  cfg_user_data_dir <- "./user_data"
-  if (!dir.exists(cfg_user_data_dir)) {
-    dir.create(cfg_user_data_dir, recursive = TRUE, showWarnings = FALSE)
-  }
-  message("Using local user_data directory: ", cfg_user_data_dir)
-}
-
-# Check if external database path is set
-external_db_path <- Sys.getenv("B1MG_DATABASE_PATH", unset = NA)
-
-if (!is.na(external_db_path) && file.exists(external_db_path)) {
-  # Use external database
-  cfg_sqlite_file <- external_db_path
-  message("Using external database: ", cfg_sqlite_file)
-} else {
-  # Fallback to local database (for development)
-  cfg_sqlite_file <- "./db.sqlite"
-  if (!file.exists(cfg_sqlite_file)) {
-    message("Warning: Database file not found at ", cfg_sqlite_file)
-  }
-  message("Using local database: ", cfg_sqlite_file)
-}
-
-# Check if external server_data directory is set
-external_server_data_dir <- Sys.getenv("B1MG_SERVER_DATA_DIR", unset = NA)
-
-if (!is.na(external_server_data_dir) && dir.exists(external_server_data_dir)) {
-  # Use external server_data directory
-  cfg_server_data_dir <- external_server_data_dir
-  message("Using external server_data directory: ", cfg_server_data_dir)
-} else {
-  # Fallback to local server_data directory (for development)
-  cfg_server_data_dir <- "./server_data"
-  if (!dir.exists(cfg_server_data_dir)) {
-    dir.create(cfg_server_data_dir, recursive = TRUE, showWarnings = FALSE)
-  }
-  message("Using local server_data directory: ", cfg_server_data_dir)
-}
-
-# the application listenes to the existence of this file to gracefully shutdown
+## External shutdown configuration
 cfg_shutdown_file <- file.path(cfg_server_data_dir, "STOP")
 
 ## Database configuration
-
 ### file paths
 cfg_to_be_voted_images_file <- "./screenshots/uro003_paths_mock.txt"
 
@@ -180,14 +77,12 @@ cfg_credentials_df <- data.frame(
   stringsAsFactors = FALSE
 )
 
-cfg_cookie_expiry <- 1 # Days until session expires
-
 cfg_selected_user_id <- "Test"
 
+cfg_cookie_expiry <- 1 # Days until session expires
+
+
 ## Voting UI
-
-cfg_application_title <- "B1MG Somatic Mutation Voting"
-
 cfg_radioBtns_label <- "Is the somatic mutation above correct? [num keys 1-4]"
 
 radio_options2val_map <- c(
@@ -203,7 +98,6 @@ cfg_radio_options2val_map <- setNames(
 )
 
 ### Options when the radio button I'm not sure [4] is selected
-
 cfg_checkboxes_label <- "Please select the reason for your uncertainty [keyboard keys a-h]"
 
 observations_dict <- c(

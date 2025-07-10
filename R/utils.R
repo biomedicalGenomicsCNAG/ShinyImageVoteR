@@ -525,3 +525,61 @@ This directory is automatically created when the application starts.
   
   return(server_data_dir)
 }
+
+#' Load configuration
+#'
+#' Loads configuration from external config file if available, otherwise loads
+#' the package default configuration.
+#'
+#' @param config_env Environment to load configuration into. Defaults to globalenv().
+#' @param app_dir Character. Path to the shiny app directory. If NULL, will try to find it.
+#' @return Environment containing the loaded configuration
+#' @export
+load_config <- function(config_env = globalenv(), app_dir = NULL) {
+  
+  # Try to find app directory if not provided
+  if (is.null(app_dir)) {
+    app_dir <- get_app_dir()
+  }
+  
+  # Check for external config via environment variable
+  external_config_path <- Sys.getenv("B1MG_CONFIG_PATH", unset = NA)
+  
+  config_loaded <- FALSE
+  
+  if (!is.na(external_config_path) && file.exists(external_config_path)) {
+    # Load external configuration
+    cat("Loading external configuration from:", external_config_path, "\n")
+    source(external_config_path, local = config_env)
+    config_loaded <- TRUE
+  } else {
+    # Try to find config in standard locations relative to working directory
+    possible_config_paths <- c(
+      "config/config.R",           # From working directory
+      "../config/config.R",        # One level up
+      "../../config/config.R"      # Two levels up (e.g., from inst/shiny-app)
+    )
+    
+    for (config_path in possible_config_paths) {
+      if (file.exists(config_path)) {
+        cat("Loading external configuration from:", normalizePath(config_path), "\n")
+        source(config_path, local = config_env)
+        config_loaded <- TRUE
+        break
+      }
+    }
+  }
+  
+  if (!config_loaded) {
+    # Fallback to package default configuration
+    package_config_path <- file.path(app_dir, "config.R")
+    if (file.exists(package_config_path)) {
+      cat("Loading package default configuration from:", package_config_path, "\n")
+      source(package_config_path, local = config_env)
+    } else {
+      stop("No configuration file found. Expected at: ", package_config_path)
+    }
+  }
+  
+  return(config_env)
+}

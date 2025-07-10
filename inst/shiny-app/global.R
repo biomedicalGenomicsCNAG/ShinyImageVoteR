@@ -1,7 +1,9 @@
 library(pool)
 library(RSQLite)
 
-source("config.R")
+# Load configuration using the package function
+# This will load external config if available, otherwise package defaults
+B1MGVariantVoting::load_config()
 
 source("modules/login_module.R")
 source("modules/voting_module.R")
