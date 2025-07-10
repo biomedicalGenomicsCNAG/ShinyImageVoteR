@@ -9,7 +9,7 @@ library(later)
 
 # Source the necessary files
 source("../../config.R")
-source("../../server_utils.R")
+source("../../server_utils.R", local = TRUE)
 
 # Helper function to create test database pool
 create_test_pool <- function() {

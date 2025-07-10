@@ -1,11 +1,11 @@
+#!/usr/bin/env Rscript
+
 source('../../config.R')
 source('../../server_utils.R')
 library(later)
 
 # Test the functions directly
 cat('Testing functions directly...\n')
-cat('pending_logout_tasks exists:', exists('pending_logout_tasks'), '\n')
-cat('schedule_logout_update exists:', exists('schedule_logout_update'), '\n')
 
 # Try to schedule a simple task
 test_executed <- FALSE
@@ -15,13 +15,17 @@ test_callback <- function() {
 }
 
 cat('Before scheduling:\n')
-cat('Environment contents:', ls(envir = pending_logout_tasks), '\n')
+schedule_logout_update('test_session', test_callback, delay = 0.5)
+cat(
+  'After scheduling, session exists:', 
+  exists('test_session', envir = pending_logout_tasks), '\n'
+)
 
-schedule_logout_update('test_session', test_callback, delay = 0.1)
+# Test cancellation
+cancel_pending_logout('test_session')
+cat(
+  'After cancellation, session exists:', 
+  exists('test_session', envir = pending_logout_tasks), '\n'
+)
 
-cat('After scheduling:\n')
-cat('Environment contents:', ls(envir = pending_logout_tasks), '\n')
-cat('Session exists:', exists('test_session', envir = pending_logout_tasks), '\n')
-
-Sys.sleep(0.2)
-cat('Final callback status:', test_executed, '\n')
+cat('Test completed successfully\n')

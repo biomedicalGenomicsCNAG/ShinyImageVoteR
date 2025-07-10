@@ -1,5 +1,9 @@
 # Utility functions for scheduling logout updates
-pending_logout_tasks <- new.env(parent = emptyenv())
+# pending_logout_tasks <- new.env(parent = emptyenv())
+
+if (!exists("pending_logout_tasks", inherits = FALSE)) {
+  pending_logout_tasks <- new.env(parent = emptyenv())
+}
 
 schedule_logout_update <- function(sessionid, callback, delay = 5) {
   cancel_pending_logout(sessionid)
