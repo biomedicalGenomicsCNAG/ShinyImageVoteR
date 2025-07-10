@@ -4,7 +4,14 @@
 \alias{run_voting_app}
 \title{Run B1MG Variant Voting Shiny Application}
 \usage{
-run_voting_app(host = "127.0.0.1", port = NULL, launch.browser = TRUE, ...)
+run_voting_app(
+  host = "127.0.0.1",
+  port = NULL,
+  launch.browser = TRUE,
+  user_data_dir = NULL,
+  database_path = NULL,
+  ...
+)
 }
 \arguments{
 \item{host}{Character. Host to run the application on. Default is "127.0.0.1"}
@@ -12,6 +19,10 @@ run_voting_app(host = "127.0.0.1", port = NULL, launch.browser = TRUE, ...)
 \item{port}{Integer. Port to run the application on. Default is NULL (random port)}
 
 \item{launch.browser}{Logical. Should the browser be launched? Default is TRUE}
+
+\item{user_data_dir}{Character. Path to the user_data directory. If NULL, uses get_user_data_dir()}
+
+\item{database_path}{Character. Path to the database file. If NULL, creates/uses db.sqlite in current directory}
 
 \item{...}{Additional arguments passed to shiny::runApp()}
 }
@@ -24,5 +35,7 @@ This function launches the B1MG Variant Voting Shiny application.
 \examples{
 \dontrun{
 run_voting_app()
+run_voting_app(user_data_dir = "/path/to/my/user_data")
+run_voting_app(database_path = "/path/to/my/database.sqlite")
 }
 }
