@@ -1,5 +1,13 @@
 library(shinyjs)
 
+color_seq <- function(seq, nt2color_map) {
+  seq %>%
+    strsplit(split = "") %>%
+    unlist() %>%
+    sapply(function(x) sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)) %>%
+    paste(collapse = "")
+}
+
 votingUI <- function(id) {
   ns <- NS(id)
     fluidPage(
@@ -51,18 +59,6 @@ votingUI <- function(id) {
 }
 
 votingServer <- function(id, login_trigger) {
-  
-  color_seq <- function(seq, nt2color_map) {
-    print("Coloring sequence:")
-    print(seq)
-
-    colored_seq <- seq %>%
-      strsplit(., split = "") %>%
-      unlist() %>%
-      sapply(., function(x) sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)) %>%
-      paste(collapse = "")
-    colored_seq
-  }
 
   moduleServer(id, function(input, output, session) {
 

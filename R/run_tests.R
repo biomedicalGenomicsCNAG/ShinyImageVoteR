@@ -57,4 +57,12 @@ cat("\n", paste(rep("=", 50), collapse = ""))
 cat("\nTest Summary:\n")
 print(test_results)
 
+if (requireNamespace("covr", quietly = TRUE)) {
+  cat("\nCalculating coverage...\n")
+  cov <- covr::package_coverage()
+  print(cov)
+} else {
+  cat("\nPackage 'covr' not installed; skipping coverage.\n")
+}
+
 cat("\nTests completed!\n")
