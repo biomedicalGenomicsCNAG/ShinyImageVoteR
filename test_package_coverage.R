@@ -31,7 +31,6 @@ tryCatch({
 
 # Test utility functions
 tryCatch({
-  stopifnot(exists("create_test_db_pool"))
   stopifnot(exists("generate_user_seed"))
   cat("✓ Utility functions available\n")
 }, error = function(e) {

@@ -14,24 +14,6 @@ app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 source(file.path(app_dir, "config.R"))
 source(file.path(app_dir, "modules", "login_module.R"))
 
-# Helper function to create a test database
-create_test_db <- function() {
-  db_file <- tempfile(fileext = ".sqlite")
-  conn <- dbConnect(RSQLite::SQLite(), db_file)
-  
-  # Create sessionids table
-  dbExecute(conn, "
-    CREATE TABLE sessionids (
-      user TEXT,
-      sessionid TEXT,
-      login_time TEXT,
-      logout_time TEXT
-    )
-  ")
-  
-  return(list(conn = conn, file = db_file))
-}
-
 test_that("Login UI renders correctly", {
   ui <- loginUI("test")
   expect_s3_class(ui, "shiny.tag")
@@ -45,8 +27,8 @@ test_that("Login UI renders correctly", {
 test_that("Database session management functions work", {
   
   # Create test database
-  test_db <- create_test_db()
-  conn <- test_db$conn
+  test_db <- create_mock_db()
+  conn <- test_db$pool
   
   # Test session ID insertion
   testServer(loginServer, args = list(db_conn = conn), {
@@ -73,17 +55,15 @@ test_that("Database session management functions work", {
     expect_false(is.na(sessions$login_time[1]))
     expect_true(is.na(sessions$logout_time[1]))
   })
-  
-  # Clean up
-  dbDisconnect(conn)
+  poolClose(conn)
   unlink(test_db$file)
 })
 
 test_that("Logout time update works correctly", {
   
   # Create test database
-  test_db <- create_test_db()
-  conn <- test_db$conn
+  test_db <- create_mock_db()
+  conn <- test_db$pool
   
   # Insert a test session
   sessionid <- "test_session_456"
@@ -102,15 +82,15 @@ test_that("Logout time update works correctly", {
   })
   
   # Clean up
-  dbDisconnect(conn)
+  poolClose(conn)
   unlink(test_db$file)
 })
 
 test_that("Session filtering works correctly", {
   
   # Create test database
-  test_db <- create_test_db()
-  conn <- test_db$conn
+  test_db <- create_mock_db()
+  conn <- test_db$pool
   
   # Insert test sessions with different states
   current_time <- now()
@@ -142,14 +122,14 @@ test_that("Session filtering works correctly", {
   })
   
   # Clean up
-  dbDisconnect(conn)
+  poolClose(conn)
   unlink(test_db$file)
 })
 
 test_that("Login data reactive works correctly", {
   # Create test database
-  test_db <- create_test_db()
-  conn <- test_db$conn
+  test_db <- create_mock_db()
+  conn <- test_db$pool
   
   testServer(loginServer, args = list(db_conn = conn), {
     # Set institute input
@@ -162,6 +142,6 @@ test_that("Login data reactive works correctly", {
   })
   
   # Clean up
-  dbDisconnect(conn)
+  poolClose(conn)
   unlink(test_db$file)
 })

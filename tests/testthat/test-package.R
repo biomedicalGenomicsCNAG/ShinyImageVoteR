@@ -11,7 +11,6 @@ test_that("Package functions work correctly", {
   expect_true("cancel_pending_logout" %in% ls("package:B1MGVariantVoting"))
   
   # Test utility functions
-  expect_true(exists("create_test_db_pool"))
   expect_true(exists("generate_user_seed"))
   
   # Test app functions
@@ -21,7 +20,7 @@ test_that("Package functions work correctly", {
 
 test_that("Database utilities work", {
   # Test create_test_db_pool
-  test_db <- create_test_db_pool()
+  test_db <- create_mock_db()
   expect_true(is.list(test_db))
   expect_true("pool" %in% names(test_db))
   expect_true("file" %in% names(test_db))

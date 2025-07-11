@@ -11,44 +11,6 @@ app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 # source necessary files
 source(file.path(app_dir, "config.R"))
 
-# Mock database setup for testing
-create_mock_db <- function() {
-  db_file <- tempfile(fileext = ".sqlite")
-  pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
-  
-  # Create annotations table
-  dbExecute(pool, "
-    CREATE TABLE annotations (
-      coordinates TEXT PRIMARY KEY,
-      REF TEXT,
-      ALT TEXT,
-      variant TEXT,
-      path TEXT,
-      vote_count_correct INTEGER DEFAULT 0,
-      vote_count_no_variant INTEGER DEFAULT 0,
-      vote_count_different_variant INTEGER DEFAULT 0,
-      vote_count_not_sure INTEGER DEFAULT 0,
-      vote_count_total INTEGER DEFAULT 0
-    )
-  ")
-  
-  # Insert test data
-  test_mutations <- list(
-    list("chr1:1000", "A", "T", "SNV", "/test/path1.png"),
-    list("chr2:2000", "G", "C", "SNV", "/test/path2.png"),
-    list("chr3:3000", "AT", "A", "DEL", "/test/path3.png")
-  )
-  
-  for (mutation in test_mutations) {
-    dbExecute(pool, "
-      INSERT INTO annotations (coordinates, REF, ALT, variant, path)
-      VALUES (?, ?, ?, ?, ?)
-    ", params = mutation)
-  }
-  
-  return(list(pool = pool, file = db_file))
-}
-
 test_that("Database connection and queries work", {
   # Create mock database
   mock_db <- create_mock_db()

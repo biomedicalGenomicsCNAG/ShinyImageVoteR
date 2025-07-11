@@ -70,6 +70,16 @@ votingServer <- function(id, login_trigger) {
       parseQueryString(session$clientData$url_search)
     })
 
+    # Tracks the trigger source of the get_mutation function
+    # could be "login", "next", "back", "manual url params change"
+    get_mutation_trigger_source <- reactiveVal(NULL)
+
+    # Holds the data of the currently displayed mutation
+    current_mutation <- reactiveVal(NULL)
+
+    # Track when the current voting image was rendered
+    vote_start_time <- reactiveVal(Sys.time())
+
     observeEvent(input$nextBtn, {
       req(login_trigger())
       get_mutation_trigger_source("next")

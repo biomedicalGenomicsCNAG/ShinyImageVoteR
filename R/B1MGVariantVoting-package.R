@@ -9,7 +9,6 @@
 #'   \item{\code{run_voting_app()}}{Launch the main Shiny application}
 #'   \item{\code{schedule_logout_update()}}{Schedule logout updates with delay}
 #'   \item{\code{cancel_pending_logout()}}{Cancel pending logout updates}
-#'   \item{\code{create_test_db_pool()}}{Create test database for testing}
 #' }
 #'
 #' @docType package

@@ -12,7 +12,7 @@ test_that("Server utility functions work", {
 
 test_that("Database utility functions work", {
   # Test database pool creation
-  test_db <- create_test_db_pool()
+  test_db <- create_mock_db()
   expect_true(is.list(test_db))
   expect_true("pool" %in% names(test_db))
   expect_true("file" %in% names(test_db))
