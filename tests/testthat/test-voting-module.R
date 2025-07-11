@@ -70,21 +70,6 @@ test_that("hotkey configuration is consistent", {
 # Test: module can be invoked
 test_that("votingServer can be called within testServer", {
   env <- setup_voting_env(c("chr1:100"))
-  mock_db <- create_mock_db()
-  on.exit({
-    unlink(env$data_dir, recursive = TRUE)
-    poolClose(mock_db$pool)
-    unlink(mock_db$file)
-  }, add = TRUE)
-  
-  # Set up global environment that the module expects
-  db_pool <<- mock_db$pool
-  vote_start_time <<- reactiveVal(Sys.time())
-  on.exit({
-    rm(db_pool, envir = .GlobalEnv)
-    rm(vote_start_time, envir = .GlobalEnv)
-  }, add = TRUE)
-  
   testServer(
     votingServer,
     args = make_args(env$annotations_file),
@@ -102,21 +87,6 @@ test_that("votingServer can be called within testServer", {
 
 test_that("votingServer handles different agreement types", {
   env <- setup_voting_env(c("chr1:100"))
-  mock_db <- create_mock_db()
-  on.exit({
-    unlink(env$data_dir, recursive = TRUE)
-    poolClose(mock_db$pool)
-    unlink(mock_db$file)
-  }, add = TRUE)
-  
-  # Set up global environment that the module expects
-  db_pool <<- mock_db$pool
-  vote_start_time <<- reactiveVal(Sys.time())
-  on.exit({
-    rm(db_pool, envir = .GlobalEnv)
-    rm(vote_start_time, envir = .GlobalEnv)
-  }, add = TRUE)
-  
   testServer(
     votingServer,
     args = make_args(env$annotations_file),
@@ -146,21 +116,6 @@ test_that("votingServer handles different agreement types", {
 
 test_that("votingServer handles comment and observation inputs", {
   env <- setup_voting_env(c("chr1:100"))
-  mock_db <- create_mock_db()
-  on.exit({
-    unlink(env$data_dir, recursive = TRUE)
-    poolClose(mock_db$pool)
-    unlink(mock_db$file)
-  }, add = TRUE)
-  
-  # Set up global environment that the module expects
-  db_pool <<- mock_db$pool
-  vote_start_time <<- reactiveVal(Sys.time())
-  on.exit({
-    rm(db_pool, envir = .GlobalEnv)
-    rm(vote_start_time, envir = .GlobalEnv)
-  }, add = TRUE)
-  
   testServer(
     votingServer,
     args = make_args(env$annotations_file),
@@ -184,8 +139,6 @@ test_that("votingServer handles comment and observation inputs", {
 # Test: module reacts to nextBtn click
 test_that("votingServer responds to nextBtn click", {
   env <- setup_voting_env(c("chr1:100"))
-  on.exit(unlink(env$data_dir, recursive = TRUE), add = TRUE)
-
   testServer(
     votingServer,
     args = make_args(env$annotations_file),
