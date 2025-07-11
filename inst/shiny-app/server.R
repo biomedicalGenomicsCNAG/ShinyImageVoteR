@@ -12,13 +12,13 @@ library(shinyjs)
 library(tibble)
 library(later)
 
-source("config.R")
-source("ui.R")
-source("modules/login_module.R")
-source("modules/leaderboard_module.R")
-source("modules/user_stats_module.R")
-source("modules/about_module.R")
-source("server_utils.R")
+# source("config.R")
+# source("ui.R")
+# source("modules/login_module.R")
+# source("modules/leaderboard_module.R")
+# source("modules/user_stats_module.R")
+# source("modules/about_module.R")
+# source("server_utils.R")
 
 # pending_logout_tasks <- new.env(parent = emptyenv())
 
@@ -48,13 +48,13 @@ lapply(cfg_institute_ids, function(institute) {
 
 server <- function(input, output, session) {
 
-  # Tracks the url parameters be they manually set in the URL or
-  # set by the app when the user clicks on the "Back" button
-  # or presses "Go back one page" in the browser
-  url_params <- reactive({
-    # example "?coords=chrY:10935390"
-    parseQueryString(session$clientData$url_search)
-  })
+  # # Tracks the url parameters be they manually set in the URL or
+  # # set by the app when the user clicks on the "Back" button
+  # # or presses "Go back one page" in the browser
+  # url_params <- reactive({
+  #   # example "?coords=chrY:10935390"
+  #   parseQueryString(session$clientData$url_search)
+  # })
 
   # Tracks the trigger source of the get_mutation function
   # could be "login", "next", "back", "manual url params change"

@@ -62,6 +62,14 @@ votingServer <- function(id, login_trigger) {
 
   moduleServer(id, function(input, output, session) {
 
+    # Tracks the url parameters be they manually set in the URL or
+    # set by the app when the user clicks on the "Back" button
+    # or presses "Go back one page" in the browser
+    url_params <- reactive({
+      # example "?coords=chrY:10935390"
+      parseQueryString(session$clientData$url_search)
+    })
+
     observeEvent(input$nextBtn, {
       req(login_trigger())
       get_mutation_trigger_source("next")
