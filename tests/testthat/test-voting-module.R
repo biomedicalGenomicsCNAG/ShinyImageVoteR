@@ -138,7 +138,7 @@ test_that("votingServer handles comment and observation inputs", {
 
 # Test: module reacts to nextBtn click
 test_that("votingServer responds to nextBtn click", {
-  env <- setup_voting_env(c("chr1:100"))
+  env <- setup_voting_env(c("chr1:100", "chr1:200"))
   testServer(
     votingServer,
     args = make_args(env$annotations_file),
@@ -151,8 +151,54 @@ test_that("votingServer responds to nextBtn click", {
       # Simulate user selecting 'yes' and clicking 'Next'
       session$setInputs(agreement = "yes")
       session$setInputs(nextBtn = 1)
+      
+      expect_true(TRUE)
+    }
+  )
+})
 
-      # Verify behavior: here just ensure no errors
+
+# test_that("votingServer handles backBtn click", {
+#   env <- setup_voting_env(c("chr1:100"))
+#   testServer(
+#     votingServer,
+#     args = make_args(env$annotations_file),
+#     {
+#       # Set up session userData that the module expects
+#       session$userData$userAnnotationsFile <- env$annotations_file
+#       session$userData$votingInstitute <- cfg_test_institute
+#       session$userData$shinyauthr_session_id <- "test_session_123"
+      
+#       # Simulate user clicking 'Back'
+#       session$setInputs(agreement = "yes")  # Set an agreement first
+#       session$setInputs(nextBtn = 1)
+#       session$setInputs(backBtn = 1)
+
+#       # Verify behavior: here just ensure no errors
+#       expect_true(TRUE)
+#     }
+#   )
+# })
+
+test_that("votingServer handles manual URL parameter changes", {
+  my_session <- MockShinySession$new()
+  my_session$clientData <- reactiveValues(
+    url_search   = "?coords=done"
+  )
+
+  testServer(
+    votingServer,
+    session = my_session,
+    args = make_args("done"),
+    {
+      expect_true(exists("url_params"))
+      
+      # Check that url_params() returns the expected coordinates
+      url_params <- url_params()
+      expect_true("coords" %in% names(url_params))
+      expect_equal(url_params$coords, "done")
+      
+      # Check that the module can handle this without errors
       expect_true(TRUE)
     }
   )

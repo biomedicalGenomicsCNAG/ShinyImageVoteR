@@ -17,6 +17,7 @@ setup_voting_env <- function(coordinates) {
     time_till_vote_casted_in_seconds = NA,
     stringsAsFactors = FALSE
   )
+
   write.table(
     test_annotations, test_annotations_file, sep = "\t",
     row.names = FALSE, col.names = TRUE, quote = FALSE
@@ -32,9 +33,9 @@ setup_voting_env <- function(coordinates) {
 make_args <- function(annotations_file) {
   list(
     id = "voting",
-    login_trigger = reactiveVal(
+    login_trigger = shiny::reactiveVal(
       list(user_id = "test_user", voting_institute = "CNAG")
     ),
-    get_mutation_trigger_source = reactiveVal(NULL)
+    get_mutation_trigger_source = shiny::reactiveVal(NULL)
   )
 }
