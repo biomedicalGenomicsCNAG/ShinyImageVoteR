@@ -58,7 +58,7 @@ votingUI <- function(id) {
     )
 }
 
-votingServer <- function(id, login_trigger, get_mutation_trigger_source) {
+votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source) {
 
   moduleServer(id, function(input, output, session) {
 
@@ -352,6 +352,12 @@ votingServer <- function(id, login_trigger, get_mutation_trigger_source) {
           return(df[1, ])
         } else {
           print("No mutation found for the given coordinates.")
+          print(paste("Coordinates:", coords))
+          # return the whole coordinates column from the database
+          query <- "SELECT coordinates FROM annotations"
+          coords_df <- dbGetQuery(db_pool, query)
+          print("Available coordinates in the database:")
+          print(coords_df)
           return(NULL)
         }
       }

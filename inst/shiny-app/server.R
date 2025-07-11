@@ -257,7 +257,7 @@ server <- function(input, output, session) {
     }
   })
   
-  votingServer("voting", login_data, get_mutation_trigger_source)
+  votingServer("voting", login_data, db_pool, get_mutation_trigger_source)
   leaderboardServer("leaderboard", login_data, leaderboard_tab_trigger)
   userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
   aboutServer("about")

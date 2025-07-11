@@ -69,10 +69,18 @@ test_that("hotkey configuration is consistent", {
 
 # Test: module can be invoked
 test_that("votingServer can be called within testServer", {
-  env <- setup_voting_env(c("chr1:100"))
+  env <- setup_voting_env(c("chr1:1000"))
+  args <- make_args(env$annotations_file)
+  
+  on.exit({
+    unlink(env$data_dir, recursive = TRUE)
+    cleanup_fn <- attr(args$mock_db, "cleanup")
+    if (!is.null(cleanup_fn)) cleanup_fn()
+  }, add = TRUE)
+  
   testServer(
     votingServer,
-    args = make_args(env$annotations_file),
+    args = args,
     {
       # Set up session userData that the module expects
       session$userData$userAnnotationsFile <- env$annotations_file
@@ -86,10 +94,18 @@ test_that("votingServer can be called within testServer", {
 })
 
 test_that("votingServer handles different agreement types", {
-  env <- setup_voting_env(c("chr1:100"))
+  env <- setup_voting_env(c("chr1:1000"))
+  args <- make_args(env$annotations_file)
+  
+  on.exit({
+    unlink(env$data_dir, recursive = TRUE)
+    cleanup_fn <- attr(args$mock_db, "cleanup")
+    if (!is.null(cleanup_fn)) cleanup_fn()
+  }, add = TRUE)
+  
   testServer(
     votingServer,
-    args = make_args(env$annotations_file),
+    args = args,
     {
       # Set up session userData that the module expects
       session$userData$userAnnotationsFile <- env$annotations_file
@@ -115,10 +131,12 @@ test_that("votingServer handles different agreement types", {
 })
 
 test_that("votingServer handles comment and observation inputs", {
-  env <- setup_voting_env(c("chr1:100"))
+  env <- setup_voting_env(c("chr1:1000"))
+  args <- make_args(env$annotations_file)
+
   testServer(
     votingServer,
-    args = make_args(env$annotations_file),
+    args = args,
     {
       # Set up session userData that the module expects
       session$userData$userAnnotationsFile <- env$annotations_file
@@ -138,7 +156,7 @@ test_that("votingServer handles comment and observation inputs", {
 
 # Test: module reacts to nextBtn click
 test_that("votingServer responds to nextBtn click", {
-  env <- setup_voting_env(c("chr1:100", "chr1:200"))
+  env <- setup_voting_env(c("chr1:1000", "chr1:2000"))
   testServer(
     votingServer,
     args = make_args(env$annotations_file),
@@ -157,28 +175,59 @@ test_that("votingServer responds to nextBtn click", {
   )
 })
 
+test_that("votingServer writes agreement to annotations file on nextBtn", {
+  # Set up test environment
+  env <- setup_voting_env(c("chr1:1000"))
+  args <- make_args(env$annotations_file)
 
-# test_that("votingServer handles backBtn click", {
-#   env <- setup_voting_env(c("chr1:100"))
-#   testServer(
-#     votingServer,
-#     args = make_args(env$annotations_file),
-#     {
-#       # Set up session userData that the module expects
-#       session$userData$userAnnotationsFile <- env$annotations_file
-#       session$userData$votingInstitute <- cfg_test_institute
-#       session$userData$shinyauthr_session_id <- "test_session_123"
+  my_session <- MockShinySession$new()
+  my_session$clientData <- reactiveValues(
+    url_search = "?coords=chr1:1000"
+  )
+
+  testServer(
+    votingServer, 
+    session = my_session,
+    args = args, 
+    {
+      # Set up session userData needed by the observer
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$shinyauthr_session_id <- "session_123"
+      session$userData$votingInstitute <- cfg_test_institute
+
+      # Read the initial state of annotations file
+      initial_annotations <- read.table(env$annotations_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+      expect_equal(initial_annotations$agreement, "")  # Should start empty
       
-#       # Simulate user clicking 'Back'
-#       session$setInputs(agreement = "yes")  # Set an agreement first
-#       session$setInputs(nextBtn = 1)
-#       session$setInputs(backBtn = 1)
+      # Manually set current_mutation to simulate a loaded variant
+      # This bypasses the complex get_mutation reactive chain
+      current_mutation <- reactiveVal(list(
+        coordinates = "chr1:1000",
+        REF = "A",
+        ALT = "T", 
+        variant = "A>T",
+        path = "dummy.png"
+      ))
+      
+      # Replace the module's current_mutation with our test version
+      assign("current_mutation", current_mutation, envir = parent.frame())
 
-#       # Verify behavior: here just ensure no errors
-#       expect_true(TRUE)
-#     }
-#   )
-# })
+      # Simulate the user clicking Next with an agreement
+      session$setInputs(agreement = "yes")
+      session$setInputs(nextBtn = 1)
+
+      session$flushReact()
+
+      # Read back the file and assert the agreement was written
+      updated_annotations <- read.table(env$annotations_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+
+      expect_equal(updated_annotations$agreement, "yes")
+      expect_equal(updated_annotations$shinyauthr_session_id, "session_123")
+      expect_true(is.numeric(updated_annotations$time_till_vote_casted_in_seconds))
+      expect_true(updated_annotations$time_till_vote_casted_in_seconds >= 0)
+    }
+  )
+})
 
 test_that("votingServer handles manual URL parameter changes", {
   my_session <- MockShinySession$new()

@@ -31,8 +31,19 @@ setup_voting_env <- function(coordinates) {
 
 # Common args for server initialization
 make_args <- function(annotations_file) {
+  # Create mock database and set it globally (as the module expects)
+  mock_db <- create_mock_db()
+  db_pool <<- mock_db$pool
+  
+  # Store cleanup info for tests to use
+  attr(mock_db, "cleanup") <- function() {
+    poolClose(mock_db$pool)
+    unlink(mock_db$file)
+  }
+  
   list(
     id = "voting",
+    db_pool = mock_db$pool,  # Return for cleanup purposes
     login_trigger = shiny::reactiveVal(
       list(user_id = "test_user", voting_institute = "CNAG")
     ),
