@@ -92,6 +92,9 @@ votingServer <- function(id, login_trigger, get_mutation_trigger_source) {
       )
       
       mut_df <- current_mutation()
+      if (is.null(mut_df)) {
+        return()
+      }
       user_annotations_file <- session$userData$userAnnotationsFile
 
       annotations_df <- read.table(
@@ -115,6 +118,11 @@ votingServer <- function(id, login_trigger, get_mutation_trigger_source) {
 
       # use the row index to update the annotations_df
       rowIdx <- which(annotations_df$coordinates == coords)
+
+      if (length(rowIdx) == 0) {
+        warning("No annotation row for coordinates; skipping update")
+        return(NULL)
+      }
 
       # store the previous agreement for later use
       previous_agreement <- annotations_df[rowIdx, "agreement"]
