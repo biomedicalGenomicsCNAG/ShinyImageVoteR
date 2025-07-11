@@ -14,7 +14,7 @@ setup_voting_env <- function(coordinates) {
     observation = "",
     comment = "",
     shinyauthr_session_id = "",
-    time_till_vote_casted_in_seconds = NA,
+    time_till_vote_casted_in_seconds = "",
     stringsAsFactors = FALSE
   )
 
@@ -31,22 +31,36 @@ setup_voting_env <- function(coordinates) {
 
 # Common args for server initialization
 make_args <- function(annotations_file) {
-  # Create mock database and set it globally (as the module expects)
+  # Create mock database but don't set it globally yet
   mock_db <- create_mock_db()
-  db_pool <<- mock_db$pool
   
-  # Store cleanup info for tests to use
-  attr(mock_db, "cleanup") <- function() {
-    poolClose(mock_db$pool)
-    unlink(mock_db$file)
-  }
-  
-  list(
+  # Create the argument list that votingServer expects
+  args <- list(
     id = "voting",
-    db_pool = mock_db$pool,  # Return for cleanup purposes
+    db_pool = mock_db$pool,
     login_trigger = shiny::reactiveVal(
       list(user_id = "test_user", voting_institute = "CNAG")
     ),
     get_mutation_trigger_source = shiny::reactiveVal(NULL)
   )
+  
+  # Attach mock_db as an attribute for cleanup purposes
+  attr(args, "mock_db") <- mock_db
+  
+  return(args)
+}
+
+# Helper function to set up database globally and return cleanup function
+setup_test_db <- function(args) {
+  # Extract mock_db from the attributes
+  mock_db <- attr(args, "mock_db")
+  
+  # Set the global db_pool that the module expects
+  db_pool <<- mock_db$pool
+  
+  # Return cleanup function
+  function() {
+    poolClose(mock_db$pool)
+    unlink(mock_db$file)
+  }
 }

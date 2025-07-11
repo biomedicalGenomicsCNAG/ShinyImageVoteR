@@ -71,12 +71,8 @@ test_that("hotkey configuration is consistent", {
 test_that("votingServer can be called within testServer", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
-  
-  on.exit({
-    unlink(env$data_dir, recursive = TRUE)
-    cleanup_fn <- attr(args$mock_db, "cleanup")
-    if (!is.null(cleanup_fn)) cleanup_fn()
-  }, add = TRUE)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
   
   testServer(
     votingServer,
@@ -96,12 +92,8 @@ test_that("votingServer can be called within testServer", {
 test_that("votingServer handles different agreement types", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
-  
-  on.exit({
-    unlink(env$data_dir, recursive = TRUE)
-    cleanup_fn <- attr(args$mock_db, "cleanup")
-    if (!is.null(cleanup_fn)) cleanup_fn()
-  }, add = TRUE)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
   
   testServer(
     votingServer,
@@ -133,6 +125,8 @@ test_that("votingServer handles different agreement types", {
 test_that("votingServer handles comment and observation inputs", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
 
   testServer(
     votingServer,
@@ -157,9 +151,13 @@ test_that("votingServer handles comment and observation inputs", {
 # Test: module reacts to nextBtn click
 test_that("votingServer responds to nextBtn click", {
   env <- setup_voting_env(c("chr1:1000", "chr1:2000"))
+  args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+  
   testServer(
     votingServer,
-    args = make_args(env$annotations_file),
+    args = args,
     {
       # Set up session userData that the module expects
       session$userData$userAnnotationsFile <- env$annotations_file
@@ -179,6 +177,8 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
   # Set up test environment
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
 
   my_session <- MockShinySession$new()
   my_session$clientData <- reactiveValues(
@@ -196,7 +196,8 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
       session$userData$votingInstitute <- cfg_test_institute
 
       # Read the initial state of annotations file
-      initial_annotations <- read.table(env$annotations_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+      initial_annotations <- read.table(env$annotations_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE, 
+                                       colClasses = c("character", "character", "character", "character", "character", "character", "character"))
       expect_equal(initial_annotations$agreement, "")  # Should start empty
       
       # Manually set current_mutation to simulate a loaded variant
@@ -223,13 +224,17 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
 
       expect_equal(updated_annotations$agreement, "yes")
       expect_equal(updated_annotations$shinyauthr_session_id, "session_123")
-      expect_true(is.numeric(updated_annotations$time_till_vote_casted_in_seconds))
-      expect_true(updated_annotations$time_till_vote_casted_in_seconds >= 0)
+      expect_true(is.numeric(as.numeric(updated_annotations$time_till_vote_casted_in_seconds)))
+      expect_true(as.numeric(updated_annotations$time_till_vote_casted_in_seconds) >= 0)
     }
   )
 })
 
 test_that("votingServer handles manual URL parameter changes", {
+  args <- make_args("done")
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+  
   my_session <- MockShinySession$new()
   my_session$clientData <- reactiveValues(
     url_search   = "?coords=done"
@@ -238,7 +243,7 @@ test_that("votingServer handles manual URL parameter changes", {
   testServer(
     votingServer,
     session = my_session,
-    args = make_args("done"),
+    args = args,
     {
       expect_true(exists("url_params"))
       
