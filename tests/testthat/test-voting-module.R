@@ -202,17 +202,19 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
         REF = "A",
         ALT = "T", 
         variant = "A>T",
-        path = "dummy.png"
+        path = "dummy.png"  
       ))
       
       # Replace the module's current_mutation with our test version
       assign("current_mutation", current_mutation, envir = parent.frame())
 
-      expect_true(exists("current_mutation"))
-
       # Simulate the user clicking Next with an agreement
-      # session$setInputs(agreement = "yes")
+      session$setInputs(agreement = "yes")
+      expect_equal(input$agreement, "yes")
       # session$setInputs(nextBtn = 1)
+
+      # expect_true(exists("current_mutation"))
+
 
       # session$flushReact()
 
