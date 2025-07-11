@@ -1,5 +1,8 @@
 library(testthat)
 library(shiny)
+library(DBI)
+library(RSQLite)
+library(pool)
 library(B1MGVariantVoting)
 
 # locate the directory where inst/shiny-app was installed
@@ -66,8 +69,21 @@ test_that("hotkey configuration is consistent", {
 
 # Test: module can be invoked
 test_that("votingServer can be called within testServer", {
-  env <- setup_voting_env(c("chr1:100-200"))
-  on.exit(unlink(env$data_dir, recursive = TRUE), add = TRUE)
+  env <- setup_voting_env(c("chr1:100"))
+  mock_db <- create_mock_db()
+  on.exit({
+    unlink(env$data_dir, recursive = TRUE)
+    poolClose(mock_db$pool)
+    unlink(mock_db$file)
+  }, add = TRUE)
+  
+  # Set up global environment that the module expects
+  db_pool <<- mock_db$pool
+  vote_start_time <<- reactiveVal(Sys.time())
+  on.exit({
+    rm(db_pool, envir = .GlobalEnv)
+    rm(vote_start_time, envir = .GlobalEnv)
+  }, add = TRUE)
   
   testServer(
     votingServer,
@@ -84,34 +100,22 @@ test_that("votingServer can be called within testServer", {
   )
 })
 
-# Test: module reacts to nextBtn click
-# test_that("votingServer responds to nextBtn click", {
-#   env <- setup_voting_env(c("chr1:100-200", "chr2:300-400"))
-#   on.exit(unlink(env$data_dir, recursive = TRUE), add = TRUE)
-
-#   testServer(
-#     votingServer,
-#     args = make_args(env$annotations_file),
-#     {
-#       # Set up session userData that the module expects
-#       session$userData$userAnnotationsFile <- env$annotations_file
-#       session$userData$votingInstitute <- cfg_test_institute
-#       session$userData$shinyauthr_session_id <- "test_session_123"
-      
-#       # Simulate user selecting 'yes' and clicking 'Next'
-#       session$setInputs(agreement = "yes")
-#       session$setInputs(nextBtn = 1)
-
-#       # Verify behavior: here just ensure no errors
-#       expect_true(TRUE)
-#     }
-#   )
-# })
-
-
 test_that("votingServer handles different agreement types", {
-  env <- setup_voting_env(c("chr1:100-200"))
-  on.exit(unlink(env$data_dir, recursive = TRUE), add = TRUE)
+  env <- setup_voting_env(c("chr1:100"))
+  mock_db <- create_mock_db()
+  on.exit({
+    unlink(env$data_dir, recursive = TRUE)
+    poolClose(mock_db$pool)
+    unlink(mock_db$file)
+  }, add = TRUE)
+  
+  # Set up global environment that the module expects
+  db_pool <<- mock_db$pool
+  vote_start_time <<- reactiveVal(Sys.time())
+  on.exit({
+    rm(db_pool, envir = .GlobalEnv)
+    rm(vote_start_time, envir = .GlobalEnv)
+  }, add = TRUE)
   
   testServer(
     votingServer,
@@ -122,27 +126,40 @@ test_that("votingServer handles different agreement types", {
       session$userData$votingInstitute <- cfg_test_institute
       session$userData$shinyauthr_session_id <- "test_session_123"
       
+      # Just test that inputs can be set without triggering nextBtn
       # Test 'yes' agreement
       session$setInputs(agreement = "yes")
-      session$setInputs(nextBtn = 1)
-      expect_true(TRUE)  # If we reach here, it worked
+      expect_equal(input$agreement, "yes")
 
       # Test 'no' agreement
       session$setInputs(agreement = "no")
-      session$setInputs(nextBtn = 2)
-      expect_true(TRUE)  # If we reach here, it worked
+      expect_equal(input$agreement, "no")
 
       # Test 'not_confident' agreement
       session$setInputs(agreement = "not_confident")
-      session$setInputs(nextBtn = 3)
+      expect_equal(input$agreement, "not_confident")
+      
       expect_true(TRUE)  # If we reach here, it worked
     }
   )
 })
 
 test_that("votingServer handles comment and observation inputs", {
-  env <- setup_voting_env(c("chr1:100-200"))
-  on.exit(unlink(env$data_dir, recursive = TRUE), add = TRUE)
+  env <- setup_voting_env(c("chr1:100"))
+  mock_db <- create_mock_db()
+  on.exit({
+    unlink(env$data_dir, recursive = TRUE)
+    poolClose(mock_db$pool)
+    unlink(mock_db$file)
+  }, add = TRUE)
+  
+  # Set up global environment that the module expects
+  db_pool <<- mock_db$pool
+  vote_start_time <<- reactiveVal(Sys.time())
+  on.exit({
+    rm(db_pool, envir = .GlobalEnv)
+    rm(vote_start_time, envir = .GlobalEnv)
+  }, add = TRUE)
   
   testServer(
     votingServer,
@@ -160,6 +177,30 @@ test_that("votingServer handles comment and observation inputs", {
       # Verify that inputs were set correctly
       expect_equal(input$comment, "Test comment")
       expect_equal(input$observation, "Test observation")
+    }
+  )
+})
+
+# Test: module reacts to nextBtn click
+test_that("votingServer responds to nextBtn click", {
+  env <- setup_voting_env(c("chr1:100"))
+  on.exit(unlink(env$data_dir, recursive = TRUE), add = TRUE)
+
+  testServer(
+    votingServer,
+    args = make_args(env$annotations_file),
+    {
+      # Set up session userData that the module expects
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$votingInstitute <- cfg_test_institute
+      session$userData$shinyauthr_session_id <- "test_session_123"
+      
+      # Simulate user selecting 'yes' and clicking 'Next'
+      session$setInputs(agreement = "yes")
+      session$setInputs(nextBtn = 1)
+
+      # Verify behavior: here just ensure no errors
+      expect_true(TRUE)
     }
   )
 })

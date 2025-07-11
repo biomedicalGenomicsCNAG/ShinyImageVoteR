@@ -58,13 +58,13 @@ server <- function(input, output, session) {
 
   # Tracks the trigger source of the get_mutation function
   # could be "login", "next", "back", "manual url params change"
-  # get_mutation_trigger_source <- reactiveVal(NULL)
+  get_mutation_trigger_source <- reactiveVal(NULL)
   
   # # Holds the data of the currently displayed mutation
   # current_mutation <- reactiveVal(NULL)
 
   # Track when the current voting image was rendered
-  vote_start_time <- reactiveVal(Sys.time())
+  # vote_start_time <- reactiveVal(Sys.time())
 
   # Load the voting module within this environment so it can
   # access reactive values defined above
@@ -257,7 +257,7 @@ server <- function(input, output, session) {
     }
   })
   
-  votingServer("voting", login_data)
+  votingServer("voting", login_data, get_mutation_trigger_source)
   leaderboardServer("leaderboard", login_data, leaderboard_tab_trigger)
   userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
   aboutServer("about")

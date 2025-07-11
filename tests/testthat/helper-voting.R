@@ -34,6 +34,7 @@ make_args <- function(annotations_file) {
     id = "voting",
     login_trigger = reactiveVal(
       list(user_id = "test_user", voting_institute = "CNAG")
-    )
+    ),
+    get_mutation_trigger_source = reactiveVal(NULL)
   )
 }
