@@ -13,7 +13,7 @@ app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 
 # source necessary files
 source(file.path(app_dir, "config.R"))
-source(file.path(app_dir, "server_utils.R"), local = TRUE)
+source(file.path(app_dir, "server.R"))
 
 # Helper function to create test database pool
 create_test_pool <- function() {

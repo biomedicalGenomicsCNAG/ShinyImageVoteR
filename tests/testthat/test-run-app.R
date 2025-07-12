@@ -6,7 +6,7 @@ library(B1MGVariantVoting)
 test_that("get_app_dir returns valid path", {
   app_dir <- get_app_dir()
   expect_true(dir.exists(app_dir))
-  expect_true(file.exists(file.path(app_dir, "run_app.R")))
+  expect_true(file.exists(file.path(app_dir, "server.R")))
 })
 
 # Test run_voting_app sets env vars and forwards arguments

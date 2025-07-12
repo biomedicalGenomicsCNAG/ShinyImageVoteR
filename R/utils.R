@@ -1,22 +1,4 @@
 
-#' Generate randomization seed
-#'
-#' Generates a consistent randomization seed based on user ID and timestamp.
-#'
-#' @param user_id Character. The user ID
-#' @param timestamp Numeric. Optional timestamp (uses current time if not provided)
-#' @return Integer. The generated seed
-#' @export
-generate_user_seed <- function(user_id, timestamp = NULL) {
-  if (is.null(timestamp)) {
-    timestamp <- as.numeric(Sys.time())
-  }
-  
-  combined <- paste0(user_id, timestamp)
-  seed <- strtoi(substr(digest::digest(combined, algo = "crc32"), 1, 7), base = 16)
-  return(seed)
-}
-
 #' Initialize user data directory structure
 #'
 #' Creates the external user_data directory structure with institute subdirectories.

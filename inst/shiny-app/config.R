@@ -88,7 +88,6 @@ cfg_shutdown_file <- file.path(cfg_server_data_dir, "STOP")
 
 ### file paths
 cfg_to_be_voted_images_file <- "./screenshots/uro003_paths_mock.txt"
-cfg_sqlite_file <- "./db.sqlite"
 
 ### database columns
 cfg_db_general_cols <- c("coordinates", "REF", "ALT", "variant", "path")

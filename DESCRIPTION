@@ -27,5 +27,7 @@ Imports:
 Suggests:
     testthat (>= 3.0.0),
     covr,
-    shinytest2
+    shinytest2,
+    pak,
+    DT
 Config/testthat/edition: 3

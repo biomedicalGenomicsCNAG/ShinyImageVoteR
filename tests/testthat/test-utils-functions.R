@@ -3,36 +3,6 @@ library(DBI)
 library(RSQLite)
 library(digest)
 
-# locate the directory where utils.R is defined (inside the folder R)
-# utils_dir <- system.file("R", package = "B1MGVariantVoting")
-# source(file.path(utils_dir, "utils.R"))
-
-# Test generate_user_seed function
-test_that("generate_user_seed works correctly", {
-  # Test basic functionality
-  user_id <- "test_user"
-  seed1 <- generate_user_seed(user_id, timestamp = 1609459200)
-  seed2 <- generate_user_seed(user_id, timestamp = 1609459200)
-  
-  # Should be reproducible with same inputs
-  expect_equal(seed1, seed2)
-  expect_true(is.numeric(seed1))
-  expect_true(seed1 > 0)
-  
-  # Different timestamps should give different seeds
-  seed3 <- generate_user_seed(user_id, timestamp = 1609459300)
-  expect_false(seed1 == seed3)
-  
-  # Different users should give different seeds
-  seed4 <- generate_user_seed("different_user", timestamp = 1609459200)
-  expect_false(seed1 == seed4)
-  
-  # Test with NULL timestamp (should use current time)
-  seed_current <- generate_user_seed(user_id)
-  expect_true(is.numeric(seed_current))
-  expect_true(seed_current > 0)
-})
-
 # Test init_user_data_structure function
 test_that("init_user_data_structure creates correct directory structure", {
   temp_dir <- tempdir()
