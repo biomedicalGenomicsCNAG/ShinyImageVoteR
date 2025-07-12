@@ -30,8 +30,6 @@ cov_r <- package_coverage(
 
 app_files <- c(
   file.path(inst_app, "global.R"),
-  file.path(inst_app, "ui.R"),
-  file.path(inst_app, "server.R"),
   file.path(inst_app, "config.R")
 )
 

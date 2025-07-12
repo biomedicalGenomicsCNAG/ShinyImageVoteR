@@ -1,5 +1,4 @@
-#' Make a Shiny app server function for the voting application
-#' @keywords internal
+#' Factory function to create the Shiny server for the voting application
 #' @param db_pool A database connection pool
 #' @return A Shiny server function
 #' @export
