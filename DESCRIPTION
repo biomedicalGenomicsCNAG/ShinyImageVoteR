@@ -22,7 +22,8 @@ Imports:
     later,
     shinyjs,
     tibble,
-    data.table
+    data.table,
+    markdown
 Suggests:
     testthat (>= 3.0.0),
     covr,

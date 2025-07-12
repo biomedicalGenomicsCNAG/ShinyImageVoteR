@@ -41,7 +41,7 @@ dbExecute(con, "
 
 # create sessionids only if missing
 if (!"sessionids" %in% dbListTables(con)) {
-  print("Creating sessionids table")
+  print("Creating sessionids table - HERE")
   dbCreateTable(con,
     "sessionids",
     c(

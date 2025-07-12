@@ -262,10 +262,13 @@ server <- function(input, output, session) {
   userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
   aboutServer("about")
 
+  # TODO
+  # below is not working
+
   # every 2 seconds, check for external shutdown file
   observe({
     invalidateLater(2000, session)
-    print("Checking for external shutdown request…")
+    # print("Checking for external shutdown request…")
     print(cfg_shutdown_file)
     if (file.exists(cfg_shutdown_file)) {
       print("External shutdown request received.")
