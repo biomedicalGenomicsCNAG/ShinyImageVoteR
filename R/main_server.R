@@ -150,26 +150,22 @@ makeVotingAppServer <- function(db_pool) {
     })
 
     session$onSessionEnded(function() {
-      try({
-        cat("Session ended\n")
-        session_id <- session$userData$shinyauthr_session_id
-        cat("Session ID:", session_id, "\n")
+      print("Session ended")
+      print(paste("Session ID:", session$userData$shinyauthr_session_id))
 
-        if (!is.null(session_id)) {
-          schedule_logout_update(
-            session_id,
-            function() {
-              tryCatch({
-                conn <- pool::poolCheckout(db_pool)
-                on.exit(pool::poolReturn(conn), add = TRUE)
-                login_return$update_logout_time(session_id, conn = conn)
-              }, error = function(e) {
-                warning(sprintf("Could not update logout time: %s", e$message))
-              })
-            }
-          )
-        }
-      }, silent = TRUE)
+      if (!is.null(session$userData$shinyauthr_session_id)) {
+        schedule_logout_update(
+          session$userData$shinyauthr_session_id,
+          function() {
+            conn <- pool::poolCheckout(db_pool)
+            on.exit(pool::poolReturn(conn))
+            login_return$update_logout_time(
+              session$userData$shinyauthr_session_id,
+              conn = conn
+            )
+          }
+        )
+      }
     })
     
     # Track when the User stats tab is selected to trigger automatic refresh
