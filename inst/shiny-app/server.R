@@ -12,72 +12,12 @@ library(shinyjs)
 library(tibble)
 library(later)
 
-# source("config.R")
-# source("ui.R")
-# source("modules/login_module.R")
-# source("modules/leaderboard_module.R")
-# source("modules/user_stats_module.R")
-# source("modules/about_module.R")
-# source("server_utils.R")
-
-# pending_logout_tasks <- new.env(parent = emptyenv())
-
-# cancel_pending_logout <- function(sessionid) {
-#   if (exists(sessionid, envir = pending_logout_tasks)) {
-#     handle <- get(sessionid, envir = pending_logout_tasks)
-#     later::cancel(handle)
-#     rm(list = sessionid, envir = pending_logout_tasks)
-#   }
-# }
-
-# schedule_logout_update <- function(sessionid, callback, delay = 5) {
-#   cancel_pending_logout(sessionid)
-#   handle <- later::later(function() {
-#     callback()
-#     rm(list = sessionid, envir = pending_logout_tasks)
-#   }, delay)
-#   assign(sessionid, handle, envir = pending_logout_tasks)
-# }
-
-# create folders for all institutes
-lapply(cfg_institute_ids, function(institute) {
-  # replace spaces with underscores in institute names
-  institute <- gsub(" ", "_", institute)
-  dir.create(file.path(cfg_user_data_dir, institute), recursive = TRUE, showWarnings = FALSE)
-})
-
 server <- function(input, output, session) {
-
-  # # Tracks the url parameters be they manually set in the URL or
-  # # set by the app when the user clicks on the "Back" button
-  # # or presses "Go back one page" in the browser
-  # url_params <- reactive({
-  #   # example "?coords=chrY:10935390"
-  #   parseQueryString(session$clientData$url_search)
-  # })
 
   # Tracks the trigger source of the get_mutation function
   # could be "login", "next", "back", "manual url params change"
   get_mutation_trigger_source <- reactiveVal(NULL)
   
-  # # Holds the data of the currently displayed mutation
-  # current_mutation <- reactiveVal(NULL)
-
-  # Track when the current voting image was rendered
-  # vote_start_time <- reactiveVal(Sys.time())
-
-  # Load the voting module within this environment so it can
-  # access reactive values defined above
-  # source("modules/voting_module.R", local = TRUE)
-
-  # db_pool <- dbPool(
-  #   RSQLite::SQLite(),
-  #   dbname = cfg_sqlite_file
-  # )
-  # onStop(function() {
-  #   poolClose(db_pool)
-  # })
-
   total_images <- dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
@@ -269,7 +209,7 @@ server <- function(input, output, session) {
   observe({
     invalidateLater(2000, session)
     # print("Checking for external shutdown request…")
-    print(cfg_shutdown_file)
+    # print(cfg_shutdown_file)
     if (file.exists(cfg_shutdown_file)) {
       print("External shutdown request received.")
       file.remove(cfg_shutdown_file)
