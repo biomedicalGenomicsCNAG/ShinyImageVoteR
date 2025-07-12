@@ -1,5 +1,5 @@
 aboutUI <- function(id) {
-  ns <- NS(id)
+  ns <- shiny::NS(id)
   fluidPage(
     h3("About this app"),
     p("This app allows users to vote on somatic mutations in images."),

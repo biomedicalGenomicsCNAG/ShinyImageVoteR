@@ -1,8 +1,9 @@
 library(shinyauthr)
+library(shiny)
 
 loginUI <- function(id) {
-  ns <- NS(id)
-  wellPanel(
+  ns <- shiny::NS(id)
+  shiny::wellPanel(
     id = ns("loginPanel"),
     h3(paste0("Welcome to ", cfg_application_title)),
     br(),

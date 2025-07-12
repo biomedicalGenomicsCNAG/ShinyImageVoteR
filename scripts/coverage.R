@@ -28,6 +28,13 @@ cov_r <- package_coverage(
   type = "tests"
 )
 
+app_files <- c(
+  file.path(inst_app, "global.R"),
+  file.path(inst_app, "ui.R"),
+  file.path(inst_app, "server.R"),
+  file.path(inst_app, "config.R")
+)
+
 # 2. Compute coverage for inst/shiny-app/modules separately
 modules_dir <- file.path(inst_app, "modules")
 mod_files <- if (dir.exists(modules_dir)) {
@@ -36,10 +43,13 @@ mod_files <- if (dir.exists(modules_dir)) {
   character()
 }
 
+# Combine all source files to test (modules + global/server/ui)
+source_files <- c(mod_files, app_files)
+
 test_files <- list.files("tests/testthat", pattern = "\\.R$", full.names = TRUE)
 
-cov_mod <- if (length(mod_files) > 0) {
-  file_coverage(source_files = mod_files, test_files = test_files)
+cov_mod <- if (length(source_files) > 0) {
+  file_coverage(source_files = source_files, test_files = test_files)
 } else {
   NULL
 }

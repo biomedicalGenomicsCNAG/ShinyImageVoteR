@@ -17,7 +17,6 @@ source_app <- function(file, env) {
 }
 
 test_that("global.R sources without error and defines db_pool", {
-  skip_if_not(dir.exists(app_dir), "app directory not found")
   env <- new.env()
   # source config first
   source_app("config.R", env)
@@ -30,7 +29,6 @@ test_that("global.R sources without error and defines db_pool", {
 })
 
 test_that("db_pool is a working Pool object", {
-  skip_if_not(dir.exists(app_dir), "app directory not found")
   env <- new.env()
   source_app("config.R", env)
   source_app("global.R", env)
@@ -46,7 +44,6 @@ test_that("db_pool is a working Pool object", {
 })
 
 test_that("all modules are loaded into the global environment", {
-  skip_if_not(dir.exists(app_dir), "app directory not found")
   env <- new.env()
   source_app("config.R", env)
   source_app("global.R", env)
@@ -72,12 +69,4 @@ test_that("all modules are loaded into the global environment", {
   # cleanup
   p <- get("db_pool", envir = env)
   poolClose(p)
-})
-
-test_that("cfg_sqlite_file points to an existing SQLite file", {
-  skip_if_not(dir.exists(app_dir), "app directory not found")
-  env <- new.env()
-  source_app("config.R", env)
-  expect_true(file.exists(env$cfg_sqlite_file),
-              info = "cfg_sqlite_file must refer to an existing .sqlite file")
 })

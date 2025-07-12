@@ -1,11 +1,11 @@
 # Main UI
-ui <- fluidPage(
-  conditionalPanel(
+ui <- shiny::fluidPage(
+  shiny::conditionalPanel(
     condition = "!output.logged_in",
     loginUI("login")
   ),
 
-  conditionalPanel(
+  shiny::conditionalPanel(
     condition = "output.logged_in",
     tagList(
       navbarPage(

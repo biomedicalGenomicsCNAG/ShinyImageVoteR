@@ -9,7 +9,7 @@ color_seq <- function(seq, nt2color_map) {
 }
 
 votingUI <- function(id) {
-  ns <- NS(id)
+  ns <- shiny::NS(id)
     fluidPage(
       useShinyjs(),
       shiny::singleton(

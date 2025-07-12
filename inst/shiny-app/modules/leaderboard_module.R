@@ -1,5 +1,5 @@
 leaderboardUI <- function(id) {
-  ns <- NS(id)
+  ns <- shiny::NS(id)
   fluidPage(
     tableOutput(ns("institutes_voting_counts")),
     actionButton(ns("refresh_counts"), "Refresh counts")
