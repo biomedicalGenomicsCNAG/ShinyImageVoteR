@@ -118,6 +118,7 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
 
       # use the row index to update the annotations_df
       rowIdx <- which(annotations_df$coordinates == coords)
+      print(paste("Row index for coordinates:", coords, "is", rowIdx))
 
       if (length(rowIdx) == 0) {
         warning("No annotation row for coordinates; skipping update")
@@ -129,9 +130,15 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
       already_voted <- !is.na(previous_agreement) && previous_agreement != ""
       new_agreement <- input$agreement
 
+      print(paste("Previous agreement:", previous_agreement))
+      print(paste("New agreement:", new_agreement))
+
       # always update the agreement and the shinyauthr_session_id
       annotations_df[rowIdx, "agreement"] <- input$agreement
       annotations_df[rowIdx, "shinyauthr_session_id"] <- session$userData$shinyauthr_session_id
+
+      print("Annotations DataFrame after updating agreement:")
+      print(annotations_df)
 
       # only update if provided
       if (!is.null(input$alternative_vartype)) {
@@ -142,12 +149,29 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
         annotations_df[rowIdx, "observation"] <- paste(input$observation, collapse = ";")
       }
 
+      print("here")
+
       # handle comment (default NA)
       comment <- NA
-      if (input$comment != "") {
-        comment <- input$comment
-        annotations_df[rowIdx, "comment"] <- comment
-      }
+      print(paste("Comment:", input$comment))
+      print(vote_start_time())
+
+      tryCatch({
+        # If the comment is empty, set it to NA
+        if (input$comment == "") {
+          comment <- NA
+        } else {
+          comment <- input$comment
+        }
+      }, error = function(e) {
+        print(paste("Error setting comment:", e$message))
+      })
+      # if (input$comment != "") {
+      #   comment <- input$comment
+      #   annotations_df[rowIdx, "comment"] <- comment
+      # }
+
+      print("Before updating the time_till_vote_casted_in_seconds:")
 
       # calculate time spent on the current variant
       time_spent <- as.numeric(difftime(Sys.time(), vote_start_time(), units = "secs"))

@@ -211,20 +211,29 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
       # Simulate the user clicking Next with an agreement
       session$setInputs(agreement = "yes")
       expect_equal(input$agreement, "yes")
-      # session$setInputs(nextBtn = 1)
 
-      # expect_true(exists("current_mutation"))
+      # Now simulate clicking the “Next” button
+      session$setInputs(nextBtn = 1)
 
+      # Give the observer a tick to write the file
+      session$flushReact()
 
-      # session$flushReact()
+      # Read back the annotations file and assert contents
+      annotations <- read.delim(
+        env$annotations_file,
+        header = TRUE,
+        stringsAsFactors = FALSE
+      )
 
-      # # Read back the file and assert the agreement was written
-      # updated_annotations <- read.table(env$annotations_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+      # expected headers
+      expected_headers <- c(
+        "coordinates", "agreement", "alternative_vartype",
+        "observation", "comment", "shinyauthr_session_id",
+        "time_till_vote_casted_in_seconds"
+      )
 
-      # expect_equal(updated_annotations$agreement, "yes")
-      # expect_equal(updated_annotations$shinyauthr_session_id, "session_123")
-      # expect_true(is.numeric(as.numeric(updated_annotations$time_till_vote_casted_in_seconds)))
-      # expect_true(as.numeric(updated_annotations$time_till_vote_casted_in_seconds) >= 0)
+      # Check that the annotations file has the expected headers
+      expect_equal(colnames(annotations), expected_headers)     
     }
   )
 })
@@ -250,6 +259,17 @@ test_that("votingServer handles manual URL parameter changes", {
       url_params <- url_params()
       expect_true("coords" %in% names(url_params))
       expect_equal(url_params$coords, "done")
+
+      # Manually set current_mutation to simulate a loaded variant
+      # This bypasses the complex get_mutation reactive chain
+      current_mutation <- reactiveVal(list(
+        coordinates = "done",
+        REF = "A",
+        ALT = "T", 
+        variant = "A>T",
+        path = "dummy.png"  
+      ))
+      assign("current_mutation", current_mutation, envir = parent.frame())
       
       # Check that the module can handle this without errors
       expect_true(TRUE)
