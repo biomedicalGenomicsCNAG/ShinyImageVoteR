@@ -6,22 +6,24 @@ library(pool)
 library(B1MGVariantVoting)
 
 # locate the directory where inst/shiny-app was installed
-app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+# app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 
-# source config and module
-source(file.path(app_dir, "config.R"))
-source(file.path(app_dir, "modules", "voting_module.R"))
+# # source config and module
+# source(file.path(app_dir, "config.R"))
+# source(file.path(app_dir, "modules", "voting_module.R"))
+
+cfg <- B1MGVariantVoting::load_config()
 
 test_that("color_seq colors nucleotides correctly", {
   seq <- "ACGT-"
   expected <- paste0(
-    '<span style="color:', cfg_nt2color_map["A"], '">A</span>',
-    '<span style="color:', cfg_nt2color_map["C"], '">C</span>',
-    '<span style="color:', cfg_nt2color_map["G"], '">G</span>',
-    '<span style="color:', cfg_nt2color_map["T"], '">T</span>',
-    '<span style="color:', cfg_nt2color_map["-"], '">-</span>'
+    '<span style="color:', cfg$nt2color_map["A"], '">A</span>',
+    '<span style="color:', cfg$nt2color_map["C"], '">C</span>',
+    '<span style="color:', cfg$nt2color_map["G"], '">G</span>',
+    '<span style="color:', cfg$nt2color_map["T"], '">T</span>',
+    '<span style="color:', cfg$nt2color_map["-"], '">-</span>'
   )
-  result <- color_seq(seq, cfg_nt2color_map)
+  result <- B1MGVariantVoting:::color_seq(seq, cfg$nt2color_map)
   expect_equal(result, expected)
 })
 
@@ -57,13 +59,13 @@ test_that("votingUI contains expected UI elements", {
 
 test_that("hotkey configuration is consistent", {
   # Check that observation hotkeys match the number of observations
-  expect_equal(length(observation_hotkeys), length(observations_dict))
+  expect_equal(length(cfg$observation_hotkeys), length(cfg$observations_dict))
   
   # Check that hotkeys are single characters
-  expect_true(all(nchar(observation_hotkeys) == 1))
+  expect_true(all(nchar(cfg$observation_hotkeys) == 1))
   
   # Check that hotkeys are unique
-  expect_equal(length(observation_hotkeys), length(unique(observation_hotkeys)))
+  expect_equal(length(cfg$observation_hotkeys), length(unique(cfg$observation_hotkeys)))
 })
 
 # Test: module can be invoked
@@ -79,7 +81,7 @@ test_that("votingServer can be called within testServer", {
     {
       # Set up session userData that the module expects
       session$userData$userAnnotationsFile <- env$annotations_file
-      session$userData$votingInstitute <- cfg_test_institute
+      session$userData$votingInstitute <- cfg$test_institute
       session$userData$shinyauthr_session_id <- "test_session_123"
       
       # If we reach here without error, the module initialized successfully
@@ -100,7 +102,7 @@ test_that("votingServer handles different agreement types", {
     {
       # Set up session userData that the module expects
       session$userData$userAnnotationsFile <- env$annotations_file
-      session$userData$votingInstitute <- cfg_test_institute
+      session$userData$votingInstitute <- cfg$test_institute
       session$userData$shinyauthr_session_id <- "test_session_123"
       
       # Just test that inputs can be set without triggering nextBtn
@@ -133,7 +135,7 @@ test_that("votingServer handles comment and observation inputs", {
     {
       # Set up session userData that the module expects
       session$userData$userAnnotationsFile <- env$annotations_file
-      session$userData$votingInstitute <- cfg_test_institute
+      session$userData$votingInstitute <- cfg$test_institute
       session$userData$shinyauthr_session_id <- "test_session_123"
       
       # Set inputs for comment and observation
@@ -160,7 +162,7 @@ test_that("votingServer responds to nextBtn click", {
     {
       # Set up session userData that the module expects
       session$userData$userAnnotationsFile <- env$annotations_file
-      session$userData$votingInstitute <- cfg_test_institute
+      session$userData$votingInstitute <- cfg$test_institute
       session$userData$shinyauthr_session_id <- "test_session_123"
       
       # Simulate user selecting 'yes' and clicking 'Next'
@@ -192,7 +194,7 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
       # Set up session userData needed by the observer
       session$userData$userAnnotationsFile <- env$annotations_file
       session$userData$shinyauthr_session_id <- "session_123"
-      session$userData$votingInstitute <- cfg_test_institute
+      session$userData$votingInstitute <- cfg$test_institute
       
       # Manually set current_mutation to simulate a loaded variant
       # This bypasses the complex get_mutation reactive chain

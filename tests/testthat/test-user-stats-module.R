@@ -8,11 +8,11 @@ library(lubridate)
 library(B1MGVariantVoting)
 
 # locate the directory where inst/shiny-app was installed
-app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+# app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 
-# source necessary files
-source(file.path(app_dir, "config.R"))
-source(file.path(app_dir, "modules", "user_stats_module.R"))
+# # source necessary files
+# source(file.path(app_dir, "config.R"))
+# source(file.path(app_dir, "modules", "user_stats_module.R"))
 
 test_that("User stats module UI renders correctly", {
   ui_result <- userStatsUI("test")

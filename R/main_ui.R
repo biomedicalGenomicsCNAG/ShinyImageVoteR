@@ -3,6 +3,7 @@
 #' @return A Shiny UI object (tagList)
 #' @export
 votingAppUI <- function() {
+  cfg <- B1MGVariantVoting::load_config()
   fluidPage(
     shiny::conditionalPanel(
       condition = "!output.logged_in",
@@ -13,7 +14,7 @@ votingAppUI <- function() {
       condition = "output.logged_in",
       tagList(
         navbarPage(
-          cfg_application_title,
+          cfg$application_title,
           id = "main_navbar",
           tabPanel("Vote", votingUI("voting")),
           tabPanel("Leaderboard", leaderboardUI("leaderboard")),

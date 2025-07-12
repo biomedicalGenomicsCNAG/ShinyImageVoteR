@@ -2,12 +2,7 @@ library(testthat)
 library(shiny)
 library(B1MGVariantVoting)
 
-# locate the directory where inst/shiny-app was installed
-app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
-
-# source necessary files
-source(file.path(app_dir, "config.R"))
-source(file.path(app_dir, "modules", "leaderboard_module.R"))
+cfg <- B1MGVariantVoting::load_config()
 
 test_that("Leaderboard module UI renders correctly", {
   ui_result <- leaderboardUI("test")
@@ -45,7 +40,7 @@ test_that("Leaderboard reactive triggers correctly", {
   setwd(temp_dir)
   
   # Create test institute directories and files
-  for (institute in cfg_institute_ids[1:2]) {  # Test with first 2 institutes
+  for (institute in cfg$institute_ids[1:2]) {  # Test with first 2 institutes
     institute_dir <- file.path("user_data", institute)
     dir.create(institute_dir, recursive = TRUE, showWarnings = FALSE)
     
@@ -105,7 +100,7 @@ test_that("Leaderboard works without tab trigger (backward compatibility)", {
   setwd(temp_dir)
   
   # Create minimal directory structure
-  dir.create(file.path("user_data", cfg_institute_ids[1]), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path("user_data", cfg$institute_ids[1]), recursive = TRUE, showWarnings = FALSE)
   
   testServer(leaderboardServer, args = list(
     login_trigger = login_trigger

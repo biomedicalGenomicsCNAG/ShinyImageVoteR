@@ -6,10 +6,12 @@ library(pool)
 library(B1MGVariantVoting)
 
 # locate the directory where inst/shiny-app was installed
-app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+# app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 
-# source necessary files
-source(file.path(app_dir, "config.R"))
+# # source necessary files
+# source(file.path(app_dir, "config.R"))
+
+cfg <- B1MGVariantVoting::load_config()
 
 test_that("Database connection and queries work", {
   # Create mock database
@@ -92,18 +94,18 @@ test_that("Vote counting updates work correctly", {
 
 test_that("Database column mappings are correct", {
   # Test that vote mappings match database columns
-  expect_equal(cfg_vote2dbcolumn_map$yes, "vote_count_correct")
-  expect_equal(cfg_vote2dbcolumn_map$no, "vote_count_no_variant")
-  expect_equal(cfg_vote2dbcolumn_map$diff_var, "vote_count_different_variant")
-  expect_equal(cfg_vote2dbcolumn_map$not_confident, "vote_count_not_sure")
+  expect_equal(cfg$vote2dbcolumn_map$yes, "vote_count_correct")
+  expect_equal(cfg$vote2dbcolumn_map$no, "vote_count_no_variant")
+  expect_equal(cfg$vote2dbcolumn_map$diff_var, "vote_count_different_variant")
+  expect_equal(cfg$vote2dbcolumn_map$not_confident, "vote_count_not_sure")
   
   # Test that all vote count columns are included in cfg_vote_counts_cols
-  for (vote_col in cfg_vote2dbcolumn_map) {
-    expect_true(vote_col %in% cfg_vote_counts_cols)
+  for (vote_col in cfg$vote2dbcolumn_map) {
+    expect_true(vote_col %in% cfg$vote_counts_cols)
   }
   
   # Test that total column is included
-  expect_true("vote_count_total" %in% cfg_vote_counts_cols)
+  expect_true("vote_count_total" %in% cfg$vote_counts_cols)
 })
 
 test_that("Database schema matches configuration", {
@@ -116,13 +118,13 @@ test_that("Database schema matches configuration", {
   column_names <- schema$name
   
   # Test that all configured general columns exist
-  for (col in cfg_db_general_cols) {
+  for (col in cfg$db_general_cols) {
     expect_true(col %in% column_names, 
                 info = paste("Column", col, "should exist in annotations table"))
   }
   
   # Test that all vote count columns exist
-  for (col in cfg_vote_counts_cols) {
+  for (col in cfg$vote_counts_cols) {
     expect_true(col %in% column_names,
                 info = paste("Column", col, "should exist in annotations table"))
   }

@@ -4,18 +4,27 @@ library(shiny)
 app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 source(file.path(app_dir, "config.R"))
 
+#' Login module UI
+#'
+#' Provides the user interface for logging in to the B1MG Variant Voting application.
+#' This module is based on `shinyauthr` and includes reactive user authentication.
+#'
+#' @param id A string identifier for the module namespace.
+#' @return A Shiny UI element (typically a login panel) rendered within a namespace.
+#' @export
 loginUI <- function(id) {
   ns <- shiny::NS(id)
+  cfg <- B1MGVariantVoting::load_config()
   shiny::wellPanel(
     id = ns("loginPanel"),
-    h3(paste0("Welcome to ", cfg_application_title)),
+    h3(paste0("Welcome to ", cfg$application_title)),
     br(),
     h4("First select your institute"),
     selectInput(
       inputId = ns("institutes_id"),
       label = "Institute",
-      choices = cfg_institute_ids,
-      selected = cfg_selected_institute_id
+      choices = cfg$institute_ids,
+      selected = cfg$selected_institute_id
     ),
     h4("Then enter your user name and password"),
     shinyauthr::loginUI(
@@ -32,8 +41,29 @@ loginUI <- function(id) {
   )
 }
 
+#' Login module server logic
+#'
+#' Handles user authentication and session tracking using the `shinyauthr` package.
+#' This module supports login via a database-backed user table and emits reactive
+#' values for downstream modules to consume.
+#'
+#' It also supports optional logout triggering and updates the session tracking database.
+#'
+#' @param id A string identifier for the module namespace.
+#' @param db_conn A database pool connection (e.g. SQLite or PostgreSQL) used to track sessions.
+#' @param log_out A reactive trigger (default: `reactive(NULL)`) to perform logout actions.
+#' 
+#' @return A list containing:
+#' \describe{
+#'   \item{login_data}{A `reactiveVal` holding login metadata (e.g. user ID, voting institute, session ID)}
+#'   \item{credentials}{A `reactive` object with user authentication status}
+#'   \item{update_logout_time}{A function to record logout time for a session ID}
+#' }
+#' @importFrom magrittr %>%
+#' @export
 loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
+    cfg <- B1MGVariantVoting::load_config()
 
     add_sessionid_to_db <- function(user, sessionid, conn = db_conn) {
       tibble::tibble(
@@ -42,11 +72,11 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
         login_time = as.character(lubridate::now()),
         logout_time = NA_character_
       ) %>%
-      dbWriteTable(conn, "sessionids", ., append = TRUE)
+      DBI::dbWriteTable(conn, "sessionids", ., append = TRUE)
     }
 
     update_logout_time_in_db <- function(sessionid, conn = db_conn) {
-      dbExecute(
+      DBI::dbExecute(
         conn,
         "UPDATE sessionids SET logout_time = ? WHERE sessionid = ? AND logout_time IS NULL",
         params = list(as.character(lubridate::now()), sessionid)
@@ -54,7 +84,7 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
     }
 
     get_sessionids_from_db <- function(conn = db_conn, expiry = cfg$cookie_expiry) {
-      dbReadTable(conn, "sessionids") %>%
+      DBI::dbReadTable(conn, "sessionids") %>%
         dplyr::mutate(login_time = lubridate::ymd_hms(login_time)) %>%
         tibble::as_tibble() %>%
         dplyr::filter(

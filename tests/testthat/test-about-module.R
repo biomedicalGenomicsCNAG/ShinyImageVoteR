@@ -7,7 +7,7 @@ library(B1MGVariantVoting)
 app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 
 # source your module(s)
-source(file.path(app_dir, "modules", "about_module.R"))
+# source(file.path(app_dir, "modules", "about_module.R"))
 
 
 test_that("About module UI renders correctly", {

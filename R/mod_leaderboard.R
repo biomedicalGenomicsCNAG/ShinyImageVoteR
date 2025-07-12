@@ -1,3 +1,16 @@
+library(magrittr)
+
+#' Leaderboard module UI
+#'
+#' Provides a user interface for displaying the number of votes submitted
+#' by each participating institute in the B1MG Variant Voting app.
+#'
+#' The UI includes a table of vote counts and a button to refresh the data.
+#'
+#' @param id A string identifier for the module namespace.
+#'
+#' @return A Shiny UI element (`fluidPage`) for displaying the leaderboard.
+#' @export
 leaderboardUI <- function(id) {
   ns <- shiny::NS(id)
   fluidPage(
@@ -16,8 +29,12 @@ leaderboardUI <- function(id) {
 #' @param tab_trigger Optional reactive that triggers when the leaderboard tab is selected
 #'                   This enables automatic refresh of counts when navigating to the page
 #' @return Reactive containing leaderboard data frame
+#' @export
 leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
+
+    cfg <- B1MGVariantVoting::load_config()
+
     # Create a reactive that triggers when the leaderboard tab is selected
     # This allows automatic refresh when navigating to the leaderboard page
     tab_change_trigger <- reactive({

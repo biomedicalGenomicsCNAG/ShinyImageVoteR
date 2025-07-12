@@ -1,66 +1,102 @@
-library(shinyjs)
-
-color_seq <- function(seq, nt2color_map) {
-  seq %>%
-    strsplit(split = "") %>%
-    unlist() %>%
-    sapply(function(x) sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)) %>%
-    paste(collapse = "")
-}
-
+#' Voting module UI
+#'
+#' Provides the user interface for displaying a voting task, including:
+#' - An image of a candidate somatic mutation
+#' - A radio button to express agreement with the annotation
+#' - Conditional inputs for alternate variant type and comments
+#' - Navigation controls (Back / Next)
+#'
+#' This module uses `shinyjs` for interactivity and includes a custom `hotkeys.js`
+#' script to enable keyboard shortcuts (e.g., Enter for "Next", Backspace for "Back").
+#'
+#' The displayed options and labels are configured using:
+#' - `cfg_radioBtns_label`
+#' - `cfg_radio_options2val_map`
+#' - `cfg_checkboxes_label`
+#' - `cfg_observations2val_map`
+#'
+#' These should be defined in a sourced configuration file (e.g. `config.R`).
+#'
+#' @param id A string identifier for the module namespace.
+#'
+#' @return A Shiny UI element (`fluidPage`) representing the voting interface.
+#' @export
 votingUI <- function(id) {
+  cfg <- B1MGVariantVoting::load_config()
   ns <- shiny::NS(id)
-    fluidPage(
-      useShinyjs(),
-      shiny::singleton(
-        includeScript("www/hotkeys.js")
+  fluidPage(
+    shinyjs::useShinyjs(),
+    shiny::singleton(
+      includeScript("www/hotkeys.js")
+    ),
+    uiOutput(ns("voting_image_div")),
+    div(
+      id = ns("voting_questions_div"),
+      radioButtons(
+        inputId = ns("agreement"),
+        label   = cfg$radioBtns_label,
+        choices = cfg$radio_options2val_map
       ),
-      uiOutput(ns("voting_image_div")),
-      div(
-        id = ns("voting_questions_div"),
-        radioButtons(
-          inputId = ns("agreement"),
-          label   = cfg_radioBtns_label,
-          choices = cfg_radio_options2val_map
-        ),
-        
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
-          checkboxGroupInput(
-            inputId = ns("observation"),
-            label   = cfg_checkboxes_label,
-            choices = cfg_observations2val_map
-          )
-        ),
+      
+      conditionalPanel(
+        condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
+        checkboxGroupInput(
+          inputId = ns("observation"),
+          label   = cfg$checkboxes_label,
+          choices = cfg$observations2val_map
+        )
+      ),
 
-        conditionalPanel(
-          condition = sprintf(
-            "input['%1$s'] == 'diff_var' || input['%1$s'] == 'not_confident'",
-            ns("agreement")
-          ),
-          textInput(
-            inputId = ns("comment"),
-            label   = "Comments",
-            value   = ""
-          )
+      conditionalPanel(
+        condition = sprintf(
+          "input['%1$s'] == 'diff_var' || input['%1$s'] == 'not_confident'",
+          ns("agreement")
+        ),
+        textInput(
+          inputId = ns("comment"),
+          label   = "Comments",
+          value   = ""
         )
-      ),
-      shinyjs::hidden(
-        disabled(
-          actionButton(
-            ns("backBtn"),
-            "Back (press Backspace)",
-            onclick = "history.back(); return false;"
-          )
+      )
+    ),
+    shinyjs::hidden(
+      shinyjs::disabled(
+        actionButton(
+          ns("backBtn"),
+          "Back (press Backspace)",
+          onclick = "history.back(); return false;"
         )
-      ),
-      actionButton(ns("nextBtn"), "Next (press Enter)")
-    )
+      )
+    ),
+    actionButton(ns("nextBtn"), "Next (press Enter)")
+  )
 }
 
+#' Voting module server logic
+#'
+#' Handles the server-side logic for the variant voting workflow.
+#' This includes:
+#' - Reactively loading mutation images and metadata
+#' - Capturing user input (agreement, observation, comment)
+#' - Writing votes to a tsv file and session data to a database
+#' - Advancing to the next voting item based on user interaction or trigger source
+#'
+#' The module is triggered when the `login_trigger` reactive becomes active
+#' and optionally by `get_mutation_trigger_source()` to load new voting tasks.
+#'
+#' Annotations are saved to the database connection provided in `db_pool`.
+#'
+#' @param id A string identifier for the module namespace.
+#' @param login_trigger A reactive expression that indicates when a user has logged in.
+#' @param db_pool A database pool object (e.g. SQLite or PostgreSQL) for writing annotations.
+#' @param get_mutation_trigger_source A reactive expression that signals a new mutation should be loaded.
+#'
+#' @return None. Side effect only: registers reactive observers and UI updates.
+#' @export
 votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source) {
-
   moduleServer(id, function(input, output, session) {
+
+    cfg <- B1MGVariantVoting::load_config()
 
     # Tracks the url parameters be they manually set in the URL or
     # set by the app when the user clicks on the "Back" button
@@ -86,8 +122,8 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
 
       session$onFlushed(
         function() {
-          showElement(session$ns("backBtn"))
-          enable(session$ns("backBtn"))
+          shinyjs::showElement(session$ns("backBtn"))
+          shinyjs::enable(session$ns("backBtn"))
         }
       )
       
@@ -179,12 +215,12 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
 
       print(paste0("already_voted:", already_voted))
       
-      if (!already_voted && session$userData$votingInstitute != cfg_test_institute) {
+      if (!already_voted && session$userData$votingInstitute != cfg$test_institute) {
       
         # depending on the agreement, update the vote counts in the database
-        vote_col <- cfg_vote2dbcolumn_map[[input$agreement]]
+        vote_col <- cfg$vote2dbcolumn_map[[input$agreement]]
 
-        dbExecute(
+        DBI::dbExecute(
           db_pool,
           paste0(
             "UPDATE annotations SET ", 
@@ -238,8 +274,8 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
 
         # Count the different agreements (yes, no, diff_var, not_confident)
         agreement_counts_df <- same_coords_df %>%
-          group_by(agreement) %>%
-          summarise(count = n(), .groups = 'drop')
+          dplyr::group_by(agreement) %>%
+          dplyr::summarise(count = n(), .groups = 'drop')
         print("Counts of agreements:")
         print(counts)
 
@@ -249,7 +285,7 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
           count <- agreement_counts_df$count[i] 
           vote_col <- vote2dbcolumn_map[[agreement]]
           if (!is.null(vote_col)) {
-            dbExecute(
+            DBI::dbExecute(
               db_pool,
               paste0(
                 "UPDATE annotations SET ", 
@@ -297,7 +333,7 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
 
         if (coords == "done") {
           print("All variants have been voted on.")
-          res <- tibble( # duplicated code
+          res <- tibble::tibble( # duplicated code
             rowid = NA,
             coordinates = "done",
             REF = "-",
@@ -310,9 +346,9 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
           # url: "https://www.flaticon.com/free-icon/done_14018771"
 
           session$onFlushed(function() {
-            hideElement(session$ns("voting_questions_div"))
-            hideElement(session$ns("nextBtn"))
-            disable(session$ns("nextBtn"))
+            shinyjs::hideElement(session$ns("voting_questions_div"))
+            shinyjs::hideElement(session$ns("nextBtn"))
+            shinyjs::disable(session$ns("nextBtn"))
           })
 
           current_mutation(res)
@@ -324,15 +360,15 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
           print(session$ns("voting_questions_div"))
 
           session$onFlushed(function() {
-            showElement(session$ns("voting_questions_div"))
-            showElement(session$ns("nextBtn"))
-            enable(session$ns("nextBtn"))
+            shinyjs::showElement(session$ns("voting_questions_div"))
+            shinyjs::showElement(session$ns("nextBtn"))
+            shinyjs::enable(session$ns("nextBtn"))
           })
         }
 
         # Query the database for the variant with these coordinates
         query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coords, "'")
-        df <- dbGetQuery(db_pool, query)
+        df <- DBI::dbGetQuery(db_pool, query)
         # assert that the query returns only one row
         if (nrow(df) > 1) {
           stop("Query returned more than one row. Check the DB.")
@@ -359,12 +395,12 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
                 if (rowIdx == 1) {
                   # hide & disable backBtn 
                   # when navigated back to the first mutation voted on in that session
-                  hideElement(session$ns("backBtn"))
-                  disable(session$ns("backBtn"))
+                  shinyjs::hideElement(session$ns("backBtn"))
+                  shinyjs::disable(session$ns("backBtn"))
                 } else {
                   # show & enable backBtn otherwise
-                  showElement(session$ns("backBtn"))
-                  enable(session$ns("backBtn"))
+                  shinyjs::showElement(session$ns("backBtn"))
+                  shinyjs::enable(session$ns("backBtn"))
                 }
               })
             }
@@ -376,7 +412,7 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
           print(paste("Coordinates:", coords))
           # return the whole coordinates column from the database
           query <- "SELECT coordinates FROM annotations"
-          coords_df <- dbGetQuery(db_pool, query)
+          coords_df <- DBI::dbGetQuery(db_pool, query)
           print("Available coordinates in the database:")
           print(coords_df)
           return(NULL)
@@ -384,7 +420,7 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
       }
 
       if (all(!is.na(annotations_df$agreement))) {
-        res <- tibble( #duplicated code
+        res <- tibble::tibble( #duplicated code
           rowid = NA,
           coordinates = "done",
           REF = "-",
@@ -399,9 +435,9 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
         )
 
         session$onFlushed(function() {
-          hideElement(session$ns("voting_questions_div"))
-          hideElement(session$ns("nextBtn"))
-          disable(session$ns("nextBtn"))
+          shinyjs::hideElement(session$ns("voting_questions_div"))
+          shinyjs::hideElement(session$ns("nextBtn"))
+          shinyjs::disable(session$ns("nextBtn"))
         })
         current_mutation(res)
         vote_start_time(Sys.time())
@@ -419,11 +455,11 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
 
           query <- paste0(
             "SELECT ", 
-            paste(cfg_db_cols, collapse = ", "), 
+            paste(cfg$db_cols, collapse = ", "), 
             " FROM annotations WHERE coordinates = '", coordinates, "'"
           )
           # Execute the query to get the variant that has not been voted on
-          df <- dbGetQuery(db_pool, query)
+          df <- DBI::dbGetQuery(db_pool, query)
           print("Query result:")
           print(df)
 
@@ -469,9 +505,9 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
         div(
           HTML(paste0(
             "Somatic mutation: ", 
-            color_seq(mut_df$REF, cfg_nt2color_map),
+            color_seq(mut_df$REF, cfg$nt2color_map),
             " > ", 
-            color_seq(mut_df$ALT, cfg_nt2color_map)
+            color_seq(mut_df$ALT, cfg$nt2color_map)
           ))
         ),
         br()

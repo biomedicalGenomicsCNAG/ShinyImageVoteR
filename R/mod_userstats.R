@@ -1,3 +1,13 @@
+#' User statistics module UI
+#'
+#' Provides the user interface for displaying statistics related to the current user's
+#' voting activity within the B1MG Variant Voting app. This typically includes a table
+#' of vote counts or annotations per session, along with a refresh button.
+#'
+#' @param id A string identifier for the module namespace.
+#'
+#' @return A Shiny UI element (`fluidPage`) for rendering user statistics.
+#' @export
 userStatsUI <- function(id) {
   ns <- shiny::NS(id)
   fluidPage(
@@ -17,6 +27,7 @@ userStatsUI <- function(id) {
 #' @param tab_trigger Optional reactive that triggers when the user stats tab is selected
 #'                   This enables automatic refresh of stats when navigating to the page
 #' @return Reactive containing user statistics data frame
+#' @export
 userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
     # Create a reactive that triggers when the user stats tab is selected
@@ -46,10 +57,10 @@ userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
       annotations_df <- annotations_df[!is.na(annotations_df$shinyauthr_session_id), ]
 
       session_counts_df <- annotations_df %>%
-        group_by(shinyauthr_session_id) %>%
-        dplyr::summarise(images_voted = n(), .groups = 'drop')
+        dplyr::group_by(shinyauthr_session_id) %>%
+        dplyr::summarise(images_voted = dplyr::n(), .groups = 'drop')
 
-      session_df <- dbReadTable(db_pool, "sessionids") %>%
+      session_df <- DBI::dbReadTable(db_pool, "sessionids") %>%
         dplyr::filter(user == session$userData$userId) %>%
         dplyr::mutate(
           login_time = lubridate::ymd_hms(login_time),

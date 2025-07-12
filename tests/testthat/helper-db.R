@@ -4,7 +4,7 @@ library(pool)
 
 create_mock_db <- function() {
   db_file <- tempfile(fileext = ".sqlite")
-  db_pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
+  db_pool <- pool::dbPool(RSQLite::SQLite(), dbname = db_file)
 
   conn <- poolCheckout(db_pool)
   on.exit(poolReturn(conn), add = TRUE)  # Ensure return no matter what

@@ -60,7 +60,7 @@ setup_test_db <- function(args) {
   
   # Return cleanup function
   function() {
-    poolClose(mock_db$pool)
+    pool::poolClose(mock_db$pool)
     unlink(mock_db$file)
   }
 }

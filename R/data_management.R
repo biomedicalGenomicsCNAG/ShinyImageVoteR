@@ -35,13 +35,13 @@ get_user_data_dir <- function(base_dir = NULL) {
 #' @return A DBI pool object
 #' @export
 init_db <- function(cfg_sqlite_file) {
-  pool <- dbPool(
+  pool <- pool::dbPool(
     RSQLite::SQLite(),
     dbname = cfg_sqlite_file
   )
 
   shiny::onStop(function() {
-    poolClose(pool)
+    pool::poolClose(pool)
   })
 
   return(pool)
