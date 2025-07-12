@@ -15,7 +15,7 @@ NULL
 #' @return Character path to the user_data directory
 #' @export
 get_user_data_dir <- function(base_dir = NULL) {
-  if (is.null(base_dir)) {
+  if (is.null(base_dir) || base_dir == "") {
     base_dir <- getwd()
   }
   
