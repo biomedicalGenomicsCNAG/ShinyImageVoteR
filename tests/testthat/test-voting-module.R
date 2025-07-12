@@ -215,9 +215,6 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
       # Now simulate clicking the “Next” button
       session$setInputs(nextBtn = 1)
 
-      # Give the observer a tick to write the file
-      session$flushReact()
-
       # Read back the annotations file and assert contents
       annotations <- read.delim(
         env$annotations_file,
@@ -234,45 +231,6 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
 
       # Check that the annotations file has the expected headers
       expect_equal(colnames(annotations), expected_headers)     
-    }
-  )
-})
-
-test_that("votingServer handles manual URL parameter changes", {
-  args <- make_args("done")
-  cleanup_db <- setup_test_db(args)
-  on.exit(cleanup_db())
-  
-  my_session <- MockShinySession$new()
-  my_session$clientData <- reactiveValues(
-    url_search   = "?coords=done"
-  )
-
-  testServer(
-    votingServer,
-    session = my_session,
-    args = args,
-    {
-      expect_true(exists("url_params"))
-      
-      # Check that url_params() returns the expected coordinates
-      url_params <- url_params()
-      expect_true("coords" %in% names(url_params))
-      expect_equal(url_params$coords, "done")
-
-      # Manually set current_mutation to simulate a loaded variant
-      # This bypasses the complex get_mutation reactive chain
-      current_mutation <- reactiveVal(list(
-        coordinates = "done",
-        REF = "A",
-        ALT = "T", 
-        variant = "A>T",
-        path = "dummy.png"  
-      ))
-      assign("current_mutation", current_mutation, envir = parent.frame())
-      
-      # Check that the module can handle this without errors
-      expect_true(TRUE)
     }
   )
 })

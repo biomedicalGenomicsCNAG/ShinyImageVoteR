@@ -180,10 +180,7 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
       print(paste0("already_voted:", already_voted))
       
       if (!already_voted && session$userData$votingInstitute != cfg_test_institute) {
-        # Increment the total images voted for the user
-        user_info_file <- session$userData$userInfoFile
-        user_info <- read_json(user_info_file)
-        
+      
         # depending on the agreement, update the vote counts in the database
         vote_col <- cfg_vote2dbcolumn_map[[input$agreement]]
 
