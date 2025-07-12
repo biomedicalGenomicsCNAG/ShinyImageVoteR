@@ -1,4 +1,3 @@
-# tests/testthat/test_global.R
 library(testthat)
 library(shiny)
 library(pool)
@@ -15,33 +14,6 @@ source_app <- function(file, env) {
   setwd(app_dir)
   source(file, local = env)
 }
-
-test_that("global.R sources without error and defines db_pool", {
-  env <- new.env()
-  # source config first
-  source_app("config.R", env)
-  # then global
-  expect_error(source_app("global.R", env), NA)
-  expect_true(exists("db_pool", envir = env), "db_pool should be created")
-
-  p <- get("db_pool", envir = env)
-  poolClose(p)
-})
-
-test_that("db_pool is a working Pool object", {
-  env <- new.env()
-  source_app("config.R", env)
-  source_app("global.R", env)
-  
-  p <- get("db_pool", envir = env)
-  expect_s3_class(p, "Pool")
-  # simple query
-  res <- dbGetQuery(p, "SELECT 1 AS one;")
-  expect_equal(res$one, 1)
-  
-  p <- get("db_pool", envir = env)
-  poolClose(p)
-})
 
 test_that("all modules are loaded into the global environment", {
   env <- new.env()
@@ -65,8 +37,4 @@ test_that("all modules are loaded into the global environment", {
     expect_true(is.function(get(f, envir = env)),
                 info = paste(f, "should be a function"))
   }
-  
-  # cleanup
-  p <- get("db_pool", envir = env)
-  poolClose(p)
 })

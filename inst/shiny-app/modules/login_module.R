@@ -1,6 +1,9 @@
 library(shinyauthr)
 library(shiny)
 
+app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+source(file.path(app_dir, "config.R"))
+
 loginUI <- function(id) {
   ns <- shiny::NS(id)
   shiny::wellPanel(

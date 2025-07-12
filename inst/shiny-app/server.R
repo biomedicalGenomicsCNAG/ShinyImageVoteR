@@ -1,5 +1,3 @@
-
-
 library(DBI)
 library(data.table)
 library(digest)
@@ -35,6 +33,14 @@ cancel_pending_logout <- function(sessionid) {
 }
 
 server <- function(input, output, session) {
+
+  db_pool <- dbPool(
+    RSQLite::SQLite(),
+    dbname = cfg_sqlite_file
+  )
+  shiny::onStop(function() {
+    poolClose(db_pool)
+  })
 
   # Tracks the trigger source of the get_mutation function
   # could be "login", "next", "back", "manual url params change"
