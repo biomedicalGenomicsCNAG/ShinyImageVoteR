@@ -8,58 +8,12 @@ library(pool)
 library(later)
 library(B1MGVariantVoting)
 
-# locate the directory where inst/shiny-app was installed
-app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
-
-# source necessary files
-source(file.path(app_dir, "config.R"))
-source(file.path(app_dir, "server.R"))
-
-# Helper function to create test database pool
-create_test_pool <- function() {
-  db_file <- tempfile(fileext = ".sqlite")
-  pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
-  
-  # Create required tables
-  dbExecute(pool, "
-    CREATE TABLE annotations (
-      coordinates TEXT,
-      REF TEXT,
-      ALT TEXT,
-      variant TEXT,
-      path TEXT,
-      vote_count_correct INTEGER DEFAULT 0,
-      vote_count_no_variant INTEGER DEFAULT 0,
-      vote_count_different_variant INTEGER DEFAULT 0,
-      vote_count_not_sure INTEGER DEFAULT 0,
-      vote_count_total INTEGER DEFAULT 0
-    )
-  ")
-  
-  dbExecute(pool, "
-    CREATE TABLE sessionids (
-      user TEXT,
-      sessionid TEXT,
-      login_time TEXT,
-      logout_time TEXT
-    )
-  ")
-  
-  # Insert some test data
-  dbExecute(pool, "
-    INSERT INTO annotations (coordinates, REF, ALT, variant, path)
-    VALUES 
-      ('chr1:1000', 'A', 'T', 'SNV', '/path/to/image1.png'),
-      ('chr2:2000', 'G', 'C', 'SNV', '/path/to/image2.png'),
-      ('chr3:3000', 'AT', 'A', 'DEL', '/path/to/image3.png')
-  ")
-  
-  return(list(pool = pool, file = db_file))
-}
-
 test_that("Logout scheduling functions work correctly", {
+  mock_db <- create_mock_db()
+  test_pool <- mock_db$pool
+
   # Test cancel_pending_logout with non-existent session
-  expect_silent(cancel_pending_logout("non_existent_session"))
+  expect_silent(B1MGVariantVoting::cancel_pending_logout("non_existent_session"))
   
   # Debug: Check if functions exist
   expect_true(exists("schedule_logout_update"))
@@ -111,4 +65,8 @@ test_that("Logout scheduling functions work correctly", {
   
   # Verify first callback was NOT executed (since it was cancelled)
   expect_false(callback_executed)
+
+  # Clean up
+  poolClose(test_pool)
+  unlink(mock_db$file)
 })

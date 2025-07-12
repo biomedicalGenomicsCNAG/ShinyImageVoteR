@@ -9,12 +9,3 @@ source(file.path(app_dir, "modules", "voting_module.R"))
 source(file.path(app_dir, "modules", "leaderboard_module.R"))
 source(file.path(app_dir, "modules", "user_stats_module.R"))
 source(file.path(app_dir, "modules", "about_module.R"))
-
-# db_pool <- dbPool(
-#   RSQLite::SQLite(),
-#   dbname = cfg_sqlite_file
-# )
-# shiny::onStop(function() {
-#   poolClose(db_pool)
-# })
-

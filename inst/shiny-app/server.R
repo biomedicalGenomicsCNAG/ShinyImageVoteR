@@ -9,240 +9,216 @@ library(shiny)
 library(shinyjs)
 library(tibble)
 library(later)
+library(B1MGVariantVoting)
 
-# Utility functions for scheduling logout updates
-if (!exists("pending_logout_tasks", inherits = FALSE)) {
-  pending_logout_tasks <- new.env(parent = emptyenv())
-}
+# # Initialize the database connection pool
+# db_pool <- init_db(cfg_sqlite_file)
 
-schedule_logout_update <- function(sessionid, callback, delay = 5) {
-  cancel_pending_logout(sessionid)
-  handle <- later::later(function() {
-    callback()
-    rm(list = sessionid, envir = pending_logout_tasks)
-  }, delay)
-  assign(sessionid, handle, envir = pending_logout_tasks)
-}
+server <- makeVotingAppServer(init_db(cfg_sqlite_file))
 
-cancel_pending_logout <- function(sessionid) {
-  if (exists(sessionid, envir = pending_logout_tasks)) {
-    handle <- get(sessionid, envir = pending_logout_tasks)
-    handle()                      
-    rm(list = sessionid, envir = pending_logout_tasks)
-  }
-}
+# server <- function(input, output, session) {
 
-server <- function(input, output, session) {
-
-  db_pool <- dbPool(
-    RSQLite::SQLite(),
-    dbname = cfg_sqlite_file
-  )
-  shiny::onStop(function() {
-    poolClose(db_pool)
-  })
-
-  # Tracks the trigger source of the get_mutation function
-  # could be "login", "next", "back", "manual url params change"
-  get_mutation_trigger_source <- reactiveVal(NULL)
+#   # Tracks the trigger source of the get_mutation function
+#   # could be "login", "next", "back", "manual url params change"
+#   get_mutation_trigger_source <- reactiveVal(NULL)
   
-  total_images <- dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
-  cat(sprintf("Total annotations in DB: %s\n", total_images))
+#   total_images <- dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
+#   cat(sprintf("Total annotations in DB: %s\n", total_images))
 
-  # Initialize the login module
-  login_return <- loginServer(
-    "login",
-    db_conn = db_pool,
-    log_out = reactive(logout_init())
-  )
+#   # Initialize the login module
+#   login_return <- loginServer(
+#     "login",
+#     db_conn = db_pool,
+#     log_out = reactive(logout_init())
+#   )
 
-  # Initialize the logout module
-  logout_init <- shinyauthr::logoutServer(
-    id = "logout",
-    active = reactive(login_return$credentials()$user_auth)
-  )
+#   # Initialize the logout module
+#   logout_init <- shinyauthr::logoutServer(
+#     id = "logout",
+#     active = reactive(login_return$credentials()$user_auth)
+#   )
   
-  output$logged_in <- reactive({
-    login_return$credentials()$user_auth
-  })
-  outputOptions(output, "logged_in", suspendWhenHidden = FALSE)
+#   output$logged_in <- reactive({
+#     login_return$credentials()$user_auth
+#   })
+#   outputOptions(output, "logged_in", suspendWhenHidden = FALSE)
 
-  login_data <- login_return$login_data
+#   login_data <- login_return$login_data
 
-  observeEvent(login_data(), {
-    req(login_data())
-    user_id <- login_data()$user_id
-    voting_institute <- login_data()$voting_institute
-    session$userData$shinyauthr_session_id <- login_data()$session_id
-    cancel_pending_logout(session$userData$shinyauthr_session_id)
+#   observeEvent(login_data(), {
+#     req(login_data())
+#     user_id <- login_data()$user_id
+#     voting_institute <- login_data()$voting_institute
+#     session$userData$shinyauthr_session_id <- login_data()$session_id
+#     cancel_pending_logout(session$userData$shinyauthr_session_id)
 
-    session$userData$userId <- user_id
-    session$userData$votingInstitute <- voting_institute
+#     session$userData$userId <- user_id
+#     session$userData$votingInstitute <- voting_institute
 
-    user_dir <- file.path(cfg_user_data_dir, voting_institute, user_id)
+#     user_dir <- file.path(cfg_user_data_dir, voting_institute, user_id)
 
-    print(paste("User directory:", user_dir))
-    print(paste("User ID:", user_id)) 
+#     print(paste("User directory:", user_dir))
+#     print(paste("User ID:", user_id)) 
 
-    session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
-    session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
+#     session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
+#     session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
 
-    print(paste("User Annotations File:", session$userData$userAnnotationsFile))
+#     print(paste("User Annotations File:", session$userData$userAnnotationsFile))
 
-    if (!dir.exists(user_dir)) {
-      cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
-      dir.create(user_dir, recursive = TRUE)
-    } else {
-      cat(sprintf("Directory for user: %s already exists at %s\n", user_id, user_dir))
-    }
+#     if (!dir.exists(user_dir)) {
+#       cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
+#       dir.create(user_dir, recursive = TRUE)
+#     } else {
+#       cat(sprintf("Directory for user: %s already exists at %s\n", user_id, user_dir))
+#     }
 
-    if (file.exists(session$userData$userInfoFile)) {
-      get_mutation_trigger_source("login")
-      return()
-    }
+#     if (file.exists(session$userData$userInfoFile)) {
+#       get_mutation_trigger_source("login")
+#       return()
+#     }
 
-    # Concatenate time and user_id
-    combined <- paste0(user_id, as.numeric(Sys.time()))
+#     # Concatenate time and user_id
+#     combined <- paste0(user_id, as.numeric(Sys.time()))
 
-    # Create a numeric seed (e.g., using crc32 hash and convert to integer)
-    seed <- strtoi(substr(digest(combined, algo = "crc32"), 1, 7), base = 16)
-    print("Seed for randomization:")
-    print(seed)
-    "********"
+#     # Create a numeric seed (e.g., using crc32 hash and convert to integer)
+#     seed <- strtoi(substr(digest(combined, algo = "crc32"), 1, 7), base = 16)
+#     print("Seed for randomization:")
+#     print(seed)
+#     "********"
 
-    # store user info in json file
-    set.seed(seed)  # Use user_id to create a unique seed
+#     # store user info in json file
+#     set.seed(seed)  # Use user_id to create a unique seed
 
-    user_info <- list(
-      user_id = user_id,
-      voting_institute = voting_institute,
-      images_randomisation_seed = seed
-    )
+#     user_info <- list(
+#       user_id = user_id,
+#       voting_institute = voting_institute,
+#       images_randomisation_seed = seed
+#     )
 
-    session$userData$sessionInfo <- list(
-      start_time = Sys.time(),
-      end_time = NA # to be updated when the session ends
-    )
+#     session$userData$sessionInfo <- list(
+#       start_time = Sys.time(),
+#       end_time = NA # to be updated when the session ends
+#     )
 
-    print("User info:")
-    print(user_info)
+#     print("User info:")
+#     print(user_info)
 
-    # create user info file
-    write_json(
-      user_info,
-      session$userData$userInfoFile,
-      auto_unbox = TRUE,
-      pretty = TRUE
-    )
+#     # create user info file
+#     write_json(
+#       user_info,
+#       session$userData$userInfoFile,
+#       auto_unbox = TRUE,
+#       pretty = TRUE
+#     )
 
-    # create user annotations file
-    # query the database for all coordinates
-    query <- "SELECT coordinates FROM annotations"
-    coords <- dbGetQuery(db_pool, query)
+#     # create user annotations file
+#     # query the database for all coordinates
+#     query <- "SELECT coordinates FROM annotations"
+#     coords <- dbGetQuery(db_pool, query)
 
-    coords_vec <- as.character(coords[[1]])
-    randomised_coords <- sample(coords_vec, length(coords_vec), replace = FALSE)
+#     coords_vec <- as.character(coords[[1]])
+#     randomised_coords <- sample(coords_vec, length(coords_vec), replace = FALSE)
 
-    # Initialize with empty strings except for coordinates
-    annotations_df <- setNames(
-      as.data.frame(
-        lapply(cfg_user_annotations_colnames, function(col) {
-          if (col == "coordinates") {
-            randomised_coords
-          } else {
-            rep("", length(randomised_coords))
-          }
-        }),
-        stringsAsFactors = FALSE
-      ),
-      cfg_user_annotations_colnames
-    )
+#     # Initialize with empty strings except for coordinates
+#     annotations_df <- setNames(
+#       as.data.frame(
+#         lapply(cfg_user_annotations_colnames, function(col) {
+#           if (col == "coordinates") {
+#             randomised_coords
+#           } else {
+#             rep("", length(randomised_coords))
+#           }
+#         }),
+#         stringsAsFactors = FALSE
+#       ),
+#       cfg_user_annotations_colnames
+#     )
 
-    # write annotations_df to a text file
-    write.table(
-      annotations_df,
-      file = session$userData$userAnnotationsFile,
-      sep = "\t",
-      row.names = FALSE,
-      col.names = TRUE,
-      quote = FALSE
-    )
-    get_mutation_trigger_source("login")
-  })
+#     # write annotations_df to a text file
+#     write.table(
+#       annotations_df,
+#       file = session$userData$userAnnotationsFile,
+#       sep = "\t",
+#       row.names = FALSE,
+#       col.names = TRUE,
+#       quote = FALSE
+#     )
+#     get_mutation_trigger_source("login")
+#   })
 
-  observeEvent(logout_init(), {
-    if (!is.null(session$userData$shinyauthr_session_id)) {
-      print("Logging out user:")
-      print("Updating logout time in database")
-      print(paste("Session ID:", session$userData$shinyauthr_session_id))
-      print("login_return:")
-      print(login_return)
-      print("login_return$update_logout_time:")
-      print(login_return$update_logout_time)
-      cancel_pending_logout(session$userData$shinyauthr_session_id)
-      login_return$update_logout_time(session$userData$shinyauthr_session_id)
-    }
-  })
+#   observeEvent(logout_init(), {
+#     if (!is.null(session$userData$shinyauthr_session_id)) {
+#       print("Logging out user:")
+#       print("Updating logout time in database")
+#       print(paste("Session ID:", session$userData$shinyauthr_session_id))
+#       print("login_return:")
+#       print(login_return)
+#       print("login_return$update_logout_time:")
+#       print(login_return$update_logout_time)
+#       cancel_pending_logout(session$userData$shinyauthr_session_id)
+#       login_return$update_logout_time(session$userData$shinyauthr_session_id)
+#     }
+#   })
 
-  session$onSessionEnded(function() {
-    print("Session ended")
-    print(paste("Session ID:", session$userData$shinyauthr_session_id))
+#   session$onSessionEnded(function() {
+#     print("Session ended")
+#     print(paste("Session ID:", session$userData$shinyauthr_session_id))
 
-    if (!is.null(session$userData$shinyauthr_session_id)) {
-      schedule_logout_update(
-        session$userData$shinyauthr_session_id,
-        function() {
-          conn <- poolCheckout(db_pool)
-          on.exit(poolReturn(conn))
-          login_return$update_logout_time(
-            session$userData$shinyauthr_session_id,
-            conn = conn
-          )
-        }
-      )
-    }
-  })
+#     if (!is.null(session$userData$shinyauthr_session_id)) {
+#       schedule_logout_update(
+#         session$userData$shinyauthr_session_id,
+#         function() {
+#           conn <- poolCheckout(db_pool)
+#           on.exit(poolReturn(conn))
+#           login_return$update_logout_time(
+#             session$userData$shinyauthr_session_id,
+#             conn = conn
+#           )
+#         }
+#       )
+#     }
+#   })
   
-  # Track when the User stats tab is selected to trigger automatic refresh
-  user_stats_tab_trigger <- reactive({
-    req(input$main_navbar)
-    if (input$main_navbar == "User stats") {
-      # Return a timestamp to ensure the reactive fires each time the tab is selected
-      Sys.time()
-    } else {
-      NULL
-    }
-  })
+#   # Track when the User stats tab is selected to trigger automatic refresh
+#   user_stats_tab_trigger <- reactive({
+#     req(input$main_navbar)
+#     if (input$main_navbar == "User stats") {
+#       # Return a timestamp to ensure the reactive fires each time the tab is selected
+#       Sys.time()
+#     } else {
+#       NULL
+#     }
+#   })
   
-  # Track when the Leaderboard tab is selected to trigger automatic refresh
-  leaderboard_tab_trigger <- reactive({
-    req(input$main_navbar)
-    if (input$main_navbar == "Leaderboard") {
-      # Return a timestamp to ensure the reactive fires each time the tab is selected
-      Sys.time()
-    } else {
-      NULL
-    }
-  })
+#   # Track when the Leaderboard tab is selected to trigger automatic refresh
+#   leaderboard_tab_trigger <- reactive({
+#     req(input$main_navbar)
+#     if (input$main_navbar == "Leaderboard") {
+#       # Return a timestamp to ensure the reactive fires each time the tab is selected
+#       Sys.time()
+#     } else {
+#       NULL
+#     }
+#   })
   
-  votingServer("voting", login_data, db_pool, get_mutation_trigger_source)
-  leaderboardServer("leaderboard", login_data, leaderboard_tab_trigger)
-  userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
-  aboutServer("about")
+#   votingServer("voting", login_data, db_pool, get_mutation_trigger_source)
+#   leaderboardServer("leaderboard", login_data, leaderboard_tab_trigger)
+#   userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
+#   aboutServer("about")
 
-  # TODO
-  # below is not working
+#   # TODO
+#   # below is not working
 
-  # every 2 seconds, check for external shutdown file
-  observe({
-    invalidateLater(2000, session)
-    # print("Checking for external shutdown request…")
-    # print(cfg_shutdown_file)
-    if (file.exists(cfg_shutdown_file)) {
-      print("External shutdown request received.")
-      file.remove(cfg_shutdown_file)
-      showNotification("External shutdown request received…", type="warning")
-      stopApp()
-    }
-  })
-}
+#   # every 2 seconds, check for external shutdown file
+#   observe({
+#     invalidateLater(2000, session)
+#     # print("Checking for external shutdown request…")
+#     # print(cfg_shutdown_file)
+#     if (file.exists(cfg_shutdown_file)) {
+#       print("External shutdown request received.")
+#       file.remove(cfg_shutdown_file)
+#       showNotification("External shutdown request received…", type="warning")
+#       stopApp()
+#     }
+#   })
+# }

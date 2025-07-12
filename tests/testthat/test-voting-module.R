@@ -10,7 +10,6 @@ app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
 
 # source config and module
 source(file.path(app_dir, "config.R"))
-source(file.path(app_dir, "server.R"))
 source(file.path(app_dir, "modules", "voting_module.R"))
 
 test_that("color_seq colors nucleotides correctly", {

@@ -29,6 +29,24 @@ get_user_data_dir <- function(base_dir = NULL) {
   return(user_data_dir)
 }
 
+#' Initialize the database connection pool
+#' @keywords internal
+#' @param cfg_sqlite_file Path to an existing SQLite file
+#' @return A DBI pool object
+#' @export
+init_db <- function(cfg_sqlite_file) {
+  pool <- dbPool(
+    RSQLite::SQLite(),
+    dbname = cfg_sqlite_file
+  )
+
+  shiny::onStop(function() {
+    poolClose(pool)
+  })
+
+  return(pool)
+}
+
 # #' Get configuration with external user_data path
 # #'
 # #' Returns a configuration object with the correct user_data path
