@@ -243,52 +243,65 @@ test_that("init_external_config creates configuration correctly", {
 })
 
 # Test init_external_images function
-# test_that("init_external_images creates images directory", {
-#   temp_dir <- tempdir()
-#   test_base <- file.path(temp_dir, "test_images_init")
+test_that("init_external_images creates images directory", {
+  temp_dir <- tempdir()
+  test_base <- file.path(temp_dir, "test_images_init")
   
-#   # Clean up any existing directory
-#   if (dir.exists(test_base)) {
-#     unlink(test_base, recursive = TRUE)
-#   }
+  # Clean up any existing directory
+  if (dir.exists(test_base)) {
+    unlink(test_base, recursive = TRUE)
+  }
   
-#   # Test images directory creation
-#   images_dir <- init_external_images(test_base, "test_images")
+  # Store original environment variable
+  original_images_dir <- Sys.getenv("B1MG_IMAGES_DIR")
   
-#   expected_images_dir <- file.path(test_base, "test_images")
-#   expect_equal(images_dir, expected_images_dir)
-#   expect_true(dir.exists(images_dir))
+  # Test images directory creation (but expect warnings about symlinks during testing)
+  suppressWarnings({
+    images_dir <- init_external_images(test_base, "test_images")
+  })
   
-#   # Check that environment variable was set
-#   expect_equal(Sys.getenv("B1MG_IMAGES_DIR"), images_dir)
+  expected_images_dir <- file.path(test_base, "test_images")
+  expect_equal(images_dir, expected_images_dir)
+  expect_true(dir.exists(images_dir))
   
-#   # Test with default subdirectory name
-#   images_dir2 <- init_external_images(test_base)
-#   expected_images_dir2 <- file.path(test_base, "images")
-#   expect_equal(images_dir2, expected_images_dir2)
-#   expect_true(dir.exists(images_dir2))
+  # Check that environment variable was set
+  expect_equal(Sys.getenv("B1MG_IMAGES_DIR"), images_dir)
   
-#   # Clean up
-#   unlink(test_base, recursive = TRUE)
-#   Sys.unsetenv("B1MG_IMAGES_DIR")
-# })
+  # Test with default subdirectory name (suppress symlink warnings)
+  suppressWarnings({
+    images_dir2 <- init_external_images(test_base)
+  })
+  expected_images_dir2 <- file.path(test_base, "images")
+  expect_equal(images_dir2, expected_images_dir2)
+  expect_true(dir.exists(images_dir2))
+  
+  # Clean up
+  unlink(test_base, recursive = TRUE)
+  
+  # Restore original environment variable
+  if (original_images_dir == "") {
+    Sys.unsetenv("B1MG_IMAGES_DIR")
+  } else {
+    Sys.setenv(B1MG_IMAGES_DIR = original_images_dir)
+  }
+})
 
-# # Test file.symlink.exists function
-# test_that("file.symlink.exists works correctly", {
-#   temp_dir <- tempdir()
+# Test file.symlink.exists function (internal function)
+test_that("file.symlink.exists works correctly", {
+  temp_dir <- tempdir()
   
-#   # Test with non-existent file
-#   non_existent <- file.path(temp_dir, "non_existent_file")
-#   expect_false(file.symlink.exists(non_existent))
+  # Test with non-existent file
+  non_existent <- file.path(temp_dir, "non_existent_file")
+  expect_false(B1MGVariantVoting:::file.symlink.exists(non_existent))
   
-#   # Test with regular file
-#   regular_file <- file.path(temp_dir, "regular_file.txt")
-#   writeLines("test content", regular_file)
-#   expect_false(file.symlink.exists(regular_file))
+  # Test with regular file
+  regular_file <- file.path(temp_dir, "regular_file.txt")
+  writeLines("test content", regular_file)
+  expect_false(B1MGVariantVoting:::file.symlink.exists(regular_file))
   
-#   # Clean up
-#   unlink(regular_file)
-# })
+  # Clean up
+  unlink(regular_file)
+})
 
 # Test init_external_server_data function
 test_that("init_external_server_data creates server data directory", {
@@ -341,8 +354,10 @@ test_that("init_external_environment sets up complete environment with variables
     B1MG_SERVER_DATA_DIR = Sys.getenv("B1MG_SERVER_DATA_DIR")
   )
   
-  # Test complete environment initialization
-  result <- init_external_environment(test_base)
+  # Test complete environment initialization (suppress symlink warnings during testing)
+  suppressWarnings({
+    result <- init_external_environment(test_base)
+  })
   
   # Check return value structure
   expect_true(is.list(result))
@@ -379,25 +394,3 @@ test_that("init_external_environment sets up complete environment with variables
     }
   }
 })
-
-# Test error handling and edge cases
-# test_that("utils functions handle edge cases correctly", {
-#   # Test generate_user_seed with empty user_id
-#   expect_error(generate_user_seed(""), NA)  # Should not error
-  
-#   # Test generate_user_seed with special characters
-#   seed_special <- generate_user_seed("user@test.com", timestamp = 1609459200)
-#   expect_true(is.numeric(seed_special))
-  
-#   # Test init_user_data_structure with non-existent base directory
-#   non_existent_base <- file.path(tempdir(), "non_existent_dir_12345")
-#   user_data_dir <- init_user_data_structure(non_existent_base)
-#   expect_true(dir.exists(user_data_dir))
-#   unlink(dirname(user_data_dir), recursive = TRUE)
-  
-#   # Test database creation with invalid base directory name (should work due to recursive creation)
-#   test_base <- file.path(tempdir(), "test/with/deep/structure")
-#   db_path <- init_external_database(test_base, "test.sqlite")
-#   expect_true(file.exists(db_path))
-#   unlink(file.path(tempdir(), "test"), recursive = TRUE)
-# })

@@ -3,6 +3,7 @@
 export(cancel_pending_logout)
 export(generate_user_seed)
 export(get_app_dir)
+export(get_user_data_dir)
 export(init_external_config)
 export(init_external_database)
 export(init_external_environment)

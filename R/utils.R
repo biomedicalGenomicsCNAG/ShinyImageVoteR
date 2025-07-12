@@ -415,7 +415,7 @@ init_external_images <- function(base_dir = getwd(), images_subdir = "images") {
   
   # Create symlink from external images to www/images
   if (file.symlink(external_images_dir, www_images_path)) {
-    cat("Created symlink: www/images ->", external_images_dir, "\n")
+    cat("Created symlink from", external_images_dir, "to", www_images_path, "\n")
   } else {
     warning("Failed to create symlink. Images may not be accessible to Shiny server.")
   }
