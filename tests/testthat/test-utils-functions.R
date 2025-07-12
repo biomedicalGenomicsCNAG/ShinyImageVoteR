@@ -3,6 +3,10 @@ library(DBI)
 library(RSQLite)
 library(digest)
 
+# locate the directory where utils.R is defined (inside the folder R)
+# utils_dir <- system.file("R", package = "B1MGVariantVoting")
+# source(file.path(utils_dir, "utils.R"))
+
 # Test generate_user_seed function
 test_that("generate_user_seed works correctly", {
   # Test basic functionality
