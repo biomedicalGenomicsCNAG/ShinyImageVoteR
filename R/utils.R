@@ -266,7 +266,7 @@ init_external_environment <- function(base_dir = getwd()) {
 #' @export
 init_external_config <- function(base_dir = getwd()) {
   config_dir <- file.path(base_dir, "config")
-  config_file <- file.path(config_dir, "config.R")
+  config_file <- file.path(config_dir, "config.json")
   
   # Create config directory if it doesn't exist
   if (!dir.exists(config_dir)) {
@@ -277,51 +277,16 @@ init_external_config <- function(base_dir = getwd()) {
   # Check if config already exists
   if (file.exists(config_file)) {
     cat("Configuration file already exists at:", config_file, "\n")
-    # Set environment variable
     Sys.setenv(B1MG_CONFIG_PATH = config_file)
     return(config_file)
   }
-  
-  # Get the template config from the package
-  package_config <- system.file("shiny-app", "config.R", package = "B1MGVariantVoting")
-  
+
+  package_config <- system.file("shiny-app", "config.json", package = "B1MGVariantVoting")
   if (package_config == "") {
     stop("Could not find template configuration file in package")
   }
-  
-  # Read the package config and modify it for external use
-  config_content <- readLines(package_config)
-  
-  # Remove the external config check section since this IS the external config
-  start_idx <- which(grepl("Check if external configuration is set", config_content))
-  end_idx <- which(grepl("Using package configuration", config_content))
-  
-  if (length(start_idx) > 0 && length(end_idx) > 0) {
-    # Find the end of the external config checking block
-    for (i in end_idx[1]:length(config_content)) {
-      if (grepl("^\\s*}\\s*$", config_content[i])) {
-        end_idx <- i
-        break
-      }
-    }
-    # Remove the external config checking section
-    config_content <- config_content[-(start_idx[1]:end_idx)]
-  }
-  
-  # Add header comment
-  header <- c(
-    "# External Configuration for B1MG Variant Voting",
-    "# This file was created automatically and can be customized",
-    "# as needed for your deployment",
-    "",
-    paste("# Created:", Sys.time()),
-    ""
-  )
-  
-  config_content <- c(header, config_content)
-  
-  # Write the modified config
-  writeLines(config_content, config_file)
+
+  file.copy(package_config, config_file)
   cat("Configuration file created at:", config_file, "\n")
   
   # Copy annotation_screenshots_paths directory if it doesn't exist

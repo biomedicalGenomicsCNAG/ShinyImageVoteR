@@ -1,8 +1,6 @@
 library(shinyauthr)
 library(shiny)
 
-app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
-source(file.path(app_dir, "config.R"))
 
 #' Login module UI
 #'

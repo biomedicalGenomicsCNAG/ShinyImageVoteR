@@ -186,8 +186,8 @@ test_that("init_external_config creates configuration correctly", {
   
   # Test config creation
   config_file <- init_external_config(test_base)
-  
-  expected_config_file <- file.path(test_base, "config", "config.R")
+
+  expected_config_file <- file.path(test_base, "config", "config.json")
   expect_equal(config_file, expected_config_file)
   expect_true(file.exists(config_file))
   
@@ -196,9 +196,9 @@ test_that("init_external_config creates configuration correctly", {
   expect_true(dir.exists(config_dir))
   
   # Check that config file has content
-  config_content <- readLines(config_file)
-  expect_true(length(config_content) > 0)
-  expect_true(any(grepl("External Configuration", config_content)))
+  config_content <- jsonlite::read_json(config_file)
+  expect_true(is.list(config_content))
+  expect_true("application_title" %in% names(config_content))
   
   # Check that environment variable was set
   expect_equal(Sys.getenv("B1MG_CONFIG_PATH"), config_file)
