@@ -29,5 +29,7 @@ Suggests:
     covr,
     shinytest2,
     pak,
-    DT
+    DT,
+    devtools,
+    vscDebugger
 Config/testthat/edition: 3
