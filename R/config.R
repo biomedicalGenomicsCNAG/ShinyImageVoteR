@@ -7,10 +7,18 @@
 #' @export
 load_config <- function() {
   app_dir <- get_app_dir()
-  package_cfg <- file.path(app_dir, "config.json")
-  external_cfg <- file.path("config", "config.json")
+  print("app_dir:")
+  print(app_dir)
+  package_cfg <- file.path(app_dir, "default_config.json")
+  external_cfg <- file.path(Sys.getenv("B1MG_CONFIG_DIR"), "config.json")
+
+  print("external_cfg full path:")
+  print(normalizePath(external_cfg, mustWork = FALSE))
 
   config_path <- if (file.exists(external_cfg)) external_cfg else package_cfg
+
+  print("Loading configuration from:")
+  print(config_path)
 
   if (!file.exists(config_path)) {
     stop("No configuration JSON found")
@@ -43,10 +51,9 @@ load_config <- function() {
   cfg$vote_counts_cols <- c(unlist(cfg$vote2dbcolumn_map, use.names = FALSE), "vote_count_total")
   cfg$db_cols <- c(cfg$db_general_cols, cfg$vote_counts_cols)
 
-  cfg$user_ids <- names(cfg$passwords)
   cfg$credentials_df <- data.frame(
-    user = cfg$user_ids,
-    password = unname(cfg$passwords[cfg$user_ids]),
+    user = names(cfg$user2passwords_map),
+    password = vapply(cfg$user2passwords_map, identity, character(1)),
     stringsAsFactors = FALSE
   )
 

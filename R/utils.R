@@ -281,7 +281,7 @@ init_external_config <- function(base_dir = getwd()) {
     return(config_file)
   }
 
-  package_config <- system.file("shiny-app", "config.json", package = "B1MGVariantVoting")
+  package_config <- system.file("shiny-app", "default_config.json", package = "B1MGVariantVoting")
   if (package_config == "") {
     stop("Could not find template configuration file in package")
   }

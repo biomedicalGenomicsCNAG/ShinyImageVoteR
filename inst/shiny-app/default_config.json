@@ -62,7 +62,7 @@
   ],
   "test_institute": "Training_answers_not_saved",
   "selected_institute_id": "CNAG",
-  "passwords": {
+  "user2passwords_map": {
     "test": "1234",
     "test2": "1234"
   },

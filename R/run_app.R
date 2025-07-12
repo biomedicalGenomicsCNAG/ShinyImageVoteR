@@ -18,13 +18,26 @@
 #' run_voting_app(user_data_dir = "/path/to/my/user_data")
 #' run_voting_app(database_path = "/path/to/my/database.sqlite")
 #' }
-run_voting_app <- function(host = "127.0.0.1", port = NULL, launch.browser = TRUE, user_data_dir = NULL, database_path = NULL, ...) {
+run_voting_app <- function(
+    host = "127.0.0.1", 
+    port = NULL, 
+    launch.browser = TRUE, 
+    config_dir = NULL,
+    user_data_dir = NULL, 
+    database_path = NULL, 
+    ...
+  ) {
   app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
   
   if (app_dir == "") {
     stop("Could not find Shiny app directory. Please reinstall the package.")
   }
-  
+
+  if (is.null(config_dir) || config_dir == "") {
+    config_dir <- file.path(getwd(), "config")
+  }
+  Sys.setenv(B1MG_CONFIG_DIR = config_dir)
+ 
   # Set up external environment
   if (is.null(user_data_dir)) {
     user_data_dir <- get_user_data_dir()
