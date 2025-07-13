@@ -18,6 +18,7 @@ Imports:
     pool,
     dplyr,
     jsonlite,
+    yaml,
     digest,
     later,
     shinyjs,

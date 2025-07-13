@@ -4,13 +4,14 @@
 #' variables or external files.
 #'
 #' @return A named list of configuration values (e.g., `cfg_sqlite_file`, `cfg_radio_options2val_map`, etc.)
+#' @import yaml
 #' @export
 load_config <- function() {
   app_dir <- get_app_dir()
   print("app_dir:")
   print(app_dir)
-  package_cfg <- file.path(app_dir, "default_config.json")
-  external_cfg <- file.path(Sys.getenv("B1MG_CONFIG_DIR"), "config.json")
+  package_cfg <- file.path(app_dir, "default_config.yaml")
+  external_cfg <- file.path(Sys.getenv("B1MG_CONFIG_DIR"), "config.yaml")
 
   print("external_cfg full path:")
   print(normalizePath(external_cfg, mustWork = FALSE))
@@ -21,10 +22,10 @@ load_config <- function() {
   print(config_path)
 
   if (!file.exists(config_path)) {
-    stop("No configuration JSON found")
+    stop("No configuration YAML found")
   }
 
-  cfg <- jsonlite::read_json(config_path, simplifyVector = TRUE)
+  cfg <- yaml::read_yaml(config_path)
 
   cfg$user_data_dir <- Sys.getenv("B1MG_USER_DATA_DIR", unset = cfg$user_data_dir)
   if (!dir.exists(cfg$user_data_dir)) dir.create(cfg$user_data_dir, recursive = TRUE)

@@ -266,7 +266,7 @@ init_external_environment <- function(base_dir = getwd()) {
 #' @export
 init_external_config <- function(base_dir = getwd()) {
   config_dir <- file.path(base_dir, "config")
-  config_file <- file.path(config_dir, "config.json")
+  config_file <- file.path(config_dir, "config.yaml")
   
   # Create config directory if it doesn't exist
   if (!dir.exists(config_dir)) {
@@ -281,7 +281,7 @@ init_external_config <- function(base_dir = getwd()) {
     return(config_file)
   }
 
-  package_config <- system.file("shiny-app", "default_config.json", package = "B1MGVariantVoting")
+  package_config <- system.file("shiny-app", "default_config.yaml", package = "B1MGVariantVoting")
   if (package_config == "") {
     stop("Could not find template configuration file in package")
   }
