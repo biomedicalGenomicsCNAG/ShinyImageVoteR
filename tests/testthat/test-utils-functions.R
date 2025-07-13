@@ -2,6 +2,7 @@ library(testthat)
 library(DBI)
 library(RSQLite)
 library(digest)
+library(yaml)
 
 # Test init_user_data_structure function
 test_that("init_user_data_structure creates correct directory structure", {
@@ -187,7 +188,7 @@ test_that("init_external_config creates configuration correctly", {
   # Test config creation
   config_file <- init_external_config(test_base)
 
-  expected_config_file <- file.path(test_base, "config", "config.json")
+  expected_config_file <- file.path(test_base, "config", "config.yaml")
   expect_equal(config_file, expected_config_file)
   expect_true(file.exists(config_file))
   
@@ -196,7 +197,7 @@ test_that("init_external_config creates configuration correctly", {
   expect_true(dir.exists(config_dir))
   
   # Check that config file has content
-  config_content <- jsonlite::read_json(config_file)
+  config_content <- yaml::read_yaml(config_file)
   expect_true(is.list(config_content))
   expect_true("application_title" %in% names(config_content))
   

@@ -44,8 +44,8 @@ build:
 .PHONY: install
 install: build
 	@echo "Installing R package..."
-	$(R) CMD INSTALL $(TARBALL) --no-staged-install
-# 	$(R) CMD INSTALL $(TARBALL)
+# 	$(R) CMD INSTALL $(TARBALL) --no-staged-install
+	$(R) CMD INSTALL $(TARBALL)
 	@echo "Package installed successfully"
 
 # Run R CMD check
