@@ -20,7 +20,7 @@
 #' }
 run_voting_app <- function(
     host = "127.0.0.1", 
-    port = NULL, 
+    port = 8000, 
     launch.browser = TRUE, 
     config_dir = NULL,
     user_data_dir = NULL, 
