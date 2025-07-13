@@ -90,7 +90,13 @@ test_that("session end triggers scheduled logout update", {
   
   # Reset global test variables
   .test_login_rv <<- NULL
-  .update_called <<- NULL
+  .update_called <<- 
+  
+  # stub schedule_logout_update so it just runs the callback immediately
+  stub_schedule_logout_update <- function(session_id, callback) {
+    callback()
+    .update_called <<- session_id
+  }
   
   withr::local_envvar(
     B1MG_USER_DATA_DIR = temp_user_dir,
@@ -99,22 +105,29 @@ test_that("session end triggers scheduled logout update", {
   
   with_mocked_bindings(
     `loginServer` = stub_loginServer,
+    `schedule_logout_update` = stub_schedule_logout_update,
     {
       testServer(B1MGVariantVoting::makeVotingAppServer(pool), {
         # First, simulate a login to set up session data
-        .test_login_rv(list(user_id = "user1", voting_institute = "CNAG", session_id = "test_session_456"))
+        .test_login_rv(list(
+          user_id = "user1", 
+          voting_institute = "CNAG", 
+          session_id = "test_session_456"
+        ))
         session$flushReact()
         
         # Verify session data is set
-        expect_equal(session$userData$shinyauthr_session_id, "test_session_456")
-        
-        # The session$onSessionEnded callback should be registered
-        # This is harder to test directly since it's an internal callback
-        # but we can verify the session data exists for the callback to use
-        expect_true(!is.null(session$userData$shinyauthr_session_id))
+        expect_equal(
+          session$userData$shinyauthr_session_id, 
+          "test_session_456"
+        )
+
+        session$close()
+        session$flushReact()
       })
     }
   )
+  expect_equal(.update_called, "test_session_456")
 
   poolClose(pool)
   unlink(mock_db$file)
