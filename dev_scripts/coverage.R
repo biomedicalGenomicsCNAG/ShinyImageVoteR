@@ -3,7 +3,7 @@
 
 library(magrittr)
 
-cov <- covr::package_coverage()
+cov <- covr::package_coverage(quiet = FALSE)
 # covr::codecov(coverage = cov)
 
 cov_dir <- file.path(getwd(), "tests", "coverage")
@@ -12,8 +12,8 @@ covr::report(cov, file.path(cov_dir, "coverage.html"))
 # Print summary to console
 cat("Total Coverage:", covr::percent_coverage(cov), "%\n")
 
-more_details <- TRUE
-# more_details <- FALSE
+# more_details <- TRUE
+more_details <- FALSE
 if (!more_details) {
   q()
 }

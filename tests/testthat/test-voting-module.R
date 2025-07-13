@@ -242,39 +242,6 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
   )
 })
 
-test_that("votingServer handles empty comment correctly", {
-  env <- setup_voting_env(c("chr1:1000"))
-  args <- make_args(env$annotations_file)
-  cleanup_db <- setup_test_db(args)
-  on.exit(cleanup_db())
-
-  testServer(
-    votingServer,
-    args = args,
-    {
-      # Set up session userData
-      session$userData$userAnnotationsFile <- env$annotations_file
-      session$userData$votingInstitute <- "DIFFERENT_INSTITUTE"
-      session$userData$shinyauthr_session_id <- "test_session_123"
-      
-      # Trigger URL params to initialize
-      session$setInputs(url_params = list(coordinates = "chr1:1000"))
-      
-      # Set voting inputs with empty comment
-      session$setInputs(
-        agreement = "no",
-        comment = ""  # Empty comment should be handled as NA
-      )
-      
-      # Trigger the next button
-      session$setInputs(nextBtn = 1)
-      
-      # Verify the vote was processed (covers line 198-200 for empty comment handling)
-      expect_true(TRUE)
-    }
-  )
-})
-
 test_that("votingServer handles duplicate voting from same session", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
@@ -309,6 +276,66 @@ test_that("votingServer handles duplicate voting from same session", {
       
       # Verify duplicate vote handling (covers lines 221-231)
       expect_true(TRUE)
+    }
+  )
+})
+
+test_that("get_mutation returns done tibble when all variants voted", {
+  env <- setup_voting_env(c("chr1:1000"))
+  ann <- read.delim(env$annotations_file, stringsAsFactors = FALSE)
+  ann$agreement <- "yes"
+  write.table(ann, env$annotations_file, sep = "\t", row.names = FALSE, quote = FALSE)
+
+  args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+
+  my_session <- MockShinySession$new()
+  my_session$clientData <- reactiveValues(
+    url_search = "?coords=done"
+  )
+
+  testServer(
+    votingServer,
+    session = my_session,
+    args = args,
+    {
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$votingInstitute <- cfg$test_institute
+      session$userData$shinyauthr_session_id <- "done_session"
+
+      session$setInputs(nextBtn = 1)
+      session$flushReact()
+      res <- get_mutation()
+      expect_equal(res$coordinates, "done")
+    }
+  )
+})
+
+test_that("get_mutation gets triggered with not existing coordinates", {
+  env <- setup_voting_env(c("chr1:1000"))
+  args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+
+  my_session <- MockShinySession$new()
+  my_session$clientData <- reactiveValues(
+    url_search = "?coords=not_existing"
+  )
+
+  testServer(
+    votingServer,
+    session = my_session,
+    args = args,
+    {
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$votingInstitute <- cfg$test_institute
+      session$userData$shinyauthr_session_id <- "coords_not_existing"
+
+      session$setInputs(nextBtn = 1)
+      session$flushReact()
+      res <- get_mutation()
+      expect_equal(res$coordinates, NULL)
     }
   )
 })
