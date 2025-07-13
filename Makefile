@@ -44,7 +44,6 @@ build:
 .PHONY: install
 install: build
 	@echo "Installing R package..."
-# 	$(R) CMD INSTALL $(TARBALL) --no-staged-install
 	$(R) CMD INSTALL $(TARBALL)
 	@echo "Package installed successfully"
 
@@ -58,13 +57,12 @@ check: build
 .PHONY: test
 test: install
 	@echo "Running package tests..."
-# 	$(RSCRIPT) -e "testthat::test_dir('tests/testthat')"
 	$(RSCRIPT) -e "devtools::test()"
 
 # Generate test coverage
 .PHONY: coverage
 cov: install
-	@echo "Generating test coverage report at $(CURDIR)/coverage.html…"
+	@echo "Generating test coverage report"
 	@$(RSCRIPT) dev_scripts/coverage.R
 
 # Setup external environment (user_data, database, and config)

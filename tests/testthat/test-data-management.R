@@ -1,10 +1,8 @@
 library(testthat)
-library(B1MGVariantVoting)
-
-# Add required libraries for init_db tests
 library(DBI)
 library(RSQLite)
 library(pool)
+library(B1MGVariantVoting)
 
 test_that("get_user_data_dir creates directory when it does not exist", {
   # Create a temporary directory for testing
