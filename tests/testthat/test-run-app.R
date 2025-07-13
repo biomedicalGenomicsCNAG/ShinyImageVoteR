@@ -89,7 +89,7 @@ test_that("run_voting_app uses defaults when arguments are NULL", {
     
     # Check default values were used
     expect_equal(call_args$host, "127.0.0.1")
-    expect_null(call_args$port)
+    expect_equal(call_args$port, 8000)
     expect_false(call_args$launch.browser)
     expect_equal(call_args$appDir, get_app_dir())
     
