@@ -77,7 +77,12 @@ test_that("run_voting_app uses defaults when arguments are NULL", {
   # Mock shiny::runApp
   original_runApp <- shiny::runApp
   mock_runApp <- function(appDir, host, port, launch.browser, ...) {
-    call_args <<- list(appDir = appDir, host = host, port = port, launch.browser = launch.browser)
+    call_args <<- list(
+      appDir = appDir, 
+      host = host, 
+      port = port, 
+      launch.browser = launch.browser
+    )
     invisible(NULL)
   }
   
@@ -115,6 +120,11 @@ test_that("run_voting_app uses defaults when arguments are NULL", {
       Sys.unsetenv("B1MG_DATABASE_PATH")
     } else {
       Sys.setenv(B1MG_DATABASE_PATH = orig_db_path)
+    }
+    # if db.sqlite in orig_wd, remove it
+    db_file <- file.path(orig_wd, "db.sqlite")
+    if (file.exists(db_file)) {
+      unlink(db_file)
     }
     
     setwd(orig_wd)
