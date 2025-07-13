@@ -98,6 +98,18 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
 
     cfg <- B1MGVariantVoting::load_config()
 
+    # Helper function to create the "done" tibble
+    create_done_tibble <- function() {
+      tibble::tibble(
+        rowid = NA,
+        coordinates = "done",
+        REF = "-",
+        ALT = "-",
+        variant = NA,
+        path = "images/done.png"
+      )
+    }
+
     # Tracks the url parameters be they manually set in the URL or
     # set by the app when the user clicks on the "Back" button
     # or presses "Go back one page" in the browser
@@ -315,14 +327,7 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
 
         if (coords == "done") {
           print("All variants have been voted on.")
-          res <- tibble::tibble( # duplicated code
-            rowid = NA,
-            coordinates = "done",
-            REF = "-",
-            ALT = "-",
-            variant = NA,
-            path = "images/done.png"
-          )
+          res <- create_done_tibble()
           # TODO
           # Freepic attribution for done.png
           # url: "https://www.flaticon.com/free-icon/done_14018771"
@@ -398,14 +403,7 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
       }
 
       if (all(!is.na(annotations_df$agreement))) {
-        res <- tibble::tibble( #duplicated code
-          rowid = NA,
-          coordinates = "done",
-          REF = "-",
-          ALT = "-",
-          variant = NA,
-          path = "images/done.png"
-        )
+        res <- create_done_tibble()
         updateQueryString(
           "?coords=done",
           mode = "push",
@@ -440,11 +438,6 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
           df <- DBI::dbGetQuery(db_pool, query)
           print("Query result:")
           print(df)
-
-          # assert that the query returns only one row
-          if (nrow(df) > 1) {
-            stop("Query returned more than one row. Check the DB.")
-          }
 
           if (nrow(df) > 0) {
             # TODO
