@@ -210,8 +210,14 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
       assign("current_mutation", current_mutation, envir = parent.frame())
 
       # Simulate the user clicking Next with an agreement
-      session$setInputs(agreement = "yes")
-      expect_equal(input$agreement, "yes")
+      session$setInputs(agreement = "no")
+      expect_equal(input$agreement, "no")
+
+      session$setInputs(alternative_vartype = "A>T")
+      expect_equal(input$alternative_vartype, "A>T")
+
+      session$setInputs(observation = "Test observation")
+      expect_equal(input$observation, "Test observation")
 
       # Now simulate clicking the “Next” button
       session$setInputs(nextBtn = 1)

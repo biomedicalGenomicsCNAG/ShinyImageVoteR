@@ -185,28 +185,10 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
         annotations_df[rowIdx, "observation"] <- paste(input$observation, collapse = ";")
       }
 
-      print("here")
-
-      # handle comment (default NA)
       comment <- NA
-      print(paste("Comment:", input$comment))
-      print(vote_start_time())
-
-      tryCatch({
-        # If the comment is empty, set it to NA
-        if (input$comment == "") {
-          comment <- NA
-        } else {
-          comment <- input$comment
-        }
-      }, error = function(e) {
-        print(paste("Error setting comment:", e$message))
-      })
-      # if (input$comment != "") {
-      #   comment <- input$comment
-      #   annotations_df[rowIdx, "comment"] <- comment
-      # }
-
+      if (!is.null(input$comment) && input$comment != "") {
+        comment <- input$comment
+      } 
       print("Before updating the time_till_vote_casted_in_seconds:")
 
       # calculate time spent on the current variant
@@ -369,10 +351,6 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
         # Query the database for the variant with these coordinates
         query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coords, "'")
         df <- DBI::dbGetQuery(db_pool, query)
-        # assert that the query returns only one row
-        if (nrow(df) > 1) {
-          stop("Query returned more than one row. Check the DB.")
-        }
         if (nrow(df) > 0) {
           current_mutation(df[1, ])
           vote_start_time(Sys.time())
