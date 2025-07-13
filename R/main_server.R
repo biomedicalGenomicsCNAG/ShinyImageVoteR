@@ -57,8 +57,6 @@ makeVotingAppServer <- function(db_pool) {
       if (!dir.exists(user_dir)) {
         cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
         dir.create(user_dir, recursive = TRUE)
-      } else {
-        cat(sprintf("Directory for user: %s already exists at %s\n", user_id, user_dir))
       }
 
       if (file.exists(session$userData$userInfoFile)) {

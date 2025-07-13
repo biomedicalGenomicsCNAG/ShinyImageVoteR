@@ -25,5 +25,5 @@ This file guides OpenAI's Codex on project structure and coding conventions
 ## Coding Conventions
 
 - Use Shiny modules consistently: both in one file UI (`<module>UI`) + server (`<module>Server`)
-- Modules files named `<module>_module.R`
+- Modules files named `mod_<module>.R`
 - Indent code with 2 spaces
