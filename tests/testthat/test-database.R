@@ -51,7 +51,7 @@ test_that("Vote counting updates work correctly", {
   coordinates <- "chr1:1000"
   
   # Increment correct vote count
-  dbExecute(test_pool, "
+  DBI::dbExecute(test_pool, "
     UPDATE annotations 
     SET vote_count_correct = vote_count_correct + 1,
         vote_count_total = vote_count_total + 1
@@ -59,7 +59,7 @@ test_that("Vote counting updates work correctly", {
   ", params = list(coordinates))
   
   # Verify the update
-  result <- dbGetQuery(test_pool, "
+  result <- DBI::dbGetQuery(test_pool, "
     SELECT vote_count_correct, vote_count_total 
     FROM annotations 
     WHERE coordinates = ?
@@ -69,7 +69,7 @@ test_that("Vote counting updates work correctly", {
   expect_equal(result$vote_count_total, 1)
   
   # Test another vote type
-  dbExecute(test_pool, "
+  DBI::dbExecute(test_pool, "
     UPDATE annotations 
     SET vote_count_no_variant = vote_count_no_variant + 1,
         vote_count_total = vote_count_total + 1
@@ -77,7 +77,7 @@ test_that("Vote counting updates work correctly", {
   ", params = list(coordinates))
   
   # Verify the update
-  result <- dbGetQuery(test_pool, "
+  result <- DBI::dbGetQuery(test_pool, "
     SELECT vote_count_correct, vote_count_no_variant, vote_count_total 
     FROM annotations 
     WHERE coordinates = ?
@@ -140,7 +140,7 @@ test_that("Pool connection management works", {
   test_pool <- mock_db$pool
   
   # Test connection checkout/return
-  conn <- poolCheckout(test_pool)
+  conn <- pool::poolCheckout(test_pool)
   expect_s4_class(conn, "SQLiteConnection")
   
   # Test that we can use the connection
@@ -148,7 +148,7 @@ test_that("Pool connection management works", {
   expect_equal(result$n, 3)
   
   # Return connection
-  poolReturn(conn)
+  pool::poolReturn(conn)
   
   # Test pool close
   expect_silent(poolClose(test_pool))

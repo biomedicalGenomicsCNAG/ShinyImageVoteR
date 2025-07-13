@@ -213,50 +213,6 @@ test_that("init_external_config creates configuration correctly", {
   Sys.unsetenv("B1MG_CONFIG_PATH")
 })
 
-# Test init_external_images function
-test_that("init_external_images creates images directory", {
-  temp_dir <- tempdir()
-  test_base <- file.path(temp_dir, "test_images_init")
-  
-  # Clean up any existing directory
-  if (dir.exists(test_base)) {
-    unlink(test_base, recursive = TRUE)
-  }
-  
-  # Store original environment variable
-  original_images_dir <- Sys.getenv("B1MG_IMAGES_DIR")
-  
-  # Test images directory creation (but expect warnings about symlinks during testing)
-  suppressWarnings({
-    images_dir <- init_external_images(test_base, "test_images")
-  })
-  
-  expected_images_dir <- file.path(test_base, "test_images")
-  expect_equal(images_dir, expected_images_dir)
-  expect_true(dir.exists(images_dir))
-  
-  # Check that environment variable was set
-  expect_equal(Sys.getenv("B1MG_IMAGES_DIR"), images_dir)
-  
-  # Test with default subdirectory name (suppress symlink warnings)
-  suppressWarnings({
-    images_dir2 <- init_external_images(test_base)
-  })
-  expected_images_dir2 <- file.path(test_base, "images")
-  expect_equal(images_dir2, expected_images_dir2)
-  expect_true(dir.exists(images_dir2))
-  
-  # Clean up
-  unlink(test_base, recursive = TRUE)
-  
-  # Restore original environment variable
-  if (original_images_dir == "") {
-    Sys.unsetenv("B1MG_IMAGES_DIR")
-  } else {
-    Sys.setenv(B1MG_IMAGES_DIR = original_images_dir)
-  }
-})
-
 # Test file.symlink.exists function (internal function)
 test_that("file.symlink.exists works correctly", {
   temp_dir <- tempdir()
@@ -272,6 +228,51 @@ test_that("file.symlink.exists works correctly", {
   
   # Clean up
   unlink(regular_file)
+})
+
+# Test init_external_images function
+test_that("init_external_images creates images directory", {
+  app_dir <- get_app_dir()
+  temp_dir <- tempdir()
+  test_base <- file.path(temp_dir, "test_images_init")
+  
+  # Clean up any existing directory
+  if (dir.exists(test_base)) {
+    unlink(test_base, recursive = TRUE)
+  }
+  
+  # Store original environment variable
+  original_images_dir <- Sys.getenv("B1MG_IMAGES_DIR")
+  
+  # Test images directory creation
+  # suppressWarnings({
+  images_dir <- init_external_images(test_base, "test_images")
+  # })
+  
+  expected_images_dir <- file.path(test_base, "test_images")
+  expect_equal(images_dir, expected_images_dir)
+  expect_true(dir.exists(images_dir))
+  expect_true(file.symlink.exists(file.path(app_dir, "www", "images")))
+  # Check that symlink points to the correct directory
+  expect_equal(
+    normalizePath(file.path(app_dir, "www", "images")),
+    normalizePath(images_dir)
+  )
+  
+  # Restore original environment variable
+  if (original_images_dir == "") {
+    Sys.unsetenv("B1MG_IMAGES_DIR")
+  } else {
+    Sys.setenv(B1MG_IMAGES_DIR = original_images_dir)
+  }
+
+  # Clean up
+  # delete the symlink if it exists
+  symlink_path <- file.path(app_dir,"www","images")
+  if (file.symlink.exists(symlink_path)) {
+    unlink(symlink_path, recursive = TRUE)
+  }
+  unlink(test_base, recursive = TRUE)
 })
 
 # Test init_external_server_data function
@@ -308,6 +309,7 @@ test_that("init_external_server_data creates server data directory", {
 
 # Test init_external_environment function
 test_that("init_external_environment sets up complete environment with variables", {
+  app_dir <- get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_full_env_init")
   
@@ -326,9 +328,9 @@ test_that("init_external_environment sets up complete environment with variables
   )
   
   # Test complete environment initialization (suppress symlink warnings during testing)
-  suppressWarnings({
-    result <- init_external_environment(test_base)
-  })
+  # suppressWarnings({
+  result <- init_external_environment(test_base)
+  # })
   
   # Check return value structure
   expect_true(is.list(result))
@@ -353,9 +355,6 @@ test_that("init_external_environment sets up complete environment with variables
   expect_true(dir.exists(file.path(result$user_data_dir, "CNAG")))
   expect_true(dir.exists(file.path(result$user_data_dir, "Training_answers_not_saved")))
   
-  # Clean up
-  unlink(test_base, recursive = TRUE)
-  
   # Restore original environment variables
   for (var_name in names(original_env_vars)) {
     if (original_env_vars[[var_name]] == "") {
@@ -364,4 +363,12 @@ test_that("init_external_environment sets up complete environment with variables
       Sys.setenv(setNames(original_env_vars[[var_name]], var_name))
     }
   }
+
+  # Clean up
+  # delete the symlink if it exists
+  symlink_path <- file.path(app_dir,"www","images")
+  if (file.symlink.exists(symlink_path)) {
+    unlink(symlink_path, recursive = TRUE)
+  }
+  unlink(test_base, recursive = TRUE)
 })

@@ -6,11 +6,11 @@ create_mock_db <- function() {
   db_file <- tempfile(fileext = ".sqlite")
   db_pool <- pool::dbPool(RSQLite::SQLite(), dbname = db_file)
 
-  conn <- poolCheckout(db_pool)
-  on.exit(poolReturn(conn), add = TRUE)  # Ensure return no matter what
+  conn <- pool::poolCheckout(db_pool)
+  on.exit(pool::poolReturn(conn), add = TRUE)  # Ensure return no matter what
   
   # Create annotations table
-  dbExecute(conn, "
+  DBI::dbExecute(conn, "
     CREATE TABLE annotations (
       coordinates TEXT PRIMARY KEY,
       REF TEXT,
@@ -33,14 +33,14 @@ create_mock_db <- function() {
   )
   
   for (mutation in test_mutations) {
-    dbExecute(conn, "
+    DBI::dbExecute(conn, "
       INSERT INTO annotations (coordinates, REF, ALT, variant, path)
       VALUES (?, ?, ?, ?, ?)
     ", params = mutation)
   }
 
   # Create sessionids table
-  dbExecute(conn, "
+  DBI::dbExecute(conn, "
     CREATE TABLE sessionids (
       user TEXT,
       sessionid TEXT,

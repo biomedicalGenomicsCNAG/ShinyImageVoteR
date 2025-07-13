@@ -58,7 +58,8 @@ check: build
 .PHONY: test
 test: install
 	@echo "Running package tests..."
-	$(RSCRIPT) -e "testthat::test_dir('tests/testthat')"
+# 	$(RSCRIPT) -e "testthat::test_dir('tests/testthat')"
+	$(RSCRIPT) -e "devtools::test()"
 
 # Generate test coverage
 .PHONY: coverage

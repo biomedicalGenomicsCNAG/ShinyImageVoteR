@@ -29,7 +29,7 @@ test_that("User stats server handles tab trigger parameter", {
   pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
   
   # Create sessionids table
-  dbExecute(pool, "
+  DBI::dbExecute(pool, "
     CREATE TABLE sessionids (
       user TEXT,
       sessionid TEXT,
@@ -61,7 +61,7 @@ test_that("User stats reactive triggers correctly", {
   pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
   
   # Create sessionids table
-  dbExecute(pool, "
+  DBI::dbExecute(pool, "
     CREATE TABLE sessionids (
       user TEXT,
       sessionid TEXT,
@@ -71,7 +71,7 @@ test_that("User stats reactive triggers correctly", {
   ")
   
   # Insert some test session data
-  dbExecute(pool, "
+  DBI::dbExecute(pool, "
     INSERT INTO sessionids (user, sessionid, login_time, logout_time)
     VALUES ('test_user', 'session123', '2023-01-01 10:00:00', '2023-01-01 10:30:00')
   ")
@@ -134,7 +134,7 @@ test_that("User stats server works without tab trigger (backward compatibility)"
   pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
   
   # Create sessionids table
-  dbExecute(pool, "
+  DBI::dbExecute(pool, "
     CREATE TABLE sessionids (
       user TEXT,
       sessionid TEXT,

@@ -67,7 +67,7 @@ test_that("Logout time update works correctly", {
   
   # Insert a test session
   sessionid <- "test_session_456"
-  dbExecute(conn, "
+  DBI::dbExecute(conn, "
     INSERT INTO sessionids (user, sessionid, login_time, logout_time)
     VALUES (?, ?, ?, ?)
   ", params = list("test_user", sessionid, as.character(now()), NA_character_))
@@ -97,19 +97,19 @@ test_that("Session filtering works correctly", {
   old_time <- current_time - days(2)
   
   # Active session (recent, no logout)
-  dbExecute(conn, "
+  DBI::dbExecute(conn, "
     INSERT INTO sessionids (user, sessionid, login_time, logout_time)
     VALUES (?, ?, ?, ?)
   ", params = list("user1", "session1", as.character(current_time), NA_character_))
   
   # Expired session (old, no logout)
-  dbExecute(conn, "
+  DBI::dbExecute(conn, "
     INSERT INTO sessionids (user, sessionid, login_time, logout_time)
     VALUES (?, ?, ?, ?)
   ", params = list("user2", "session2", as.character(old_time), NA_character_))
   
   # Logged out session (recent, has logout)
-  dbExecute(conn, "
+  DBI::dbExecute(conn, "
     INSERT INTO sessionids (user, sessionid, login_time, logout_time)
     VALUES (?, ?, ?, ?)
   ", params = list("user3", "session3", as.character(current_time), as.character(current_time)))
