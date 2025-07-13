@@ -1,10 +1,3 @@
-#' Data Directory Management Functions
-#'
-#' Functions to manage user data directories outside the package
-#'
-#' @name data_management
-NULL
-
 #' Get or create the user data directory
 #'
 #' This function returns the path to the user_data directory, creating it if necessary.
@@ -46,21 +39,3 @@ init_db <- function(cfg_sqlite_file) {
 
   return(pool)
 }
-
-# #' Get configuration with external user_data path
-# #'
-# #' Returns a configuration object with the correct user_data path
-# #'
-# #' @param base_dir Character. Base directory for user_data
-# #' @return List with configuration including user_data_path
-# #' @export
-# get_external_config <- function(base_dir = NULL) {
-#   user_data_dir <- get_user_data_dir(base_dir)
-  
-#   config <- list(
-#     user_data_path = user_data_dir,
-#     app_dir = get_app_dir()
-#   )
-  
-#   return(config)
-# }
