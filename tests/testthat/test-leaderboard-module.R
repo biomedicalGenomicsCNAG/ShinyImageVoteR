@@ -15,14 +15,12 @@ test_that("Leaderboard module UI renders correctly", {
 
 test_that("Leaderboard server handles tab trigger parameter", {
   # Test that the function accepts the new tab_trigger parameter
-  expect_silent({
-    testServer(leaderboardServer, args = list(
-      login_trigger = reactive({ list(user_id = "test", voting_institute = "CNAG") }),
-      tab_trigger = reactive({ Sys.time() })
-    ), {
-      # Basic test that the server function loads without error
-      expect_true(TRUE)
-    })
+  testServer(leaderboardServer, args = list(
+    login_trigger = reactive({ list(user_id = "test", voting_institute = "CNAG") }),
+    tab_trigger = reactive({ Sys.time() })
+  ), {
+    # Basic test that the server function loads without error
+    expect_true(TRUE)
   })
 })
 
