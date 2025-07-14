@@ -2,4 +2,7 @@
 AGENTS.html
 AGENTS_files/
 
+user_data/*
+!user_data/README.md
+
 db.sqlite

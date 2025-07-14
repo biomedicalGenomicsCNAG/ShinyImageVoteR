@@ -11,12 +11,11 @@ Users get presented a randomly picked image of a B1MG variant and can vote for i
 
 ## Quickstart
 
-1. Start the R shiny application:
+1. Start the Shiny application:
 
 ```bash
-cd shiny
 R -e "renv::restore()"
-Rscript run.R
+R -e "B1MGVariantVoting::run_app()"
 ```
 
 2. Navigate to http://localhost:8000

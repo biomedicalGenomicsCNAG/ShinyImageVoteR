@@ -4,5 +4,6 @@
   },
   "[renviron]": {
     "editor.formatOnSave": false
-  }
+  },
+  "coverage-gutters.coverageBaseDir": "./tests/coverage"
 }

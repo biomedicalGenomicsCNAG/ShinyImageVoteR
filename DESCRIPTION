@@ -1,0 +1,36 @@
+Package: B1MGVariantVoting
+Type: Package
+Title: B1MG Variant Voting Shiny App
+Version: 0.1.0
+Authors@R: c(person(given = "Ivo Christopher", family = "Leist", role = c("aut", "cre"), email = "ivo.leist@example.com"))
+Description: A Shiny application for voting on B1MG variants. Packaged for easier testing and deployment.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 4.0.0)
+Imports:
+    shiny (>= 1.7.0),
+    DBI,
+    RSQLite,
+    pool,
+    dplyr,
+    jsonlite,
+    yaml,
+    digest,
+    later,
+    shinyjs,
+    tibble,
+    data.table,
+    markdown
+Suggests:
+    testthat (>= 3.0.0),
+    covr,
+    shinytest2,
+    pak,
+    DT,
+    devtools,
+    vscDebugger
+Config/testthat/edition: 3
