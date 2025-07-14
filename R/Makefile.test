@@ -1,0 +1,78 @@
+# Makefile for B1MG Variant Voting Application
+
+.PHONY: test test-config test-login test-server test-ui test-database test-utils clean help
+
+# Default target
+all: test
+
+# Run all tests
+test:
+	@echo "Running all tests..."
+	Rscript run_tests.R
+
+# Run specific test suites
+test-config:
+	@echo "Running configuration tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-config.R')"
+
+test-login:
+	@echo "Running login module tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-login-module.R')"
+
+test-leaderboard:
+	@echo "Running leaderboard module tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-leaderboard-module.R')"
+
+test-user-stats:
+	@echo "Running user stats module tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-user-stats-module.R')"
+
+test-server:
+	@echo "Running server function tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-server-functions.R')"
+
+test-ui:
+	@echo "Running UI tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-ui.R')"
+
+test-database:
+	@echo "Running database tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-database.R')"
+
+test-utils:
+	@echo "Running utility function tests..."
+	Rscript -e "library(testthat); test_file('tests/testthat/test-utils.R')"
+
+# Clean up test artifacts
+clean:
+	@echo "Cleaning up test artifacts..."
+	@find . -name "*.tmp" -delete
+	@find . -name "*.log" -delete
+	@rm -rf tests/testthat/test-output/
+
+# Install test dependencies
+install-deps:
+	@echo "Installing test dependencies..."
+	Rscript -e "install.packages(c('testthat', 'shinytest2'), repos='https://cran.rstudio.com')"
+
+# Run tests with coverage (requires covr package)
+test-coverage:
+	@echo "Running tests with coverage..."
+	Rscript -e "library(covr); library(testthat); covr::package_coverage()"
+
+# Help
+help:
+	@echo "Available targets:"
+	@echo "  test              - Run all tests"
+	@echo "  test-config       - Run configuration tests"
+	@echo "  test-login        - Run login module tests"
+	@echo "  test-leaderboard  - Run leaderboard module tests"
+	@echo "  test-user-stats   - Run user stats module tests"
+	@echo "  test-server       - Run server function tests"
+	@echo "  test-ui           - Run UI tests"
+	@echo "  test-database     - Run database tests"
+	@echo "  test-utils        - Run utility function tests"
+	@echo "  clean             - Clean up test artifacts"
+	@echo "  install-deps      - Install test dependencies"
+	@echo "  test-coverage     - Run tests with coverage"
+	@echo "  help              - Show this help message"
