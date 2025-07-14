@@ -3,7 +3,7 @@ user_data_dir: "./user_data"
 server_data_dir: "./server_data"
 sqlite_file: "./db.sqlite"
 to_be_voted_images_file: "./screenshots/uro003_paths_mock.txt"
-application_title: B1MG Somatic Mutation Voting v2
+application_title: B1MG Somatic Mutation Voting beta
 radioBtns_label: Is the somatic mutation above correct? [num keys 1-4]
 checkboxes_label: Please select the reason for your uncertainty [keyboard keys a-h]
 radio_options2val_map:
