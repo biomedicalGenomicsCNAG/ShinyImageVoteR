@@ -68,6 +68,7 @@ test_that("init_external_database creates database correctly", {
   tables <- dbListTables(con)
   expect_true("annotations" %in% tables)
   expect_true("sessionids" %in% tables)
+  expect_true("credentials" %in% tables)
   
   # Check annotations table structure
   annotations_info <- dbGetQuery(con, "PRAGMA table_info(annotations)")
@@ -81,6 +82,11 @@ test_that("init_external_database creates database correctly", {
   sessionids_info <- dbGetQuery(con, "PRAGMA table_info(sessionids)")
   expected_sessionids_columns <- c("user", "sessionid", "login_time", "logout_time")
   expect_true(all(expected_sessionids_columns %in% sessionids_info$name))
+
+  # Check credentials table structure
+  cred_info <- dbGetQuery(con, "PRAGMA table_info(credentials)")
+  expected_cred_cols <- c("userid", "password", "password_retrieval_link", "link_clicked_timestamp")
+  expect_true(all(expected_cred_cols %in% cred_info$name))
   
   dbDisconnect(con)
   
@@ -122,6 +128,9 @@ test_that("init_external_database works with data file", {
   
   # Check that data was loaded
   con <- dbConnect(RSQLite::SQLite(), db_path)
+
+  tables <- dbListTables(con)
+  expect_true("credentials" %in% tables)
   
   # Check that annotations were loaded
   row_count <- dbGetQuery(con, "SELECT COUNT(*) as count FROM annotations")

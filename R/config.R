@@ -52,11 +52,20 @@ load_config <- function() {
   cfg$vote_counts_cols <- c(unlist(cfg$vote2dbcolumn_map, use.names = FALSE), "vote_count_total")
   cfg$db_cols <- c(cfg$db_general_cols, cfg$vote_counts_cols)
 
-  cfg$credentials_df <- data.frame(
-    user = names(cfg$user2passwords_map),
-    password = vapply(cfg$user2passwords_map, identity, character(1)),
-    stringsAsFactors = FALSE
-  )
+  con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
+  if ("credentials" %in% DBI::dbListTables(con)) {
+    cfg$credentials_df <- DBI::dbReadTable(con, "credentials")
+    names(cfg$credentials_df)[names(cfg$credentials_df) == "userid"] <- "user"
+  } else {
+    cfg$credentials_df <- data.frame(
+      user = character(),
+      password = character(),
+      password_retrieval_link = character(),
+      link_clicked_timestamp = character(),
+      stringsAsFactors = FALSE
+    )
+  }
+  DBI::dbDisconnect(con)
 
   return(cfg)
 }

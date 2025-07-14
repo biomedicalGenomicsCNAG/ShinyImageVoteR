@@ -96,6 +96,17 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
         vote_count_total INTEGER DEFAULT 0
       )
     ")
+
+    DBI::dbExecute(con, "
+      CREATE TABLE credentials (
+        userid TEXT,
+        password TEXT,
+        password_retrieval_link TEXT,
+        link_clicked_timestamp TEXT
+      )
+    ")
+
+    DBI::dbExecute(con, "INSERT INTO credentials(userid, password) VALUES('test','1234'),('test2','1234')")
     
     DBI::dbExecute(con, "
       CREATE TABLE sessionids (
@@ -165,6 +176,19 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
         sessionid TEXT,
         login_time TEXT,
         logout_time TEXT
+      )
+    ")
+  }
+
+  # Create credentials table if missing
+  if (!"credentials" %in% DBI::dbListTables(con)) {
+    cat("Creating credentials table\n")
+    DBI::dbExecute(con, "
+      CREATE TABLE credentials (
+        userid TEXT,
+        password TEXT,
+        password_retrieval_link TEXT,
+        link_clicked_timestamp TEXT
       )
     ")
   }
