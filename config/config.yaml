@@ -68,8 +68,5 @@ institute_ids:
 - University of Verona
 test_institute: Training_answers_not_saved
 selected_institute_id: CNAG
-user2passwords_map:
-  test: '1234'
-  test2: '1234'
 selected_user_id: Test
 cookie_expiry: 1
