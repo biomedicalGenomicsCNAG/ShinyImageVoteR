@@ -24,11 +24,10 @@ test_that("init_user_data_structure creates correct directory structure", {
   
   # Check that all institute directories were created
   expected_institutes <- c(
-    "CNAG", "DKFZ", "DNGC", "FPGMX", "Hartwig", "ISCIII", 
-    "KU_Leuven", "Latvian_BRSC", "MOMA", "SciLifeLab",
-    "Training_answers_not_saved", "Universidade_de_Aveiro",
-    "University_of_Helsinki", "University_of_Oslo", 
-    "University_of_Verona"
+    "cnag","dgnc","dkfz","fpgmx","hartwig","isciii",
+    "ku_leuven","latvian_brsc","moma","scilifelab",
+    "training_answers_not_saved","universidade_de_aveiro",
+    "university_of_helsinki","university_of_oslo","university_of_verona"
   )
   
   for (institute in expected_institutes) {

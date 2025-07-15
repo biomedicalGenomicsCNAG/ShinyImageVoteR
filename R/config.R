@@ -55,14 +55,23 @@ load_config <- function() {
   con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
   on.exit(DBI::dbDisconnect(con))
 
-  pwd_tbl <- DBI::dbReadTable(con, "passwords")
-  cfg$credentials_df <- data.frame(
-    user = pwd_tbl$userid,
-    institute = pwd_tbl$institute,
-    password = pwd_tbl$password,
-    stringsAsFactors = FALSE
-  )
-
+  if ("passwords" %in% DBI::dbListTables(con)) {
+    pwd_tbl <- DBI::dbReadTable(con, "passwords")
+    cfg$credentials_df <- data.frame(
+      user = pwd_tbl$userid,
+      institute = pwd_tbl$institute,
+      password = pwd_tbl$password,
+      stringsAsFactors = FALSE
+    )
+  } else {
+    cfg$credentials_df <- data.frame(
+      user = character(0),
+      institute = character(0),
+      password = character(0),
+      stringsAsFactors = FALSE
+    )
+  }
+  
   # sanitize paths
   cfg$images_dir <- gsub("^\\./", "/", cfg$images_dir)
   

@@ -6,3 +6,4 @@ user_data/*
 !user_data/README.md
 
 db.sqlite
+.Rproj.user

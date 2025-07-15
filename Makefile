@@ -10,6 +10,11 @@ TARBALL = $(PACKAGE_NAME)_$(VERSION).tar.gz
 R = /usr/bin/R
 RSCRIPT = Rscript
 
+# DEBUG_TESTS = dev_scripts/debug-tests.sh
+DEBUG_TESTS = dev_scripts/debug-tests.R
+
+# SHELL := /usr/bin/env bash
+
 # Default target
 .PHONY: all
 all: build
@@ -58,6 +63,11 @@ check: build
 test: install
 	@echo "Running package tests..."
 	$(RSCRIPT) -e "devtools::test()"
+
+.PHONY: debug-test
+debug-test: install
+	chmod +x $(DEBUG_TESTS)
+	@$(DEBUG_TESTS)
 
 # Generate test coverage
 .PHONY: coverage
