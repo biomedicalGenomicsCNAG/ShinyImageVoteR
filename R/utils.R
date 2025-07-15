@@ -1,3 +1,13 @@
+#' Generate a random password
+#'
+#' Creates a random password of specified length using letters, numbers, and special characters.
+#'
+#' @param length Integer. Length of the password to generate. Defaults to 12.
+#' @return Character string containing the generated password
+generate_password <- function(length = 12) {
+  chars <- c(letters, LETTERS, 0:9, "!@#$%^&*")
+  paste(sample(chars, length, replace = TRUE), collapse = "")
+}
 
 #' Initialize user data directory structure
 #'
@@ -116,6 +126,71 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
       )
     ")
     
+    # Populate users from institute2userids.yaml if available
+    institute_file <- file.path(base_dir, "config", "institute2userids.yaml")
+    if (file.exists(institute_file)) {
+      cat("Found institute2userids.yaml, populating users...\n")
+      
+      # Read the institute2userids.yaml file
+      institute_data <- yaml::read_yaml(institute_file)
+      
+      # Extract all userids with their institutes
+      user_institute_map <- data.frame(userid = character(0), institute = character(0), stringsAsFactors = FALSE)
+      
+      for (institute in names(institute_data)) {
+        users <- institute_data[[institute]]
+        
+        # Handle different possible structures
+        if (is.list(users)) {
+          # If it's a list, extract the values
+          clean_users <- unlist(users)
+        } else if (is.character(users)) {
+          # If it's a character vector
+          clean_users <- users
+        } else {
+          # Convert to character
+          clean_users <- as.character(users)
+        }
+        
+        # Remove any leading/trailing whitespace and dashes
+        clean_users <- trimws(gsub("^-", "", clean_users))
+        
+        # Add to the mapping
+        institute_users <- data.frame(
+          userid = clean_users,
+          institute = institute,
+          stringsAsFactors = FALSE
+        )
+        user_institute_map <- rbind(user_institute_map, institute_users)
+      }
+      
+      userids <- user_institute_map$userid
+      cat("Found users from config:", paste(userids, collapse = ", "), "\n")
+      
+      # Prepare data for insertion (no existing users in new database)
+      user_data <- data.frame(
+        userid = user_institute_map$userid,
+        institute = user_institute_map$institute,
+        password = sapply(user_institute_map$userid, function(x) generate_password()),
+        password_retrieval_link = NA_character_,
+        link_clicked_timestamp = NA_character_,
+        stringsAsFactors = FALSE
+      )
+      
+      # Insert users
+      DBI::dbWriteTable(con, "passwords", user_data, append = TRUE)
+      cat("Added", nrow(user_data), "users to the database\n")
+      
+      # Display the added users and their passwords
+      cat("\nAdded users and their passwords:\n")
+      for (i in 1:nrow(user_data)) {
+        cat("User:", user_data$userid[i], "Institute:", user_data$institute[i], "Password:", user_data$password[i], "\n")
+      }
+    } else {
+      cat("institute2userids.yaml not found at:", institute_file, "\n")
+      cat("Skipping user population. Users can be added manually to the database.\n")
+    }
+    
     DBI::dbDisconnect(con)
     return(db_path)
   }
@@ -192,6 +267,86 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     ")
   }
   
+  # Populate users from institute2userids.yaml if available
+  institute_file <- file.path(base_dir, "config", "institute2userids.yaml")
+  if (file.exists(institute_file)) {
+    cat("Found institute2userids.yaml, populating users...\n")
+    
+    # Read the institute2userids.yaml file
+    institute_data <- yaml::read_yaml(institute_file)
+    
+    # Extract all userids with their institutes
+    user_institute_map <- data.frame(userid = character(0), institute = character(0), stringsAsFactors = FALSE)
+    
+    for (institute in names(institute_data)) {
+      users <- institute_data[[institute]]
+      
+      # Handle different possible structures
+      if (is.list(users)) {
+        # If it's a list, extract the values
+        clean_users <- unlist(users)
+      } else if (is.character(users)) {
+        # If it's a character vector
+        clean_users <- users
+      } else {
+        # Convert to character
+        clean_users <- as.character(users)
+      }
+      
+      # Remove any leading/trailing whitespace and dashes
+      clean_users <- trimws(gsub("^-", "", clean_users))
+      
+      # Add to the mapping
+      institute_users <- data.frame(
+        userid = clean_users,
+        institute = institute,
+        stringsAsFactors = FALSE
+      )
+      user_institute_map <- rbind(user_institute_map, institute_users)
+    }
+    
+    userids <- user_institute_map$userid
+    cat("Found users from config:", paste(userids, collapse = ", "), "\n")
+    
+    # Check current users in the database
+    existing_users <- DBI::dbGetQuery(con, "SELECT userid FROM passwords")$userid
+    cat("Existing users in database:", paste(existing_users, collapse = ", "), "\n")
+    
+    # Add new users (skip existing ones)
+    new_users <- setdiff(userids, existing_users)
+    cat("New users to add:", paste(new_users, collapse = ", "), "\n")
+    
+    if (length(new_users) > 0) {
+      # Get the institute information for new users
+      new_user_data <- user_institute_map[user_institute_map$userid %in% new_users, ]
+      
+      # Prepare data for insertion
+      user_data <- data.frame(
+        userid = new_user_data$userid,
+        institute = new_user_data$institute,
+        password = sapply(new_user_data$userid, function(x) generate_password()),
+        password_retrieval_link = NA_character_,
+        link_clicked_timestamp = NA_character_,
+        stringsAsFactors = FALSE
+      )
+      
+      # Insert new users
+      DBI::dbWriteTable(con, "passwords", user_data, append = TRUE)
+      cat("Added", length(new_users), "new users to the database\n")
+      
+      # Display the newly added users and their passwords
+      cat("\nNewly added users and their passwords:\n")
+      for (i in 1:nrow(user_data)) {
+        cat("User:", user_data$userid[i], "Institute:", user_data$institute[i], "Password:", user_data$password[i], "\n")
+      }
+    } else {
+      cat("No new users to add. All users already exist in the database.\n")
+    }
+  } else {
+    cat("institute2userids.yaml not found at:", institute_file, "\n")
+    cat("Skipping user population. Users can be added manually to the database.\n")
+  }
+  
   # Show created tables
   tables <- DBI::dbListTables(con)
   cat("Created tables:", paste(tables, collapse = ", "), "\n")
@@ -199,6 +354,12 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
   # Get row count for annotations
   row_count <- DBI::dbGetQuery(con, "SELECT COUNT(*) as count FROM annotations")
   cat("Loaded", row_count$count, "annotations into database\n")
+  
+  # Show user count if passwords table exists
+  if ("passwords" %in% tables) {
+    user_count <- DBI::dbGetQuery(con, "SELECT COUNT(*) as count FROM passwords")
+    cat("Total users in database:", user_count$count, "\n")
+  }
   
   DBI::dbDisconnect(con)
   

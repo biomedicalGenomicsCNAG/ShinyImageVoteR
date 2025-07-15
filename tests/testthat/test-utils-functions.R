@@ -372,3 +372,128 @@ test_that("init_external_environment sets up complete environment with variables
   }
   unlink(test_base, recursive = TRUE)
 })
+
+# Test generate_password function
+test_that("generate_password creates valid passwords", {
+  # Test default length
+  password1 <- generate_password()
+  expect_type(password1, "character")
+  expect_equal(nchar(password1), 12)
+  
+  # Test custom length
+  password2 <- generate_password(8)
+  expect_equal(nchar(password2), 8)
+  
+  # Test that passwords are different
+  password3 <- generate_password()
+  expect_true(password1 != password3)
+  
+  # Test that password contains expected character types
+  chars <- c(letters, LETTERS, 0:9, "!@#$%^&*")
+  password_chars <- strsplit(password1, "")[[1]]
+  expect_true(all(password_chars %in% chars))
+})
+
+# Test init_external_database with user population
+test_that("init_external_database populates users from institute2userids.yaml", {
+  temp_dir <- tempdir()
+  test_base <- file.path(temp_dir, "test_db_user_population")
+  
+  # Clean up any existing directory
+  if (dir.exists(test_base)) {
+    unlink(test_base, recursive = TRUE)
+  }
+  dir.create(test_base, recursive = TRUE)
+  
+  # Create config directory and institute2userids.yaml
+  config_dir <- file.path(test_base, "config")
+  dir.create(config_dir, recursive = TRUE)
+  
+  # Create test institute2userids.yaml file
+  institute_yaml_content <- "
+TestInstitute1:
+  - user1
+  - user2
+TestInstitute2:
+  - user3
+  - user4
+"
+  institute_file <- file.path(config_dir, "institute2userids.yaml")
+  writeLines(institute_yaml_content, institute_file)
+  
+  # Test database creation with user population
+  db_path <- init_external_database(test_base, "test_users_db.sqlite")
+  
+  expected_db_path <- file.path(test_base, "test_users_db.sqlite")
+  expect_equal(db_path, expected_db_path)
+  expect_true(file.exists(db_path))
+  
+  # Check database structure includes passwords table
+  con <- dbConnect(RSQLite::SQLite(), db_path)
+  tables <- dbListTables(con)
+  expect_true("passwords" %in% tables)
+  
+  # Check passwords table structure
+  passwords_info <- dbGetQuery(con, "PRAGMA table_info(passwords)")
+  expected_passwords_columns <- c("userid", "institute", "password", 
+                                  "password_retrieval_link", "link_clicked_timestamp")
+  expect_true(all(expected_passwords_columns %in% passwords_info$name))
+  
+  # Check that users were populated
+  users <- dbGetQuery(con, "SELECT userid, institute FROM passwords ORDER BY userid")
+  expect_equal(nrow(users), 4)
+  expect_true(all(c("user1", "user2", "user3", "user4") %in% users$userid))
+  expect_true(all(c("TestInstitute1", "TestInstitute2") %in% users$institute))
+  
+  # Check that passwords were generated
+  passwords <- dbGetQuery(con, "SELECT password FROM passwords")
+  expect_true(all(nchar(passwords$password) == 12))  # Default password length
+  expect_true(length(unique(passwords$password)) == 4)  # All passwords should be unique
+  
+  dbDisconnect(con)
+  
+  # Test that running again doesn't duplicate users
+  db_path2 <- init_external_database(test_base, "test_users_db.sqlite")
+  expect_equal(db_path, db_path2)
+  
+  con2 <- dbConnect(RSQLite::SQLite(), db_path2)
+  users2 <- dbGetQuery(con2, "SELECT userid FROM passwords")
+  expect_equal(nrow(users2), 4)  # Should still be 4 users, not 8
+  dbDisconnect(con2)
+  
+  # Clean up
+  unlink(test_base, recursive = TRUE)
+})
+
+# Test init_external_database without institute2userids.yaml
+test_that("init_external_database works without institute2userids.yaml", {
+  temp_dir <- tempdir()
+  test_base <- file.path(temp_dir, "test_db_no_users")
+  
+  # Clean up any existing directory
+  if (dir.exists(test_base)) {
+    unlink(test_base, recursive = TRUE)
+  }
+  dir.create(test_base, recursive = TRUE)
+  
+  # Test database creation without user file
+  db_path <- init_external_database(test_base, "test_no_users_db.sqlite")
+  
+  expected_db_path <- file.path(test_base, "test_no_users_db.sqlite")
+  expect_equal(db_path, expected_db_path)
+  expect_true(file.exists(db_path))
+  
+  # Check database structure includes passwords table
+  con <- dbConnect(RSQLite::SQLite(), db_path)
+  tables <- dbListTables(con)
+  expect_true("passwords" %in% tables)
+  
+  # Check that no users were populated
+  users <- dbGetQuery(con, "SELECT userid FROM passwords")
+  expect_equal(nrow(users), 0)
+  
+  dbDisconnect(con)
+  
+  # Clean up
+  unlink(test_base, recursive = TRUE)
+})
