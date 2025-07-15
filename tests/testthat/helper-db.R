@@ -52,6 +52,7 @@ create_mock_db <- function() {
   DBI::dbExecute(conn, "
     CREATE TABLE passwords (
       userid TEXT PRIMARY KEY,
+      institute TEXT,
       password TEXT,
       password_retrieval_link TEXT,
       link_clicked_timestamp TEXT

@@ -109,6 +109,7 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     DBI::dbExecute(con, "
       CREATE TABLE passwords (
         userid TEXT PRIMARY KEY,
+        institute TEXT,
         password TEXT,
         password_retrieval_link TEXT,
         link_clicked_timestamp TEXT
@@ -183,6 +184,7 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     DBI::dbExecute(con, "
       CREATE TABLE passwords (
         userid TEXT PRIMARY KEY,
+        institute TEXT,
         password TEXT,
         password_retrieval_link TEXT,
         link_clicked_timestamp TEXT
