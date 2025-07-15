@@ -11,6 +11,59 @@ generate_password <- function(length = 12, pattern = "!@#$%^&*") {
   paste(sample(chars, length, replace = TRUE), collapse = "")
 }
 
+#' Create a Directory Safely
+#'
+#' Validates that the target directory name is a single “word” (letters, digits, and/or underscores only)
+#' before attempting to create it. Optionally handles nested creation, warnings, and permission bits.
+#'
+#' @param path Character. The name (or path) of the directory to create.
+#'        Only the final component (basename) is validated.
+#' @param pattern Character. A regular expression that the directory name must match.
+#'        Default is `"^[A-Za-z0-9_]+$"`, i.e. one or more letters, digits, or underscores.
+#' @param showWarnings Logical. If `TRUE`, warns when the directory already exists or cannot be created.
+#'        Default is `TRUE`.
+#' @param recursive Logical. If `TRUE`, creates any missing parent directories (like `mkdir -p`). Default is `FALSE`.
+#' @param mode Character or numeric. Directory permissions in octal (e.g. `"0777"`). Default is `"0777"`.
+#'
+#' @return Invisibly returns `TRUE` if the directory was successfully created, `FALSE` otherwise.
+#'         If the directory already exists, returns `FALSE` (with a message, unless `showWarnings = FALSE`).
+#'
+#' @examples
+#' # Successful creation
+#' safe_dir_create("data_folder")
+#'
+#' # Fails validation (contains spaces)
+#' try(safe_dir_create("my data"))
+safe_dir_create <- function(
+  path,
+  pattern = "^[A-Za-z0-9_]+$",
+  showWarnings = TRUE,
+  recursive = FALSE
+) {
+
+  name <- basename(path)
+  
+  # Validate against the pattern
+  if (!grepl(pattern, name)) {
+    stop("Invalid directory name: '", name, 
+         "'. Only letters, digits and underscores are allowed.")
+  }
+  
+  # If it already exists, warn or message and return FALSE
+  if (dir.exists(path)) {
+    if (showWarnings) {
+      message("Directory '", path, "' already exists.")
+    }
+    return(invisible(FALSE))
+  }
+  
+  # Create the directory
+  dir.create(
+    path, showWarnings = showWarnings,
+    recursive = recursive
+  )
+}
+
 #' Initialize user data directory structure
 #'
 #' Creates the external user_data directory structure with institute subdirectories.
@@ -31,21 +84,29 @@ init_user_data_structure <- function(base_dir = getwd()) {
     cat("Created user_data directory at:", user_data_dir, "\n")
   }
   
-  # Create institute subdirectories
-  institutes <- c(
-    "CNAG", "DKFZ", "DNGC", "FPGMX", "Hartwig", "ISCIII", 
-    "KU_Leuven", "Latvian_BRSC", "MOMA", "SciLifeLab",
-    "Training_answers_not_saved", "Universidade_de_Aveiro",
-    "University_of_Helsinki", "University_of_Oslo", 
-    "University_of_Verona"
-  )
+  # Try to read institutes from YAML file first
+  institute_file <- file.path(base_dir, "config", "institute2userids2password.yaml")
+  institutes <- NULL
   
+  if (file.exists(institute_file)) {
+    cat("Reading institutes from:", institute_file, "\n")
+    institute_data <- yaml::read_yaml(institute_file)
+    institutes <- names(institute_data)
+    cat("Found institutes in YAML:", paste(institutes, collapse = ", "), "\n")
+  } 
+  
+  # Create institute subdirectories
   for (institute in institutes) {
     institute_dir <- file.path(user_data_dir, institute)
-    if (!dir.exists(institute_dir)) {
-      dir.create(institute_dir, recursive = TRUE)
-      cat("Created institute directory:", institute_dir, "\n")
-    }
+    
+    # fail the startup when an institute is found that do not give a valid directory name
+    # make sure the institute name is valid for a directory
+    safe_dir_create(institute_dir)
+
+    # if (!dir.exists(institute_dir)) {
+    #   dir.create(institute_dir, recursive = TRUE)
+    #   cat("Created institute directory:", institute_dir, "\n")
+    # }
   }
   
   return(user_data_dir)
@@ -129,7 +190,7 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     ")
     
     # Populate users from institute2userids2password.yaml if available
-    institute_file <- file.path(base_dir, "config", "institute2userids2password2password.yaml")
+    institute_file <- file.path(base_dir, "config", "institute2userids2password.yaml")
     if (file.exists(institute_file)) {
       cat("Found institute2userids2password.yaml, populating users...\n")
       

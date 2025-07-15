@@ -570,3 +570,85 @@ cnag:
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
+
+# Test init_user_data_structure with YAML institutes
+test_that("init_user_data_structure reads institutes from YAML file", {
+  temp_dir <- tempdir()
+  test_base <- file.path(temp_dir, "test_user_data_yaml")
+  
+  # Clean up any existing directory
+  if (dir.exists(test_base)) {
+    unlink(test_base, recursive = TRUE)
+  }
+  dir.create(test_base, recursive = TRUE)
+  
+  # Create config directory and institute2userids2password.yaml
+  config_dir <- file.path(test_base, "config")
+  dir.create(config_dir, recursive = TRUE)
+  
+  # Create test YAML file with institutes
+  institute_yaml_content <- "
+training_answers_not_saved:
+  - test: 1234
+  - test2: 1234
+cnag:
+  - ileist
+  - igut
+dkfz:
+  - ibuchhalter
+custom_institute:
+  - user1
+  - user2
+"
+  institute_file <- file.path(config_dir, "institute2userids2password.yaml")
+  writeLines(institute_yaml_content, institute_file)
+  
+  # Test user data structure creation
+  user_data_dir <- init_user_data_structure(test_base)
+  
+  expected_user_data_dir <- file.path(test_base, "user_data")
+  expect_equal(user_data_dir, expected_user_data_dir)
+  expect_true(dir.exists(user_data_dir))
+  
+  # Check that directories were created for institutes from YAML
+  expect_true(dir.exists(file.path(user_data_dir, "Training_answers_not_saved")))
+  expect_true(dir.exists(file.path(user_data_dir, "CNAG")))
+  expect_true(dir.exists(file.path(user_data_dir, "DKFZ")))
+  expect_true(dir.exists(file.path(user_data_dir, "custom_institute")))
+  
+  # Check that old hardcoded institutes that are not in YAML were NOT created
+  expect_false(dir.exists(file.path(user_data_dir, "SciLifeLab")))
+  expect_false(dir.exists(file.path(user_data_dir, "ISCIII")))
+  
+  # Clean up
+  unlink(test_base, recursive = TRUE)
+})
+
+# Test init_user_data_structure without YAML file (fallback to hardcoded)
+test_that("init_user_data_structure falls back to hardcoded institutes without YAML", {
+  temp_dir <- tempdir()
+  test_base <- file.path(temp_dir, "test_user_data_no_yaml")
+  
+  # Clean up any existing directory
+  if (dir.exists(test_base)) {
+    unlink(test_base, recursive = TRUE)
+  }
+  dir.create(test_base, recursive = TRUE)
+  
+  # Test user data structure creation without YAML file
+  user_data_dir <- init_user_data_structure(test_base)
+  
+  expected_user_data_dir <- file.path(test_base, "user_data")
+  expect_equal(user_data_dir, expected_user_data_dir)
+  expect_true(dir.exists(user_data_dir))
+  
+  # Check that some of the hardcoded institutes were created
+  expect_true(dir.exists(file.path(user_data_dir, "CNAG")))
+  expect_true(dir.exists(file.path(user_data_dir, "DKFZ")))
+  expect_true(dir.exists(file.path(user_data_dir, "Training_answers_not_saved")))
+  expect_true(dir.exists(file.path(user_data_dir, "SciLifeLab")))
+  expect_true(dir.exists(file.path(user_data_dir, "ISCIII")))
+  
+  # Clean up
+  unlink(test_base, recursive = TRUE)
+})
