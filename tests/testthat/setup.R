@@ -3,7 +3,7 @@
 
 # Load required packages
 library(testthat)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 library(shiny)
 library(DBI)
 library(RSQLite)
@@ -15,5 +15,5 @@ test_temp_dir <- tempdir()
 
 # Helper function to get app directory for tests
 get_test_app_dir <- function() {
-  system.file("shiny-app", package = "B1MGVariantVoting")
+  system.file("shiny-app", package = "ShinyImgVoteR")
 }

@@ -1,4 +1,4 @@
-# B1MG Voting App
+# Shiny IMGVOTER_ (B1MG Voting App)
 
 Voting application that allows users to vote on different B1MG variants.
 Users get presented a randomly picked image of a B1MG variant and can vote for it.
@@ -15,7 +15,7 @@ Users get presented a randomly picked image of a B1MG variant and can vote for i
 
 ```bash
 R -e "renv::restore()"
-R -e "B1MGVariantVoting::run_app()"
+R -e "ShinyImgVoteR::run_app()"
 ```
 
 2. Navigate to http://localhost:8000

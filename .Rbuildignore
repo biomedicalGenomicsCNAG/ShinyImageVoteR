@@ -29,7 +29,7 @@
 ^AGENTS\.html$
 ^AGENTS\.md$
 ^AGENTS_files$
-^B1MGVariantVoting_.*\.tar\.gz$
+^ShinyImgVoteR_.*\.tar\.gz$
 ^codex_setup\.sh$
 ^user_data$
 ^db\.sqlite$

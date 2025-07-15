@@ -5,7 +5,7 @@
 makeVotingAppServer <- function(db_pool) {
   function (input, output, session) {
 
-    cfg <- B1MGVariantVoting::load_config()
+    cfg <- ShinyImgVoteR::load_config()
 
     # Tracks the trigger source of the get_mutation function
     # could be "login", "next", "back", "manual url params change"

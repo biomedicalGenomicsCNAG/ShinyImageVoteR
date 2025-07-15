@@ -1,8 +1,8 @@
 library(testthat)
 library(shiny)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
-cfg <- B1MGVariantVoting::load_config()
+cfg <- ShinyImgVoteR::load_config()
 
 test_that("Leaderboard module UI renders correctly", {
   ui_result <- leaderboardUI("test")

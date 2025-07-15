@@ -1,10 +1,10 @@
 library(testthat)
 library(shiny)
 library(shinytest2)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
 # locate the directory where inst/shiny-app was installed
-# app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+# app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
 ui <- votingAppUI()
 

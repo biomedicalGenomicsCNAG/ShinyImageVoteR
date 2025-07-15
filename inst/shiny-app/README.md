@@ -4,7 +4,7 @@
 
 ```bash
 R -e "renv::restore()"
-R -e "B1MGVariantVoting::run_app()"
+R -e "ShinyImgVoteR::run_app()"
 ```
 
 # Note for gcloud users

@@ -1,8 +1,8 @@
-# Makefile for B1MG Variant Voting R Package
+# Makefile for the Shiny imgVoteR Package
 # Usage: make [target]
 
 # Package information
-PACKAGE_NAME = B1MGVariantVoting
+PACKAGE_NAME = ShinyImgVoteR
 VERSION = 0.1.0
 TARBALL = $(PACKAGE_NAME)_$(VERSION).tar.gz
 

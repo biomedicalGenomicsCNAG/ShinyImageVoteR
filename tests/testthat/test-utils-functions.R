@@ -202,7 +202,7 @@ test_that("init_external_config creates configuration correctly", {
   expect_true("application_title" %in% names(config_content))
   
   # Check that environment variable was set
-  expect_equal(Sys.getenv("B1MG_CONFIG_PATH"), config_file)
+  expect_equal(Sys.getenv("IMGVOTER_CONFIG_PATH"), config_file)
   
   # Test that existing config is detected
   config_file2 <- init_external_config(test_base)
@@ -210,7 +210,7 @@ test_that("init_external_config creates configuration correctly", {
   
   # Clean up
   unlink(test_base, recursive = TRUE)
-  Sys.unsetenv("B1MG_CONFIG_PATH")
+  Sys.unsetenv("IMGVOTER_CONFIG_PATH")
 })
 
 # Test file.symlink.exists function (internal function)
@@ -219,12 +219,12 @@ test_that("file.symlink.exists works correctly", {
   
   # Test with non-existent file
   non_existent <- file.path(temp_dir, "non_existent_file")
-  expect_false(B1MGVariantVoting:::file.symlink.exists(non_existent))
+  expect_false(ShinyImgVoteR:::file.symlink.exists(non_existent))
   
   # Test with regular file
   regular_file <- file.path(temp_dir, "regular_file.txt")
   writeLines("test content", regular_file)
-  expect_false(B1MGVariantVoting:::file.symlink.exists(regular_file))
+  expect_false(ShinyImgVoteR:::file.symlink.exists(regular_file))
   
   # Clean up
   unlink(regular_file)
@@ -242,7 +242,7 @@ test_that("init_external_images creates images directory", {
   }
   
   # Store original environment variable
-  original_images_dir <- Sys.getenv("B1MG_IMAGES_DIR")
+  original_images_dir <- Sys.getenv("IMGVOTER_IMAGES_DIR")
   
   # Test images directory creation
   # suppressWarnings({
@@ -261,9 +261,9 @@ test_that("init_external_images creates images directory", {
   
   # Restore original environment variable
   if (original_images_dir == "") {
-    Sys.unsetenv("B1MG_IMAGES_DIR")
+    Sys.unsetenv("IMGVOTER_IMAGES_DIR")
   } else {
-    Sys.setenv(B1MG_IMAGES_DIR = original_images_dir)
+    Sys.setenv(IMGVOTER_IMAGES_DIR = original_images_dir)
   }
 
   # Clean up
@@ -320,11 +320,11 @@ test_that("init_external_environment sets up complete environment with variables
   
   # Store original environment variables
   original_env_vars <- list(
-    B1MG_USER_DATA_DIR = Sys.getenv("B1MG_USER_DATA_DIR"),
-    B1MG_DATABASE_PATH = Sys.getenv("B1MG_DATABASE_PATH"),
-    B1MG_CONFIG_PATH = Sys.getenv("B1MG_CONFIG_PATH"),
-    B1MG_IMAGES_DIR = Sys.getenv("B1MG_IMAGES_DIR"),
-    B1MG_SERVER_DATA_DIR = Sys.getenv("B1MG_SERVER_DATA_DIR")
+    IMGVOTER_USER_DATA_DIR = Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+    IMGVOTER_DATABASE_PATH = Sys.getenv("IMGVOTER_DATABASE_PATH"),
+    IMGVOTER_CONFIG_PATH = Sys.getenv("IMGVOTER_CONFIG_PATH"),
+    IMGVOTER_IMAGES_DIR = Sys.getenv("IMGVOTER_IMAGES_DIR"),
+    IMGVOTER_SERVER_DATA_DIR = Sys.getenv("IMGVOTER_SERVER_DATA_DIR")
   )
   
   # Test complete environment initialization (suppress symlink warnings during testing)
@@ -345,11 +345,11 @@ test_that("init_external_environment sets up complete environment with variables
   expect_true(dir.exists(result$server_data_dir))
   
   # Check that environment variables were set correctly
-  expect_equal(Sys.getenv("B1MG_USER_DATA_DIR"), result$user_data_dir)
-  expect_equal(Sys.getenv("B1MG_DATABASE_PATH"), result$db_file)
-  expect_equal(Sys.getenv("B1MG_CONFIG_PATH"), result$config_file)
-  expect_equal(Sys.getenv("B1MG_IMAGES_DIR"), result$images_dir)
-  expect_equal(Sys.getenv("B1MG_SERVER_DATA_DIR"), result$server_data_dir)
+  expect_equal(Sys.getenv("IMGVOTER_USER_DATA_DIR"), result$user_data_dir)
+  expect_equal(Sys.getenv("IMGVOTER_DATABASE_PATH"), result$db_file)
+  expect_equal(Sys.getenv("IMGVOTER_CONFIG_PATH"), result$config_file)
+  expect_equal(Sys.getenv("IMGVOTER_IMAGES_DIR"), result$images_dir)
+  expect_equal(Sys.getenv("IMGVOTER_SERVER_DATA_DIR"), result$server_data_dir)
   
   # Check that user_data subdirectories exist
   expect_true(dir.exists(file.path(result$user_data_dir, "CNAG")))

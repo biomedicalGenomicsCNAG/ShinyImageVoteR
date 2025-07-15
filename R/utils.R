@@ -118,7 +118,7 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     stringsAsFactors = FALSE
   )
   
-  # Define column names (from config.R)
+  # TODO define column names (from config.yaml)
   cfg_db_general_cols <- c("coordinates", "REF", "ALT", "variant", "path")
   cfg_vote_counts_cols <- c(
     "vote_count_correct",
@@ -232,19 +232,19 @@ init_external_environment <- function(base_dir = getwd()) {
   server_data_dir <- init_external_server_data(base_dir)
   
   # Set environment variables for the application to use
-  Sys.setenv(B1MG_USER_DATA_DIR = user_data_dir)
-  Sys.setenv(B1MG_DATABASE_PATH = db_file)
-  Sys.setenv(B1MG_CONFIG_PATH = config_file)
-  Sys.setenv(B1MG_IMAGES_DIR = images_dir)
-  Sys.setenv(B1MG_SERVER_DATA_DIR = server_data_dir)
+  Sys.setenv(IMGVOTER_USER_DATA_DIR = user_data_dir)
+  Sys.setenv(IMGVOTER_DATABASE_PATH = db_file)
+  Sys.setenv(IMGVOTER_CONFIG_PATH = config_file)
+  Sys.setenv(IMGVOTER_IMAGES_DIR = images_dir)
+  Sys.setenv(IMGVOTER_SERVER_DATA_DIR = server_data_dir)
   
   cat("\nExternal environment initialized successfully!\n")
   cat("Environment variables set:\n")
-  cat("  B1MG_USER_DATA_DIR =", Sys.getenv("B1MG_USER_DATA_DIR"), "\n")
-  cat("  B1MG_DATABASE_PATH =", Sys.getenv("B1MG_DATABASE_PATH"), "\n")
-  cat("  B1MG_CONFIG_PATH =", Sys.getenv("B1MG_CONFIG_PATH"), "\n")
-  cat("  B1MG_IMAGES_DIR =", Sys.getenv("B1MG_IMAGES_DIR"), "\n")
-  cat("  B1MG_SERVER_DATA_DIR =", Sys.getenv("B1MG_SERVER_DATA_DIR"), "\n")
+  cat("  IMGVOTER_USER_DATA_DIR =", Sys.getenv("IMGVOTER_USER_DATA_DIR"), "\n")
+  cat("  IMGVOTER_DATABASE_PATH =", Sys.getenv("IMGVOTER_DATABASE_PATH"), "\n")
+  cat("  IMGVOTER_CONFIG_PATH =", Sys.getenv("IMGVOTER_CONFIG_PATH"), "\n")
+  cat("  IMGVOTER_IMAGES_DIR =", Sys.getenv("IMGVOTER_IMAGES_DIR"), "\n")
+  cat("  IMGVOTER_SERVER_DATA_DIR =", Sys.getenv("IMGVOTER_SERVER_DATA_DIR"), "\n")
   
   return(list(
     user_data_dir = user_data_dir,
@@ -277,11 +277,11 @@ init_external_config <- function(base_dir = getwd()) {
   # Check if config already exists
   if (file.exists(config_file)) {
     cat("Configuration file already exists at:", config_file, "\n")
-    Sys.setenv(B1MG_CONFIG_PATH = config_file)
+    Sys.setenv(IMGVOTER_CONFIG_PATH = config_file)
     return(config_file)
   }
 
-  package_config <- system.file("shiny-app", "default_config.yaml", package = "B1MGVariantVoting")
+  package_config <- system.file("shiny-app", "default_config.yaml", package = "ShinyImgVoteR")
   if (package_config == "") {
     stop("Could not find template configuration file in package")
   }
@@ -293,7 +293,7 @@ init_external_config <- function(base_dir = getwd()) {
   annotation_dir <- file.path(config_dir, "annotation_screenshots_paths")
   if (!dir.exists(annotation_dir)) {
     # Get the template annotation directory from the package
-    package_annotation_dir <- system.file("shiny-app", "config", "annotation_screenshots_paths", package = "B1MGVariantVoting")
+    package_annotation_dir <- system.file("shiny-app", "config", "annotation_screenshots_paths", package = "ShinyImgVoteR")
     
     if (package_annotation_dir != "" && dir.exists(package_annotation_dir)) {
       # Copy the entire directory
@@ -304,7 +304,7 @@ init_external_config <- function(base_dir = getwd()) {
       dir.create(annotation_dir, recursive = TRUE, showWarnings = FALSE)
       
       # Try to copy the uro003 file from the package screenshots directory
-      package_uro003 <- system.file("shiny-app", "screenshots", "uro003_paths_mock.txt", package = "B1MGVariantVoting")
+      package_uro003 <- system.file("shiny-app", "screenshots", "uro003_paths_mock.txt", package = "ShinyImgVoteR")
       if (package_uro003 != "") {
         file.copy(package_uro003, file.path(annotation_dir, "uro003_paths_mock.txt"))
         cat("Copied uro003_paths_mock.txt to:", file.path(annotation_dir, "uro003_paths_mock.txt"), "\n")
@@ -315,8 +315,8 @@ init_external_config <- function(base_dir = getwd()) {
   cat("You can edit this file to customize the application settings.\n")
   
   # Set environment variable
-  Sys.setenv(B1MG_CONFIG_PATH = config_file)
-  cat("Set B1MG_CONFIG_PATH to:", config_file, "\n")
+  Sys.setenv(IMGVOTER_CONFIG_PATH = config_file)
+  cat("Set IMGVOTER_CONFIG_PATH to:", config_file, "\n")
   
   return(config_file)
 }
@@ -368,7 +368,7 @@ init_external_images <- function(base_dir = getwd(), images_subdir = "images") {
   }
   
   # Set environment variable for configuration
-  Sys.setenv(B1MG_IMAGES_DIR = external_images_dir)
+  Sys.setenv(IMGVOTER_IMAGES_DIR = external_images_dir)
   
   return(external_images_dir)
 }

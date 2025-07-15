@@ -3,15 +3,15 @@ library(shiny)
 library(DBI)
 library(RSQLite)
 library(pool)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
 # locate the directory where inst/shiny-app was installed
-# app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+# app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
 # # source necessary files
 # source(file.path(app_dir, "config.R"))
 
-cfg <- B1MGVariantVoting::load_config()
+cfg <- ShinyImgVoteR::load_config()
 
 test_that("Database connection and queries work", {
   # Create mock database

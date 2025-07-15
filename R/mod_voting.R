@@ -10,19 +10,19 @@
 #' script to enable keyboard shortcuts (e.g., Enter for "Next", Backspace for "Back").
 #'
 #' The displayed options and labels are configured using:
-#' - `cfg_radioBtns_label`
-#' - `cfg_radio_options2val_map`
-#' - `cfg_checkboxes_label`
-#' - `cfg_observations2val_map`
+#' - `cfg$radioBtns_label`
+#' - `cfg$radio_options2val_map`
+#' - `cfg$checkboxes_label`
+#' - `cfg$observations2val_map`
 #'
-#' These should be defined in a sourced configuration file (e.g. `config.R`).
+#' These should be defined in a sourced configuration file (config.yaml).
 #'
 #' @param id A string identifier for the module namespace.
 #'
 #' @return A Shiny UI element (`fluidPage`) representing the voting interface.
 #' @export
 votingUI <- function(id) {
-  cfg <- B1MGVariantVoting::load_config()
+  cfg <- ShinyImgVoteR::load_config()
   ns <- shiny::NS(id)
   fluidPage(
     shinyjs::useShinyjs(),
@@ -96,7 +96,7 @@ votingUI <- function(id) {
 votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source) {
   moduleServer(id, function(input, output, session) {
 
-    cfg <- B1MGVariantVoting::load_config()
+    cfg <- ShinyImgVoteR::load_config()
 
     # Helper function to create the "done" tibble
     create_done_tibble <- function() {

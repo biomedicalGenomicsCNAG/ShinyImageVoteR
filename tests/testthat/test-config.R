@@ -4,10 +4,10 @@
 # library(RSQLite)
 # library(pool)
 # library(shinytest2)
-# library(B1MGVariantVoting)
+# library(ShinyImgVoteR)
 
 # # locate the directory where inst/shiny-app was installed
-# # app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+# # app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
 # # # source necessary files
 # # source(file.path(app_dir, "config.R"))

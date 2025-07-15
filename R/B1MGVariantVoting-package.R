@@ -12,7 +12,7 @@
 #' }
 #'
 #' @docType package
-#' @name B1MGVariantVoting
+#' @name ShinyImgVoteR
 #' @keywords internal
 "_PACKAGE"
 

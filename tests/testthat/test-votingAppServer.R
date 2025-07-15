@@ -1,6 +1,6 @@
 library(testthat)
 library(shiny)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
 # stub loginServer and logoutServer to control their behavior
 # Global variables used by the stubs
@@ -25,14 +25,14 @@ test_that("login event creates user data files", {
   dir.create(temp_user_dir)
 
   withr::local_envvar(
-    B1MG_USER_DATA_DIR = temp_user_dir,
-    B1MG_SERVER_DATA_DIR = temp_user_dir
+    IMGVOTER_USER_DATA_DIR = temp_user_dir,
+    IMGVOTER_SERVER_DATA_DIR = temp_user_dir
   )
 
   with_mocked_bindings(
     `loginServer` = stub_loginServer,
     {
-      testServer(B1MGVariantVoting::makeVotingAppServer(pool), {
+      testServer(ShinyImgVoteR::makeVotingAppServer(pool), {
         # Trigger login
         .test_login_rv(list(user_id = "user1", voting_institute = "CNAG", session_id = "sess1"))
         session$flushReact()
@@ -57,7 +57,7 @@ test_that("login event creates user data files", {
 test_that("user_stats_tab_trigger returns timestamp when tab selected", {
   mock_pool <- create_mock_db()$pool
 
-  testServer(B1MGVariantVoting::makeVotingAppServer(mock_pool), {
+  testServer(ShinyImgVoteR::makeVotingAppServer(mock_pool), {
     session$setInputs(main_navbar = "User stats")
     expect_s3_class(user_stats_tab_trigger(), "POSIXt")
     session$setInputs(main_navbar = "Other")
@@ -71,7 +71,7 @@ test_that("user_stats_tab_trigger returns timestamp when tab selected", {
 test_that("leaderboard_tab_trigger returns timestamp when tab selected", {
   mock_pool <- create_mock_db()$pool
 
-  testServer(B1MGVariantVoting::makeVotingAppServer(mock_pool), {
+  testServer(ShinyImgVoteR::makeVotingAppServer(mock_pool), {
     session$setInputs(main_navbar = "Leaderboard")
     expect_s3_class(leaderboard_tab_trigger(), "POSIXt")
     session$setInputs(main_navbar = "Other")
@@ -99,15 +99,15 @@ test_that("session end triggers scheduled logout update", {
   }
   
   withr::local_envvar(
-    B1MG_USER_DATA_DIR = temp_user_dir,
-    B1MG_SERVER_DATA_DIR = temp_user_dir
+    IMGVOTER_USER_DATA_DIR = temp_user_dir,
+    IMGVOTER_SERVER_DATA_DIR = temp_user_dir
   )
   
   with_mocked_bindings(
     `loginServer` = stub_loginServer,
     `schedule_logout_update` = stub_schedule_logout_update,
     {
-      testServer(B1MGVariantVoting::makeVotingAppServer(pool), {
+      testServer(ShinyImgVoteR::makeVotingAppServer(pool), {
         # First, simulate a login to set up session data
         .test_login_rv(list(
           user_id = "user1", 

@@ -1,5 +1,5 @@
 library(testthat)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
 # Test get_app_dir returns a valid directory
 
@@ -18,12 +18,12 @@ test_that("run_voting_app sets environment and calls shiny::runApp", {
   dir.create(user_dir, showWarnings = FALSE)
   
   # Store original environment variables
-  orig_user_data <- Sys.getenv("B1MG_USER_DATA_DIR", unset = NA)
-  orig_db_path <- Sys.getenv("B1MG_DATABASE_PATH", unset = NA)
+  orig_user_data <- Sys.getenv("IMGVOTER_USER_DATA_DIR", unset = NA)
+  orig_db_path <- Sys.getenv("IMGVOTER_DATABASE_PATH", unset = NA)
   
   # Clear environment variables for test
-  Sys.unsetenv("B1MG_USER_DATA_DIR")
-  Sys.unsetenv("B1MG_DATABASE_PATH")
+  Sys.unsetenv("IMGVOTER_USER_DATA_DIR")
+  Sys.unsetenv("IMGVOTER_DATABASE_PATH")
 
   call_args <- NULL
   
@@ -45,31 +45,31 @@ test_that("run_voting_app sets environment and calls shiny::runApp", {
     expect_equal(call_args$host, "0.0.0.0")
     expect_equal(call_args$port, 5050)
     expect_false(call_args$launch.browser)
-    expect_equal(Sys.getenv("B1MG_USER_DATA_DIR"), user_dir)
-    expect_equal(Sys.getenv("B1MG_DATABASE_PATH"), db_path)
+    expect_equal(Sys.getenv("IMGVOTER_USER_DATA_DIR"), user_dir)
+    expect_equal(Sys.getenv("IMGVOTER_DATABASE_PATH"), db_path)
   }, finally = {
     # Restore original function
     assignInNamespace("runApp", original_runApp, ns = "shiny")
     
     # Restore original environment variables
     if (is.na(orig_user_data)) {
-      Sys.unsetenv("B1MG_USER_DATA_DIR")
+      Sys.unsetenv("IMGVOTER_USER_DATA_DIR")
     } else {
-      Sys.setenv(B1MG_USER_DATA_DIR = orig_user_data)
+      Sys.setenv(IMGVOTER_USER_DATA_DIR = orig_user_data)
     }
     
     if (is.na(orig_db_path)) {
-      Sys.unsetenv("B1MG_DATABASE_PATH")
+      Sys.unsetenv("IMGVOTER_DATABASE_PATH")
     } else {
-      Sys.setenv(B1MG_DATABASE_PATH = orig_db_path)
+      Sys.setenv(IMGVOTER_DATABASE_PATH = orig_db_path)
     }
   })
 })
 
 test_that("run_voting_app uses defaults when arguments are NULL", {
   # Store original environment variables
-  orig_user_data <- Sys.getenv("B1MG_USER_DATA_DIR", unset = NA)
-  orig_db_path <- Sys.getenv("B1MG_DATABASE_PATH", unset = NA)
+  orig_user_data <- Sys.getenv("IMGVOTER_USER_DATA_DIR", unset = NA)
+  orig_db_path <- Sys.getenv("IMGVOTER_DATABASE_PATH", unset = NA)
   orig_wd <- getwd()
   
   call_args <- NULL
@@ -99,8 +99,8 @@ test_that("run_voting_app uses defaults when arguments are NULL", {
     expect_equal(call_args$appDir, get_app_dir())
     
     # Environment variables should be set
-    expect_true(nchar(Sys.getenv("B1MG_USER_DATA_DIR")) > 0)
-    expect_true(nchar(Sys.getenv("B1MG_DATABASE_PATH")) > 0)
+    expect_true(nchar(Sys.getenv("IMGVOTER_USER_DATA_DIR")) > 0)
+    expect_true(nchar(Sys.getenv("IMGVOTER_DATABASE_PATH")) > 0)
     
     # Working directory should be restored
     expect_equal(getwd(), orig_wd)
@@ -111,15 +111,15 @@ test_that("run_voting_app uses defaults when arguments are NULL", {
     
     # Restore original environment variables
     if (is.na(orig_user_data)) {
-      Sys.unsetenv("B1MG_USER_DATA_DIR")
+      Sys.unsetenv("IMGVOTER_USER_DATA_DIR")
     } else {
-      Sys.setenv(B1MG_USER_DATA_DIR = orig_user_data)
+      Sys.setenv(IMGVOTER_USER_DATA_DIR = orig_user_data)
     }
     
     if (is.na(orig_db_path)) {
-      Sys.unsetenv("B1MG_DATABASE_PATH")
+      Sys.unsetenv("IMGVOTER_DATABASE_PATH")
     } else {
-      Sys.setenv(B1MG_DATABASE_PATH = orig_db_path)
+      Sys.setenv(IMGVOTER_DATABASE_PATH = orig_db_path)
     }
     # if db.sqlite in orig_wd, remove it
     db_file <- file.path(orig_wd, "db.sqlite")
@@ -148,8 +148,8 @@ test_that("run_voting_app passes extra arguments", {
   dir.create(user_dir, showWarnings = FALSE)
   
   # Store original environment variables
-  orig_user_data <- Sys.getenv("B1MG_USER_DATA_DIR", unset = NA)
-  orig_db_path <- Sys.getenv("B1MG_DATABASE_PATH", unset = NA)
+  orig_user_data <- Sys.getenv("IMGVOTER_USER_DATA_DIR", unset = NA)
+  orig_db_path <- Sys.getenv("IMGVOTER_DATABASE_PATH", unset = NA)
   
   call_args <- NULL
   extra_args <- NULL
@@ -183,15 +183,15 @@ test_that("run_voting_app passes extra arguments", {
     
     # Restore original environment variables
     if (is.na(orig_user_data)) {
-      Sys.unsetenv("B1MG_USER_DATA_DIR")
+      Sys.unsetenv("IMGVOTER_USER_DATA_DIR")
     } else {
-      Sys.setenv(B1MG_USER_DATA_DIR = orig_user_data)
+      Sys.setenv(IMGVOTER_USER_DATA_DIR = orig_user_data)
     }
     
     if (is.na(orig_db_path)) {
-      Sys.unsetenv("B1MG_DATABASE_PATH")
+      Sys.unsetenv("IMGVOTER_DATABASE_PATH")
     } else {
-      Sys.setenv(B1MG_DATABASE_PATH = orig_db_path)
+      Sys.setenv(IMGVOTER_DATABASE_PATH = orig_db_path)
     }
   })
 })

@@ -33,7 +33,7 @@ leaderboardUI <- function(id) {
 leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
 
-    cfg <- B1MGVariantVoting::load_config()
+    cfg <- ShinyImgVoteR::load_config()
 
     # Create a reactive that triggers when the leaderboard tab is selected
     # This allows automatic refresh when navigating to the leaderboard page

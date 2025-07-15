@@ -6,14 +6,14 @@ library(DBI)
 library(RSQLite)
 library(pool)
 library(later)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
 test_that("Logout scheduling functions work correctly", {
   mock_db <- create_mock_db()
   test_pool <- mock_db$pool
 
   # Test cancel_pending_logout with non-existent session
-  expect_silent(B1MGVariantVoting::cancel_pending_logout("non_existent_session"))
+  expect_silent(ShinyImgVoteR::cancel_pending_logout("non_existent_session"))
   
   # Debug: Check if functions exist
   expect_true(exists("schedule_logout_update"))

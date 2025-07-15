@@ -27,7 +27,7 @@ run_voting_app <- function(
     database_path = NULL, 
     ...
   ) {
-  app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+  app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
   
   if (app_dir == "") {
     stop("Could not find Shiny app directory. Please reinstall the package.")
@@ -36,7 +36,7 @@ run_voting_app <- function(
   if (is.null(config_dir) || config_dir == "") {
     config_dir <- file.path(getwd(), "config")
   }
-  Sys.setenv(B1MG_CONFIG_DIR = config_dir)
+  Sys.setenv(IMGVOTER_CONFIG_DIR = config_dir)
  
   # Set up external environment
   if (is.null(user_data_dir)) {
@@ -52,13 +52,15 @@ run_voting_app <- function(
   }
   
   # Set environment variables for the app to use
-  Sys.setenv(B1MG_USER_DATA_DIR = user_data_dir)
-  Sys.setenv(B1MG_DATABASE_PATH = database_path)
+  Sys.setenv(IMGVOTER_USER_DATA_DIR = user_data_dir)
+  Sys.setenv(IMGVOTER_DATABASE_PATH = database_path)
   
   # Change to app directory but remember current directory
   old_wd <- getwd()
   on.exit(setwd(old_wd))
   setwd(app_dir)
+
+  Sys.setenv("IMGVOTER_CURRENT_DIR" = old_wd)
   
   message("Starting B1MG Variant Voting App...")
   message("App directory: ", app_dir)
@@ -79,5 +81,5 @@ run_voting_app <- function(
 #' @return Character path to the Shiny app directory
 #' @export
 get_app_dir <- function() {
-  system.file("shiny-app", package = "B1MGVariantVoting")
+  system.file("shiny-app", package = "ShinyImgVoteR")
 }

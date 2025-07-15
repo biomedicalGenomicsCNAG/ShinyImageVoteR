@@ -2,7 +2,7 @@ library(testthat)
 library(DBI)
 library(RSQLite)
 library(pool)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
 test_that("get_user_data_dir creates directory when it does not exist", {
   # Create a temporary directory for testing

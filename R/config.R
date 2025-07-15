@@ -11,7 +11,7 @@ load_config <- function() {
   print("app_dir:")
   print(app_dir)
   package_cfg <- file.path(app_dir, "default_config.yaml")
-  external_cfg <- file.path(Sys.getenv("B1MG_CONFIG_DIR"), "config.yaml")
+  external_cfg <- file.path(Sys.getenv("IMGVOTER_CONFIG_DIR"), "config.yaml")
 
   print("external_cfg full path:")
   print(normalizePath(external_cfg, mustWork = FALSE))
@@ -27,14 +27,14 @@ load_config <- function() {
 
   cfg <- yaml::read_yaml(config_path)
 
-  cfg$user_data_dir <- Sys.getenv("B1MG_USER_DATA_DIR", unset = cfg$user_data_dir)
+  cfg$user_data_dir <- Sys.getenv("IMGVOTER_USER_DATA_DIR", unset = cfg$user_data_dir)
   if (!dir.exists(cfg$user_data_dir)) dir.create(cfg$user_data_dir, recursive = TRUE)
 
-  cfg$server_data_dir <- Sys.getenv("B1MG_SERVER_DATA_DIR", unset = cfg$server_data_dir)
+  cfg$server_data_dir <- Sys.getenv("IMGVOTER_SERVER_DATA_DIR", unset = cfg$server_data_dir)
   if (!dir.exists(cfg$server_data_dir)) dir.create(cfg$server_data_dir, recursive = TRUE)
   cfg$shutdown_file <- file.path(cfg$server_data_dir, "STOP")
 
-  cfg$sqlite_file <- Sys.getenv("B1MG_DATABASE_PATH", unset = cfg$sqlite_file)
+  cfg$sqlite_file <- Sys.getenv("IMGVOTER_DATABASE_PATH", unset = cfg$sqlite_file)
   if (!file.exists(cfg$sqlite_file)) {
     message("Warning: Database file not found at ", cfg$sqlite_file)
   }
@@ -57,6 +57,9 @@ load_config <- function() {
     password = vapply(cfg$user2passwords_map, identity, character(1)),
     stringsAsFactors = FALSE
   )
-
+  
+  # sanitize paths
+  cfg$images_dir <- gsub("^\\./", "/", cfg$images_dir)
+  
   return(cfg)
 }

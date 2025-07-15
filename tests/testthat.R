@@ -2,6 +2,6 @@
 # It configures testthat for this package
 
 library(testthat)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
-test_check("B1MGVariantVoting")
+test_check("ShinyImgVoteR")

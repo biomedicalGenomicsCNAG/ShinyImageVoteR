@@ -12,7 +12,7 @@ library(shiny)
 #' @export
 loginUI <- function(id) {
   ns <- shiny::NS(id)
-  cfg <- B1MGVariantVoting::load_config()
+  cfg <- ShinyImgVoteR::load_config()
   shiny::wellPanel(
     id = ns("loginPanel"),
     h3(paste0("Welcome to ", cfg$application_title)),
@@ -61,7 +61,7 @@ loginUI <- function(id) {
 #' @export
 loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
-    cfg <- B1MGVariantVoting::load_config()
+    cfg <- ShinyImgVoteR::load_config()
 
     add_sessionid_to_db <- function(user, sessionid, conn = db_conn) {
       tibble::tibble(

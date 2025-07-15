@@ -3,16 +3,16 @@ library(shiny)
 library(DBI)
 library(RSQLite)
 library(pool)
-library(B1MGVariantVoting)
+library(ShinyImgVoteR)
 
 # locate the directory where inst/shiny-app was installed
-# app_dir <- system.file("shiny-app", package = "B1MGVariantVoting")
+# app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
 # # source config and module
 # source(file.path(app_dir, "config.R"))
 # source(file.path(app_dir, "modules", "voting_module.R"))
 
-cfg <- B1MGVariantVoting::load_config()
+cfg <- ShinyImgVoteR::load_config()
 
 test_that("color_seq colors nucleotides correctly", {
   seq <- "ACGT-"
@@ -23,7 +23,7 @@ test_that("color_seq colors nucleotides correctly", {
     '<span style="color:', cfg$nt2color_map["T"], '">T</span>',
     '<span style="color:', cfg$nt2color_map["-"], '">-</span>'
   )
-  result <- B1MGVariantVoting:::color_seq(seq, cfg$nt2color_map)
+  result <- ShinyImgVoteR:::color_seq(seq, cfg$nt2color_map)
   expect_equal(result, expected)
 })
 

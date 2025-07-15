@@ -6,8 +6,9 @@
 \usage{
 run_voting_app(
   host = "127.0.0.1",
-  port = NULL,
+  port = 8000,
   launch.browser = TRUE,
+  config_dir = NULL,
   user_data_dir = NULL,
   database_path = NULL,
   ...
