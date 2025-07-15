@@ -37,7 +37,8 @@ makeVotingAppServer <- function(db_pool) {
     observeEvent(login_data(), {
       req(login_data())
       user_id <- login_data()$user_id
-      voting_institute <- login_data()$voting_institute
+      voting_institute <- login_data()$institute
+
       session$userData$shinyauthr_session_id <- login_data()$session_id
       cancel_pending_logout(session$userData$shinyauthr_session_id)
 

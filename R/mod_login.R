@@ -17,14 +17,14 @@ loginUI <- function(id) {
     id = ns("loginPanel"),
     h3(paste0("Welcome to ", cfg$application_title)),
     br(),
-    h4("First select your institute"),
-    selectInput(
-      inputId = ns("institutes_id"),
-      label = "Institute",
-      choices = cfg$institute_ids,
-      selected = cfg$selected_institute_id
-    ),
-    h4("Then enter your user name and password"),
+    # h4("First select your institute"),
+    # selectInput(
+    #   inputId = ns("institutes_id"),
+    #   label = "Institute",
+    #   choices = cfg$institute_ids,
+    #   selected = cfg$selected_institute_id
+    # ),
+    # h4("Then enter your user name and password"),
     shinyauthr::loginUI(
       ns("auth"),
       ""
@@ -111,7 +111,7 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
       req(credentials()$user_auth)
       list(
         user_id = credentials()$info$user,
-        voting_institute = input$institutes_id,
+        institute = credentials()$info$institute,
         session_id = credentials()$info$sessionid
       )
     })
