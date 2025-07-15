@@ -52,11 +52,23 @@ load_config <- function() {
   cfg$vote_counts_cols <- c(unlist(cfg$vote2dbcolumn_map, use.names = FALSE), "vote_count_total")
   cfg$db_cols <- c(cfg$db_general_cols, cfg$vote_counts_cols)
 
-  cfg$credentials_df <- data.frame(
-    user = names(cfg$user2passwords_map),
-    password = vapply(cfg$user2passwords_map, identity, character(1)),
-    stringsAsFactors = FALSE
-  )
+  con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
+  on.exit(DBI::dbDisconnect(con))
+
+  if ("passwords" %in% DBI::dbListTables(con)) {
+    pwd_tbl <- DBI::dbReadTable(con, "passwords")
+    cfg$credentials_df <- data.frame(
+      user = pwd_tbl$userid,
+      password = pwd_tbl$password,
+      stringsAsFactors = FALSE
+    )
+  } else {
+    cfg$credentials_df <- data.frame(
+      user = character(0),
+      password = character(0),
+      stringsAsFactors = FALSE
+    )
+  }
   
   # sanitize paths
   cfg$images_dir <- gsub("^\\./", "/", cfg$images_dir)

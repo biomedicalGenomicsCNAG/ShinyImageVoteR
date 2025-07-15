@@ -105,6 +105,15 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
         logout_time TEXT
       )
     ")
+
+    DBI::dbExecute(con, "
+      CREATE TABLE passwords (
+        userid TEXT PRIMARY KEY,
+        password TEXT,
+        password_retrieval_link TEXT,
+        link_clicked_timestamp TEXT
+      )
+    ")
     
     DBI::dbDisconnect(con)
     return(db_path)
@@ -165,6 +174,18 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
         sessionid TEXT,
         login_time TEXT,
         logout_time TEXT
+      )
+    ")
+  }
+
+  if (!"passwords" %in% DBI::dbListTables(con)) {
+    cat("Creating passwords table\n")
+    DBI::dbExecute(con, "
+      CREATE TABLE passwords (
+        userid TEXT PRIMARY KEY,
+        password TEXT,
+        password_retrieval_link TEXT,
+        link_clicked_timestamp TEXT
       )
     ")
   }

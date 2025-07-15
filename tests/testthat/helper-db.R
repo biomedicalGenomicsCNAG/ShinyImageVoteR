@@ -48,6 +48,15 @@ create_mock_db <- function() {
       logout_time TEXT
     )
   ")
+
+  DBI::dbExecute(conn, "
+    CREATE TABLE passwords (
+      userid TEXT PRIMARY KEY,
+      password TEXT,
+      password_retrieval_link TEXT,
+      link_clicked_timestamp TEXT
+    )
+  ")
   
   return(list(pool = db_pool, file = db_file))
 }
