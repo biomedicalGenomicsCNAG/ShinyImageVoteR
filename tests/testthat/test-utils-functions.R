@@ -396,7 +396,7 @@ test_that("generate_password creates valid passwords", {
 })
 
 # Test init_external_database with user population
-test_that("init_external_database populates users from institute2userids.yaml", {
+test_that("init_external_database populates users from institute2userids2password.yaml", {
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_db_user_population")
   
@@ -406,11 +406,11 @@ test_that("init_external_database populates users from institute2userids.yaml", 
   }
   dir.create(test_base, recursive = TRUE)
   
-  # Create config directory and institute2userids.yaml
+  # Create config directory and institute2userids2password.yaml
   config_dir <- file.path(test_base, "config")
   dir.create(config_dir, recursive = TRUE)
   
-  # Create test institute2userids.yaml file
+  # Create test institute2userids2password.yaml file
   institute_yaml_content <- "
     TestInstitute1:
       - user1
@@ -419,7 +419,7 @@ test_that("init_external_database populates users from institute2userids.yaml", 
       - user3
       - user4
   "
-  institute_file <- file.path(config_dir, "institute2userids.yaml")
+  institute_file <- file.path(config_dir, "institute2userids2password.yaml")
   writeLines(institute_yaml_content, institute_file)
   
   # Test database creation with user population
@@ -466,8 +466,8 @@ test_that("init_external_database populates users from institute2userids.yaml", 
   unlink(test_base, recursive = TRUE)
 })
 
-# Test init_external_database without institute2userids.yaml
-test_that("init_external_database works without institute2userids.yaml", {
+# Test init_external_database without institute2userids2password.yaml
+test_that("init_external_database works without institute2userids2password.yaml", {
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_db_no_users")
   
@@ -492,6 +492,78 @@ test_that("init_external_database works without institute2userids.yaml", {
   # Check that no users were populated
   users <- dbGetQuery(con, "SELECT userid FROM passwords")
   expect_equal(nrow(users), 0)
+  
+  dbDisconnect(con)
+  
+  # Clean up
+  unlink(test_base, recursive = TRUE)
+})
+
+# Test init_external_database with preset passwords
+test_that("init_external_database handles preset passwords correctly", {
+  temp_dir <- tempdir()
+  test_base <- file.path(temp_dir, "test_db_preset_passwords")
+  
+  # Clean up any existing directory
+  if (dir.exists(test_base)) {
+    unlink(test_base, recursive = TRUE)
+  }
+  dir.create(test_base, recursive = TRUE)
+  
+  # Create config directory and institute2userids2password.yaml with preset passwords
+  config_dir <- file.path(test_base, "config")
+  dir.create(config_dir, recursive = TRUE)
+  
+  # Create test institute2userids2password.yaml file with mixed format
+  institute_yaml_content <- "
+training_answers_not_saved:
+  - test: 1234
+  - test2: abcd
+cnag:
+  - ileist
+  - igut: mypassword
+  - gaguileta
+"
+  institute_file <- file.path(config_dir, "institute2userids2password.yaml")
+  writeLines(institute_yaml_content, institute_file)
+  
+  # Test database creation with user population
+  db_path <- init_external_database(test_base, "test_preset_db.sqlite")
+  
+  expected_db_path <- file.path(test_base, "test_preset_db.sqlite")
+  expect_equal(db_path, expected_db_path)
+  expect_true(file.exists(db_path))
+  
+  # Check database structure includes passwords table
+  con <- dbConnect(RSQLite::SQLite(), db_path)
+  tables <- dbListTables(con)
+  expect_true("passwords" %in% tables)
+  
+  # Check that users were populated with correct passwords
+  users <- dbGetQuery(con, "SELECT userid, institute, password FROM passwords ORDER BY userid")
+  expect_equal(nrow(users), 5)
+  
+  # Check preset passwords
+  test_user <- users[users$userid == "test", ]
+  expect_equal(test_user$password, "1234")
+  
+  test2_user <- users[users$userid == "test2", ]
+  expect_equal(test2_user$password, "abcd")
+  
+  igut_user <- users[users$userid == "igut", ]
+  expect_equal(igut_user$password, "mypassword")
+  
+  # Check generated passwords (should be 12 characters)
+  ileist_user <- users[users$userid == "ileist", ]
+  expect_equal(nchar(ileist_user$password), 12)
+  
+  gaguileta_user <- users[users$userid == "gaguileta", ]
+  expect_equal(nchar(gaguileta_user$password), 12)
+  
+  # Ensure generated passwords are different from preset ones
+  expect_true(ileist_user$password != "1234")
+  expect_true(gaguileta_user$password != "abcd")
+  expect_true(ileist_user$password != gaguileta_user$password)
   
   dbDisconnect(con)
   
