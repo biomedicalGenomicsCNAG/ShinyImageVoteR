@@ -5,5 +5,13 @@
   "[renviron]": {
     "editor.formatOnSave": false
   },
-  "coverage-gutters.coverageBaseDir": "./tests/coverage"
+  "coverage-gutters.coverageBaseDir": "./tests/coverage",
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "database": "${workspaceFolder:B1MG-variant-voting}/db.sqlite",
+      "name": "imgVoter"
+    }
+  ]
 }
