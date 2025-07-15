@@ -3,9 +3,11 @@
 #' Creates a random password of specified length using letters, numbers, and special characters.
 #'
 #' @param length Integer. Length of the password to generate. Defaults to 12.
+#' @param pattern Character string. characters to include in the password.
+#'
 #' @return Character string containing the generated password
-generate_password <- function(length = 12) {
-  chars <- c(letters, LETTERS, 0:9, "!@#$%^&*")
+generate_password <- function(length = 12, pattern = "!@#$%^&*") {
+  chars <- c(letters, LETTERS, as.character(0:9), strsplit(pattern, "")[[1]])
   paste(sample(chars, length, replace = TRUE), collapse = "")
 }
 

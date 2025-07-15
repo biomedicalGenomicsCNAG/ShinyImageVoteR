@@ -373,7 +373,6 @@ test_that("init_external_environment sets up complete environment with variables
   unlink(test_base, recursive = TRUE)
 })
 
-# Test generate_password function
 test_that("generate_password creates valid passwords", {
   # Test default length
   password1 <- generate_password()
@@ -386,10 +385,12 @@ test_that("generate_password creates valid passwords", {
   
   # Test that passwords are different
   password3 <- generate_password()
-  expect_true(password1 != password3)
+  expect_false(password1 == password3)
+
+  # Define allowed characters
+  chars <- c(letters, LETTERS, as.character(0:9), strsplit("!@#$%^&*", "")[[1]])
   
-  # Test that password contains expected character types
-  chars <- c(letters, LETTERS, 0:9, "!@#$%^&*")
+  # Check all characters in password are valid
   password_chars <- strsplit(password1, "")[[1]]
   expect_true(all(password_chars %in% chars))
 })
@@ -411,13 +412,13 @@ test_that("init_external_database populates users from institute2userids.yaml", 
   
   # Create test institute2userids.yaml file
   institute_yaml_content <- "
-TestInstitute1:
-  - user1
-  - user2
-TestInstitute2:
-  - user3
-  - user4
-"
+    TestInstitute1:
+      - user1
+      - user2
+    TestInstitute2:
+      - user3
+      - user4
+  "
   institute_file <- file.path(config_dir, "institute2userids.yaml")
   writeLines(institute_yaml_content, institute_file)
   
