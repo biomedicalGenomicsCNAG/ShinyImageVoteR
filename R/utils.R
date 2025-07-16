@@ -83,9 +83,14 @@ init_user_data_structure <- function(base_dir = getwd()) {
     dir.create(user_data_dir, recursive = TRUE)
     cat("Created user_data directory at:", user_data_dir, "\n")
   }
+
+  # browser()
   
   # Try to read institutes from YAML file first
-  institute_file <- file.path(base_dir, "config", "institute2userids2password.yaml")
+  institute_file <- file.path(
+    Sys.getenv("IMGVOTER_CONFIG_DIR"),
+    "institute2userids2password.yaml"
+  )
   institutes <- NULL
   
   if (file.exists(institute_file)) {
@@ -190,7 +195,10 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
     ")
     
     # Populate users from institute2userids2password.yaml if available
-    institute_file <- file.path(base_dir, "config", "institute2userids2password.yaml")
+    institute_file <- file.path(
+      Sys.getenv("IMGVOTER_CONFIG_DIR"),
+      "institute2userids2password.yaml"
+    )
     if (file.exists(institute_file)) {
       cat("Found institute2userids2password.yaml, populating users...\n")
       
@@ -345,7 +353,16 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
   }
   
   # Populate users from institute2userids2password.yaml if available
-  institute_file <- file.path(base_dir, "config", "institute2userids2password.yaml")
+  institute_file <- file.path(
+    Sys.getenv("IMGVOTER_CONFIG_DIR"),
+    "institute2userids2password.yaml"
+  )
+
+  if (!file.exists(institute_file)) {
+    cat("institute2userids2password.yaml not found at:", institute_file, "\n")
+    stop()
+  }
+
   if (file.exists(institute_file)) {
     cat("Found institute2userids2password.yaml, populating users...\n")
     

@@ -14,16 +14,16 @@ library(ShinyImgVoteR)
 # source(file.path(app_dir, "config.R"))
 # source(file.path(app_dir, "modules", "user_stats_module.R"))
 
-test_that("User stats module UI renders correctly", {
+testthat::test_that("User stats module UI renders correctly", {
   ui_result <- userStatsUI("test")
   expect_s3_class(ui_result, "shiny.tag.list")
   
   ui_html <- as.character(ui_result)
-  expect_true(grepl("user_stats_table", ui_html))
-  expect_true(grepl("refresh_user_stats", ui_html))
+  testthat::expect_true(grepl("user_stats_table", ui_html))
+  testthat::expect_true(grepl("refresh_user_stats", ui_html))
 })
 
-test_that("User stats server handles tab trigger parameter", {
+testthat::test_that("User stats server handles tab trigger parameter", {
   # Create a mock database pool
   db_file <- tempfile(fileext = ".sqlite")
   pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
@@ -46,7 +46,7 @@ test_that("User stats server handles tab trigger parameter", {
       tab_trigger = reactive({ Sys.time() })
     ), {
       # Basic test that the server function loads without error
-      expect_true(TRUE)
+      testthat::expect_true(TRUE)
     })
   })
   
@@ -55,7 +55,7 @@ test_that("User stats server handles tab trigger parameter", {
   unlink(db_file)
 })
 
-test_that("User stats reactive triggers correctly", {
+testthat::test_that("User stats reactive triggers correctly", {
   # Create a mock database pool
   db_file <- tempfile(fileext = ".sqlite")
   pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
@@ -110,14 +110,14 @@ session$userData$userAnnotationsFile <- tempfile(fileext = ".tsv")
     )
     
     # Test that reactive exists and can be triggered
-    expect_true(is.reactive(stats))
+    testthat::expect_true(is.reactive(stats))
     
     # Trigger tab change
     tab_trigger(Sys.time())
     
     # The stats should update (though they'll be empty due to test setup)
     result <- stats()
-    expect_true(is.data.frame(result))
+    testthat::expect_true(is.data.frame(result))
     
     # Clean up test file
     unlink(session$userData$userAnnotationsFile)
@@ -128,7 +128,7 @@ session$userData$userAnnotationsFile <- tempfile(fileext = ".tsv")
   unlink(db_file)
 })
 
-test_that("User stats server works without tab trigger (backward compatibility)", {
+testthat::test_that("User stats server works without tab trigger (backward compatibility)", {
   # Create a mock database pool
   db_file <- tempfile(fileext = ".sqlite")
   pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
@@ -176,11 +176,11 @@ test_that("User stats server works without tab trigger (backward compatibility)"
     )
     
     # Test that reactive exists and works without tab trigger
-    expect_true(is.reactive(stats))
+    testthat::expect_true(is.reactive(stats))
     
     # The stats should work even without tab trigger
     result <- stats()
-    expect_true(is.data.frame(result))
+    testthat::expect_true(is.data.frame(result))
     
     # Clean up test file
     unlink(session$userData$userAnnotationsFile)

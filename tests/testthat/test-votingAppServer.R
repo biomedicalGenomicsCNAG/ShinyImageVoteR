@@ -8,7 +8,7 @@ library(ShinyImgVoteR)
 .update_called <- NULL
 
 stub_loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
-  .test_login_rv <<- reactiveVal()
+  .test_login_rv <<- shiny::reactiveVal()
   list(
     login_data = reactive(.test_login_rv()),
     credentials = reactive(list(user_auth = TRUE)),
@@ -18,7 +18,15 @@ stub_loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
   )
 }
 
-test_that("login event creates user data files", {
+testthat::test_that("login event creates user data files", {
+  if (interactive()) {
+    source_helpers <- function(path = "tests/testthat") {
+      helper_files <- list.files(path, pattern = "^helper-.*\\.R$", full.names = TRUE)
+      lapply(helper_files, source)
+    }
+    source_helpers()
+  }
+  
   mock_db <- create_mock_db()
   pool <- mock_db$pool
   temp_user_dir <- tempfile()
@@ -29,22 +37,31 @@ test_that("login event creates user data files", {
     IMGVOTER_SERVER_DATA_DIR = temp_user_dir
   )
 
-  with_mocked_bindings(
+  # browser()
+  # debugonce(ShinyImgVoteR::makeVotingAppServer)
+
+  testthat::with_mocked_bindings(
+    .package = "ShinyImgVoteR",
     `loginServer` = stub_loginServer,
     {
       testServer(ShinyImgVoteR::makeVotingAppServer(pool), {
+        # browser()
         # Trigger login
-        .test_login_rv(list(user_id = "user1", voting_institute = "CNAG", session_id = "sess1"))
+        .test_login_rv(list(
+          user_id = "user", 
+          institute = "institute1", 
+          session_id = "sess1"
+        ))
         session$flushReact()
 
-        user_path <- file.path(temp_user_dir, "CNAG", "user1")
-        expect_true(dir.exists(user_path))
+        user_path <- file.path(temp_user_dir, "institute1", "user")
+        testthat::expect_true(dir.exists(user_path))
 
-        info_file <- file.path(user_path, "user1_info.json")
-        ann_file <- file.path(user_path, "user1_annotations.tsv")
-        expect_true(file.exists(info_file))
-        expect_true(file.exists(ann_file))
-        expect_equal(get_mutation_trigger_source(), "url-params-change")
+        info_file <- file.path(user_path, "user_info.json")
+        ann_file <- file.path(user_path, "user_annotations.tsv")
+        testthat::expect_true(file.exists(info_file))
+        testthat::expect_true(file.exists(ann_file))
+        testthat::expect_equal(get_mutation_trigger_source(), "url-params-change")
       })
     }
   )
@@ -54,7 +71,7 @@ test_that("login event creates user data files", {
 })
 
 
-test_that("user_stats_tab_trigger returns timestamp when tab selected", {
+testthat::test_that("user_stats_tab_trigger returns timestamp when tab selected", {
   mock_pool <- create_mock_db()$pool
 
   testServer(ShinyImgVoteR::makeVotingAppServer(mock_pool), {
@@ -68,7 +85,7 @@ test_that("user_stats_tab_trigger returns timestamp when tab selected", {
   poolClose(mock_pool)
 })
 
-test_that("leaderboard_tab_trigger returns timestamp when tab selected", {
+testthat::test_that("leaderboard_tab_trigger returns timestamp when tab selected", {
   mock_pool <- create_mock_db()$pool
 
   testServer(ShinyImgVoteR::makeVotingAppServer(mock_pool), {
@@ -82,7 +99,7 @@ test_that("leaderboard_tab_trigger returns timestamp when tab selected", {
   poolClose(mock_pool)
 })
 
-test_that("session end triggers scheduled logout update", {
+testthat::test_that("session end triggers scheduled logout update", {
   mock_db <- create_mock_db()
   pool <- mock_db$pool
   temp_user_dir <- tempfile()
@@ -111,13 +128,13 @@ test_that("session end triggers scheduled logout update", {
         # First, simulate a login to set up session data
         .test_login_rv(list(
           user_id = "user1", 
-          voting_institute = "CNAG", 
+          institute = "CNAG", 
           session_id = "test_session_456"
         ))
         session$flushReact()
         
         # Verify session data is set
-        expect_equal(
+        testthat::expect_equal(
           session$userData$shinyauthr_session_id, 
           "test_session_456"
         )
@@ -127,7 +144,7 @@ test_that("session end triggers scheduled logout update", {
       })
     }
   )
-  expect_equal(.update_called, "test_session_456")
+  testthat::expect_equal(.update_called, "test_session_456")
 
   poolClose(pool)
   unlink(mock_db$file)

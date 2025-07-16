@@ -37,6 +37,7 @@ run_voting_app <- function(
     config_dir <- file.path(getwd(), "config")
   }
   Sys.setenv(IMGVOTER_CONFIG_DIR = config_dir)
+  print(paste("Using config directory:", config_dir))
  
   # Set up external environment
   if (is.null(user_data_dir)) {

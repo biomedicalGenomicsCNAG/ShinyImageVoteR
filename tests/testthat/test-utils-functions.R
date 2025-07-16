@@ -5,47 +5,53 @@ library(digest)
 library(yaml)
 
 # Test init_user_data_structure function
-test_that("init_user_data_structure creates correct directory structure", {
+testthat::test_that("init_user_data_structure creates correct directory structure", {
+  app_dir <- ShinyImgVoteR::get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_user_data_init")
+  config_dir <- file.path(app_dir,"config")
+
+  Sys.setenv("IMGVOTER_CONFIG_DIR" = config_dir)
   
   # Clean up any existing directory
   if (dir.exists(test_base)) {
     unlink(test_base, recursive = TRUE)
   }
   
+  # browser()
+  # debugonce(ShinyImgVoteR::init_user_data_structure)
+  
   # Test directory creation
-  user_data_dir <- init_user_data_structure(test_base)
+  user_data_dir <- ShinyImgVoteR::init_user_data_structure(test_base)
   
   # Check that main user_data directory was created
   expected_user_data <- file.path(test_base, "user_data")
-  expect_equal(user_data_dir, expected_user_data)
-  expect_true(dir.exists(user_data_dir))
+  testthat::expect_equal(user_data_dir, expected_user_data)
+  testthat::expect_true(dir.exists(user_data_dir))
   
   # Check that all institute directories were created
   expected_institutes <- c(
-    "cnag","dgnc","dkfz","fpgmx","hartwig","isciii",
-    "ku_leuven","latvian_brsc","moma","scilifelab",
-    "training_answers_not_saved","universidade_de_aveiro",
-    "university_of_helsinki","university_of_oslo","university_of_verona"
+    "training_answers_not_saved","institute1"
   )
   
   for (institute in expected_institutes) {
     institute_dir <- file.path(user_data_dir, institute)
-    expect_true(dir.exists(institute_dir), 
-                info = paste("Directory should exist:", institute_dir))
+    testthat::expect_true(
+      dir.exists(institute_dir), 
+      info = paste("Directory should exist:", institute_dir)
+    )
   }
   
   # Test that function handles existing directories gracefully
-  user_data_dir2 <- init_user_data_structure(test_base)
-  expect_equal(user_data_dir, user_data_dir2)
+  user_data_dir2 <- ShinyImgVoteR::init_user_data_structure(test_base)
+  testthat::expect_equal(user_data_dir, user_data_dir2)
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
 # Test init_external_database function
-test_that("init_external_database creates database correctly", {
+testthat::test_that("init_external_database creates database correctly", {
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_db_init")
   
@@ -59,14 +65,14 @@ test_that("init_external_database creates database correctly", {
   db_path <- init_external_database(test_base, "test_db.sqlite")
   
   expected_db_path <- file.path(test_base, "test_db.sqlite")
-  expect_equal(db_path, expected_db_path)
-  expect_true(file.exists(db_path))
+  testthat::expect_equal(db_path, expected_db_path)
+  testthat::expect_true(file.exists(db_path))
   
   # Check database structure
   con <- dbConnect(RSQLite::SQLite(), db_path)
   tables <- dbListTables(con)
-  expect_true("annotations" %in% tables)
-  expect_true("sessionids" %in% tables)
+  testthat::expect_true("annotations" %in% tables)
+  testthat::expect_true("sessionids" %in% tables)
   
   # Check annotations table structure
   annotations_info <- dbGetQuery(con, "PRAGMA table_info(annotations)")
@@ -74,25 +80,25 @@ test_that("init_external_database creates database correctly", {
                        "vote_count_correct", "vote_count_no_variant", 
                        "vote_count_different_variant", "vote_count_not_sure", 
                        "vote_count_total")
-  expect_true(all(expected_columns %in% annotations_info$name))
+  testthat::expect_true(all(expected_columns %in% annotations_info$name))
   
   # Check sessionids table structure
   sessionids_info <- dbGetQuery(con, "PRAGMA table_info(sessionids)")
   expected_sessionids_columns <- c("user", "sessionid", "login_time", "logout_time")
-  expect_true(all(expected_sessionids_columns %in% sessionids_info$name))
+  testthat::expect_true(all(expected_sessionids_columns %in% sessionids_info$name))
   
   dbDisconnect(con)
   
   # Test that existing database is detected
   db_path2 <- init_external_database(test_base, "test_db.sqlite")
-  expect_equal(db_path, db_path2)
+  testthat::expect_equal(db_path, db_path2)
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
 # Test init_external_database with data file
-test_that("init_external_database works with data file", {
+testthat::test_that("init_external_database works with data file", {
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_db_with_data")
   
@@ -117,24 +123,24 @@ test_that("init_external_database works with data file", {
   # Test database creation with data file
   db_path <- init_external_database(test_base, "test_with_data.sqlite")
   
-  expect_true(file.exists(db_path))
+  testthat::expect_true(file.exists(db_path))
   
   # Check that data was loaded
   con <- dbConnect(RSQLite::SQLite(), db_path)
   
   # Check that annotations were loaded
   row_count <- dbGetQuery(con, "SELECT COUNT(*) as count FROM annotations")
-  expect_equal(row_count$count, 3)
+  testthat::expect_equal(row_count$count, 3)
   
   # Check that paths were modified correctly
   paths <- dbGetQuery(con, "SELECT path FROM annotations")
-  expect_true(all(grepl("^images/", paths$path)))
+  testthat::expect_true(all(grepl("^images/", paths$path)))
   expect_false(any(grepl("/vol/b1mg/", paths$path)))
   
   # Check that vote count columns exist and are initialized
   vote_counts <- dbGetQuery(con, "SELECT vote_count_correct, vote_count_total FROM annotations LIMIT 1")
-  expect_equal(vote_counts$vote_count_correct, 0)
-  expect_equal(vote_counts$vote_count_total, 0)
+  testthat::expect_equal(vote_counts$vote_count_correct, 0)
+  testthat::expect_equal(vote_counts$vote_count_total, 0)
   
   dbDisconnect(con)
   
@@ -143,9 +149,13 @@ test_that("init_external_database works with data file", {
 })
 
 # Test setup_external_environment function
-test_that("setup_external_environment creates complete environment", {
+testthat::test_that("setup_external_environment creates complete environment", {
+  app_dir <- ShinyImgVoteR::get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_complete_env")
+  config_dir <- file.path(app_dir,"config")
+
+  Sys.setenv("IMGVOTER_CONFIG_DIR" = config_dir)
   
   # Clean up any existing directory
   if (dir.exists(test_base)) {
@@ -153,29 +163,37 @@ test_that("setup_external_environment creates complete environment", {
   }
   
   # Test complete environment setup
-  result <- setup_external_environment(test_base)
+  result <- ShinyImgVoteR::setup_external_environment(test_base)
+
+  # write result to file for debugging
+  writeLines(
+    paste("Result:", toString(result)), 
+    file.path("/home/ivo/projects/bioinfo/cnag/repos/B1MG-variant-voting/", "setup_external_environment_result.txt")
+  )
+
+  # browser()
   
   # Check return value structure
-  expect_true(is.list(result))
-  expect_true("user_data_dir" %in% names(result))
-  expect_true("database_path" %in% names(result))
-  expect_true("base_dir" %in% names(result))
+  testthat::expect_true(is.list(result))
+  testthat::expect_true("user_data_dir" %in% names(result))
+  testthat::expect_true("database_path" %in% names(result))
+  testthat::expect_true("base_dir" %in% names(result))
   
   # Check that directories and files were created
-  expect_true(dir.exists(result$user_data_dir))
-  expect_true(file.exists(result$database_path))
-  expect_equal(result$base_dir, test_base)
+  testthat::expect_true(dir.exists(result$user_data_dir))
+  testthat::expect_true(file.exists(result$database_path))
+  testthat::expect_equal(result$base_dir, test_base)
   
   # Check that user_data subdirectories exist
-  expect_true(dir.exists(file.path(result$user_data_dir, "CNAG")))
-  expect_true(dir.exists(file.path(result$user_data_dir, "DKFZ")))
+  testthat::expect_true(dir.exists(file.path(result$user_data_dir, "training_answers_not_saved")))
+  testthat::expect_true(dir.exists(file.path(result$user_data_dir, "institute1")))
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
 # Test init_external_config function
-test_that("init_external_config creates configuration correctly", {
+testthat::test_that("init_external_config creates configuration correctly", {
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_config_init")
   
@@ -188,24 +206,24 @@ test_that("init_external_config creates configuration correctly", {
   config_file <- init_external_config(test_base)
 
   expected_config_file <- file.path(test_base, "config", "config.yaml")
-  expect_equal(config_file, expected_config_file)
-  expect_true(file.exists(config_file))
+  testthat::expect_equal(config_file, expected_config_file)
+  testthat::expect_true(file.exists(config_file))
   
   # Check that config directory was created
   config_dir <- file.path(test_base, "config")
-  expect_true(dir.exists(config_dir))
+  testthat::expect_true(dir.exists(config_dir))
   
   # Check that config file has content
   config_content <- yaml::read_yaml(config_file)
-  expect_true(is.list(config_content))
-  expect_true("application_title" %in% names(config_content))
+  testthat::expect_true(is.list(config_content))
+  testthat::expect_true("application_title" %in% names(config_content))
   
   # Check that environment variable was set
-  expect_equal(Sys.getenv("IMGVOTER_CONFIG_PATH"), config_file)
+  testthat::expect_equal(Sys.getenv("IMGVOTER_CONFIG_PATH"), config_file)
   
   # Test that existing config is detected
   config_file2 <- init_external_config(test_base)
-  expect_equal(config_file, config_file2)
+  testthat::expect_equal(config_file, config_file2)
   
   # Clean up
   unlink(test_base, recursive = TRUE)
@@ -213,7 +231,7 @@ test_that("init_external_config creates configuration correctly", {
 })
 
 # Test file.symlink.exists function (internal function)
-test_that("file.symlink.exists works correctly", {
+testthat::test_that("file.symlink.exists works correctly", {
   temp_dir <- tempdir()
   
   # Test with non-existent file
@@ -230,7 +248,7 @@ test_that("file.symlink.exists works correctly", {
 })
 
 # Test init_external_images function
-test_that("init_external_images creates images directory", {
+testthat::test_that("init_external_images creates images directory", {
   app_dir <- get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_images_init")
@@ -249,11 +267,11 @@ test_that("init_external_images creates images directory", {
   # })
   
   expected_images_dir <- file.path(test_base, "test_images")
-  expect_equal(images_dir, expected_images_dir)
-  expect_true(dir.exists(images_dir))
-  expect_true(file.symlink.exists(file.path(app_dir, "www", "images")))
+  testthat::expect_equal(images_dir, expected_images_dir)
+  testthat::expect_true(dir.exists(images_dir))
+  testthat::expect_true(file.symlink.exists(file.path(app_dir, "www", "images")))
   # Check that symlink points to the correct directory
-  expect_equal(
+  testthat::expect_equal(
     normalizePath(file.path(app_dir, "www", "images")),
     normalizePath(images_dir)
   )
@@ -275,7 +293,7 @@ test_that("init_external_images creates images directory", {
 })
 
 # Test init_external_server_data function
-test_that("init_external_server_data creates server data directory", {
+testthat::test_that("init_external_server_data creates server data directory", {
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_server_data_init")
   
@@ -288,26 +306,26 @@ test_that("init_external_server_data creates server data directory", {
   server_data_dir <- init_external_server_data(test_base)
   
   expected_server_data_dir <- file.path(test_base, "server_data")
-  expect_equal(server_data_dir, expected_server_data_dir)
-  expect_true(dir.exists(server_data_dir))
+  testthat::expect_equal(server_data_dir, expected_server_data_dir)
+  testthat::expect_true(dir.exists(server_data_dir))
   
   # Check that README was created
   readme_file <- file.path(server_data_dir, "README.md")
-  expect_true(file.exists(readme_file))
+  testthat::expect_true(file.exists(readme_file))
   
   readme_content <- readLines(readme_file)
-  expect_true(any(grepl("Server Data Directory", readme_content)))
+  testthat::expect_true(any(grepl("Server Data Directory", readme_content)))
   
   # Test that existing directory is handled correctly
   server_data_dir2 <- init_external_server_data(test_base)
-  expect_equal(server_data_dir, server_data_dir2)
+  testthat::expect_equal(server_data_dir, server_data_dir2)
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
 # Test init_external_environment function
-test_that("init_external_environment sets up complete environment with variables", {
+testthat::test_that("init_external_environment sets up complete environment with variables", {
   app_dir <- get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_full_env_init")
@@ -332,27 +350,27 @@ test_that("init_external_environment sets up complete environment with variables
   # })
   
   # Check return value structure
-  expect_true(is.list(result))
+  testthat::expect_true(is.list(result))
   expected_keys <- c("user_data_dir", "db_file", "config_file", "images_dir", "server_data_dir")
-  expect_true(all(expected_keys %in% names(result)))
+  testthat::expect_true(all(expected_keys %in% names(result)))
   
   # Check that all directories and files were created
-  expect_true(dir.exists(result$user_data_dir))
-  expect_true(file.exists(result$db_file))
-  expect_true(file.exists(result$config_file))
-  expect_true(dir.exists(result$images_dir))
-  expect_true(dir.exists(result$server_data_dir))
+  testthat::expect_true(dir.exists(result$user_data_dir))
+  testthat::expect_true(file.exists(result$db_file))
+  testthat::expect_true(file.exists(result$config_file))
+  testthat::expect_true(dir.exists(result$images_dir))
+  testthat::expect_true(dir.exists(result$server_data_dir))
   
   # Check that environment variables were set correctly
-  expect_equal(Sys.getenv("IMGVOTER_USER_DATA_DIR"), result$user_data_dir)
-  expect_equal(Sys.getenv("IMGVOTER_DATABASE_PATH"), result$db_file)
-  expect_equal(Sys.getenv("IMGVOTER_CONFIG_PATH"), result$config_file)
-  expect_equal(Sys.getenv("IMGVOTER_IMAGES_DIR"), result$images_dir)
-  expect_equal(Sys.getenv("IMGVOTER_SERVER_DATA_DIR"), result$server_data_dir)
+  testthat::expect_equal(Sys.getenv("IMGVOTER_USER_DATA_DIR"), result$user_data_dir)
+  testthat::expect_equal(Sys.getenv("IMGVOTER_DATABASE_PATH"), result$db_file)
+  testthat::expect_equal(Sys.getenv("IMGVOTER_CONFIG_PATH"), result$config_file)
+  testthat::expect_equal(Sys.getenv("IMGVOTER_IMAGES_DIR"), result$images_dir)
+  testthat::expect_equal(Sys.getenv("IMGVOTER_SERVER_DATA_DIR"), result$server_data_dir)
   
   # Check that user_data subdirectories exist
-  expect_true(dir.exists(file.path(result$user_data_dir, "CNAG")))
-  expect_true(dir.exists(file.path(result$user_data_dir, "Training_answers_not_saved")))
+  testthat::expect_true(dir.exists(file.path(result$user_data_dir, "institute1")))
+  testthat::expect_true(dir.exists(file.path(result$user_data_dir, "training_answers_not_saved")))
   
   # Restore original environment variables
   for (var_name in names(original_env_vars)) {
@@ -372,15 +390,15 @@ test_that("init_external_environment sets up complete environment with variables
   unlink(test_base, recursive = TRUE)
 })
 
-test_that("generate_password creates valid passwords", {
+testthat::test_that("generate_password creates valid passwords", {
   # Test default length
   password1 <- generate_password()
   expect_type(password1, "character")
-  expect_equal(nchar(password1), 12)
+  testthat::expect_equal(nchar(password1), 12)
   
   # Test custom length
   password2 <- generate_password(8)
-  expect_equal(nchar(password2), 8)
+  testthat::expect_equal(nchar(password2), 8)
   
   # Test that passwords are different
   password3 <- generate_password()
@@ -391,117 +409,91 @@ test_that("generate_password creates valid passwords", {
   
   # Check all characters in password are valid
   password_chars <- strsplit(password1, "")[[1]]
-  expect_true(all(password_chars %in% chars))
+  testthat::expect_true(all(password_chars %in% chars))
 })
 
 # Test init_external_database with user population
-test_that("init_external_database populates users from institute2userids2password.yaml", {
+testthat::test_that("init_external_database populates users from institute2userids2password.yaml", {
+  app_dir <- ShinyImgVoteR::get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_db_user_population")
+  config_dir <- file.path(app_dir, "config")
+
+  Sys.setenv("IMGVOTER_CONFIG_DIR" = config_dir)
   
   # Clean up any existing directory
   if (dir.exists(test_base)) {
     unlink(test_base, recursive = TRUE)
   }
   dir.create(test_base, recursive = TRUE)
-  
-  # Create config directory and institute2userids2password.yaml
-  config_dir <- file.path(test_base, "config")
-  dir.create(config_dir, recursive = TRUE)
-  
-  # Create test institute2userids2password.yaml file
-  institute_yaml_content <- "
-    TestInstitute1:
-      - user1
-      - user2
-    TestInstitute2:
-      - user3
-      - user4
-  "
-  institute_file <- file.path(config_dir, "institute2userids2password.yaml")
-  writeLines(institute_yaml_content, institute_file)
   
   # Test database creation with user population
-  db_path <- init_external_database(test_base, "test_users_db.sqlite")
+  # browser()
+  
+  # debugonce(ShinyImgVoteR::init_external_database)
+  db_path <- ShinyImgVoteR::init_external_database(test_base, "test_users_db.sqlite")
   
   expected_db_path <- file.path(test_base, "test_users_db.sqlite")
-  expect_equal(db_path, expected_db_path)
-  expect_true(file.exists(db_path))
+  testthat::expect_equal(db_path, expected_db_path)
+  testthat::expect_true(file.exists(db_path))
   
   # Check database structure includes passwords table
-  con <- dbConnect(RSQLite::SQLite(), db_path)
-  tables <- dbListTables(con)
-  expect_true("passwords" %in% tables)
+  con <- DBI::dbConnect(RSQLite::SQLite(), db_path)
+  tables <- DBI::dbListTables(con)
+  testthat::expect_true("passwords" %in% tables)
   
   # Check passwords table structure
-  passwords_info <- dbGetQuery(con, "PRAGMA table_info(passwords)")
+  passwords_info <- DBI::dbGetQuery(con, "PRAGMA table_info(passwords)")
   expected_passwords_columns <- c("userid", "institute", "password", 
                                   "password_retrieval_link", "link_clicked_timestamp")
-  expect_true(all(expected_passwords_columns %in% passwords_info$name))
+  testthat::expect_true(all(expected_passwords_columns %in% passwords_info$name))
   
   # Check that users were populated
-  users <- dbGetQuery(con, "SELECT userid, institute FROM passwords ORDER BY userid")
-  expect_equal(nrow(users), 4)
-  expect_true(all(c("user1", "user2", "user3", "user4") %in% users$userid))
-  expect_true(all(c("TestInstitute1", "TestInstitute2") %in% users$institute))
-  
-  # Check that passwords were generated
-  passwords <- dbGetQuery(con, "SELECT password FROM passwords")
-  expect_true(all(nchar(passwords$password) == 12))  # Default password length
-  expect_true(length(unique(passwords$password)) == 4)  # All passwords should be unique
-  
-  dbDisconnect(con)
-  
-  # Test that running again doesn't duplicate users
-  db_path2 <- init_external_database(test_base, "test_users_db.sqlite")
-  expect_equal(db_path, db_path2)
-  
-  con2 <- dbConnect(RSQLite::SQLite(), db_path2)
-  users2 <- dbGetQuery(con2, "SELECT userid FROM passwords")
-  expect_equal(nrow(users2), 4)  # Should still be 4 users, not 8
-  dbDisconnect(con2)
-  
-  # Clean up
-  unlink(test_base, recursive = TRUE)
-})
+  users <- DBI::dbGetQuery(con, "SELECT userid, institute, password FROM passwords ORDER BY userid")
+  testthat::expect_equal(nrow(users), 4)
+  testthat::expect_true(all(c("test", "test2", "user", "user2") %in% users$userid))
+  testthat::expect_true(all(c("training_answers_not_saved", "institute1") %in% users$institute))
 
-# Test init_external_database without institute2userids2password.yaml
-test_that("init_external_database works without institute2userids2password.yaml", {
-  temp_dir <- tempdir()
-  test_base <- file.path(temp_dir, "test_db_no_users")
+  # filter the users_df by institute
+  institute1_users <- users[users$institute == "institute1", ]
+  testthat::expect_equal(nrow(institute1_users), 2)
+  testthat::expect_true(all(c("user", "user2") %in% institute1_users$userid))
+
+  # check that passwords were generated
+  passwords <- users[!users$userid %in% c("test", "test2"), ]
+  testthat::expect_equal(nrow(passwords), 2)  # Should be 2 generated passwords
+  testthat::expect_true(all(nchar(passwords$password) == 12))  # Default password length
+  testthat::expect_true(length(unique(passwords$password)) == 2)  # All passwords should be unique
+
+  DBI::dbDisconnect(con)
   
-  # Clean up any existing directory
-  if (dir.exists(test_base)) {
-    unlink(test_base, recursive = TRUE)
-  }
-  dir.create(test_base, recursive = TRUE)
-  
-  # Test database creation without user file
-  db_path <- init_external_database(test_base, "test_no_users_db.sqlite")
-  
-  expected_db_path <- file.path(test_base, "test_no_users_db.sqlite")
-  expect_equal(db_path, expected_db_path)
-  expect_true(file.exists(db_path))
-  
-  # Check database structure includes passwords table
-  con <- dbConnect(RSQLite::SQLite(), db_path)
-  tables <- dbListTables(con)
-  expect_true("passwords" %in% tables)
-  
-  # Check that no users were populated
-  users <- dbGetQuery(con, "SELECT userid FROM passwords")
-  expect_equal(nrow(users), 0)
-  
-  dbDisconnect(con)
-  
+  # Test that running again doesn't duplicate users and does not change existing passwords
+  db_path2 <- ShinyImgVoteR::init_external_database(test_base, "test_users_db.sqlite")
+  testthat::expect_equal(db_path, db_path2)
+
+  con2 <- DBI::dbConnect(RSQLite::SQLite(), db_path2)
+  users2 <- DBI::dbGetQuery(con2, "SELECT userid, institute, password FROM passwords ORDER BY userid")
+  testthat::expect_equal(nrow(users2), 4)  # Should still be 4 users, not 8
+
+  # passwords should not change
+  testthat::expect_equal(users2$userid, users$userid)
+  testthat::expect_equal(users2$institute, users$institute)
+  testthat::expect_equal(users2$password, users$password)
+
+  DBI::dbDisconnect(con2)
+
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
 # Test init_external_database with preset passwords
-test_that("init_external_database handles preset passwords correctly", {
+testthat::test_that("init_external_database handles preset passwords correctly", {
+  app_dir <- ShinyImgVoteR::get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_db_preset_passwords")
+  config_dir <- file.path(app_dir, "config")
+
+  Sys.setenv("IMGVOTER_CONFIG_DIR" = config_dir)
   
   # Clean up any existing directory
   if (dir.exists(test_base)) {
@@ -509,60 +501,41 @@ test_that("init_external_database handles preset passwords correctly", {
   }
   dir.create(test_base, recursive = TRUE)
   
-  # Create config directory and institute2userids2password.yaml with preset passwords
-  config_dir <- file.path(test_base, "config")
-  dir.create(config_dir, recursive = TRUE)
-  
-  # Create test institute2userids2password.yaml file with mixed format
-  institute_yaml_content <- "
-training_answers_not_saved:
-  - test: 1234
-  - test2: abcd
-cnag:
-  - ileist
-  - igut: mypassword
-  - gaguileta
-"
-  institute_file <- file.path(config_dir, "institute2userids2password.yaml")
-  writeLines(institute_yaml_content, institute_file)
-  
   # Test database creation with user population
   db_path <- init_external_database(test_base, "test_preset_db.sqlite")
   
   expected_db_path <- file.path(test_base, "test_preset_db.sqlite")
-  expect_equal(db_path, expected_db_path)
-  expect_true(file.exists(db_path))
+  testthat::expect_equal(db_path, expected_db_path)
+  testthat::expect_true(file.exists(db_path))
   
   # Check database structure includes passwords table
   con <- dbConnect(RSQLite::SQLite(), db_path)
   tables <- dbListTables(con)
-  expect_true("passwords" %in% tables)
+  testthat::expect_true("passwords" %in% tables)
   
   # Check that users were populated with correct passwords
   users <- dbGetQuery(con, "SELECT userid, institute, password FROM passwords ORDER BY userid")
-  expect_equal(nrow(users), 5)
+  testthat::expect_equal(nrow(users), 4)
   
   # Check preset passwords
   test_user <- users[users$userid == "test", ]
-  expect_equal(test_user$password, "1234")
+  testthat::expect_equal(test_user$password, "1234")
   
   test2_user <- users[users$userid == "test2", ]
-  expect_equal(test2_user$password, "abcd")
-  
-  igut_user <- users[users$userid == "igut", ]
-  expect_equal(igut_user$password, "mypassword")
+  testthat::expect_equal(test2_user$password, "abcd")
   
   # Check generated passwords (should be 12 characters)
-  ileist_user <- users[users$userid == "ileist", ]
-  expect_equal(nchar(ileist_user$password), 12)
-  
-  gaguileta_user <- users[users$userid == "gaguileta", ]
-  expect_equal(nchar(gaguileta_user$password), 12)
-  
+  test3_user <- users[users$userid == "user", ]
+  testthat::expect_equal(nchar(test3_user$password), 12)
+
+  test4_user <- users[users$userid == "user2", ]
+  testthat::expect_equal(nchar(test4_user$password), 12)
+
   # Ensure generated passwords are different from preset ones
-  expect_true(ileist_user$password != "1234")
-  expect_true(gaguileta_user$password != "abcd")
-  expect_true(ileist_user$password != gaguileta_user$password)
+  testthat::expect_true(test3_user$password != "1234")
+  testthat::expect_true(test4_user$password != "abcd")
+  
+  testthat::expect_true(test3_user$password != test4_user$password)
   
   dbDisconnect(con)
   
@@ -571,82 +544,30 @@ cnag:
 })
 
 # Test init_user_data_structure with YAML institutes
-test_that("init_user_data_structure reads institutes from YAML file", {
+testthat::test_that("init_user_data_structure reads institutes from YAML file", {
+  app_dir <- ShinyImgVoteR::get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_user_data_yaml")
+  config_dir <- file.path(app_dir, "config")
+
+  Sys.setenv("IMGVOTER_CONFIG_DIR" = config_dir)
   
   # Clean up any existing directory
   if (dir.exists(test_base)) {
     unlink(test_base, recursive = TRUE)
   }
   dir.create(test_base, recursive = TRUE)
-  
-  # Create config directory and institute2userids2password.yaml
-  config_dir <- file.path(test_base, "config")
-  dir.create(config_dir, recursive = TRUE)
-  
-  # Create test YAML file with institutes
-  institute_yaml_content <- "
-training_answers_not_saved:
-  - test: 1234
-  - test2: 1234
-cnag:
-  - ileist
-  - igut
-dkfz:
-  - ibuchhalter
-custom_institute:
-  - user1
-  - user2
-"
-  institute_file <- file.path(config_dir, "institute2userids2password.yaml")
-  writeLines(institute_yaml_content, institute_file)
   
   # Test user data structure creation
-  user_data_dir <- init_user_data_structure(test_base)
+  user_data_dir <- ShinyImgVoteR::init_user_data_structure(test_base)
   
   expected_user_data_dir <- file.path(test_base, "user_data")
-  expect_equal(user_data_dir, expected_user_data_dir)
-  expect_true(dir.exists(user_data_dir))
+  testthat::expect_equal(user_data_dir, expected_user_data_dir)
+  testthat::expect_true(dir.exists(user_data_dir))
   
   # Check that directories were created for institutes from YAML
-  expect_true(dir.exists(file.path(user_data_dir, "Training_answers_not_saved")))
-  expect_true(dir.exists(file.path(user_data_dir, "CNAG")))
-  expect_true(dir.exists(file.path(user_data_dir, "DKFZ")))
-  expect_true(dir.exists(file.path(user_data_dir, "custom_institute")))
-  
-  # Check that old hardcoded institutes that are not in YAML were NOT created
-  expect_false(dir.exists(file.path(user_data_dir, "SciLifeLab")))
-  expect_false(dir.exists(file.path(user_data_dir, "ISCIII")))
-  
-  # Clean up
-  unlink(test_base, recursive = TRUE)
-})
-
-# Test init_user_data_structure without YAML file (fallback to hardcoded)
-test_that("init_user_data_structure falls back to hardcoded institutes without YAML", {
-  temp_dir <- tempdir()
-  test_base <- file.path(temp_dir, "test_user_data_no_yaml")
-  
-  # Clean up any existing directory
-  if (dir.exists(test_base)) {
-    unlink(test_base, recursive = TRUE)
-  }
-  dir.create(test_base, recursive = TRUE)
-  
-  # Test user data structure creation without YAML file
-  user_data_dir <- init_user_data_structure(test_base)
-  
-  expected_user_data_dir <- file.path(test_base, "user_data")
-  expect_equal(user_data_dir, expected_user_data_dir)
-  expect_true(dir.exists(user_data_dir))
-  
-  # Check that some of the hardcoded institutes were created
-  expect_true(dir.exists(file.path(user_data_dir, "CNAG")))
-  expect_true(dir.exists(file.path(user_data_dir, "DKFZ")))
-  expect_true(dir.exists(file.path(user_data_dir, "Training_answers_not_saved")))
-  expect_true(dir.exists(file.path(user_data_dir, "SciLifeLab")))
-  expect_true(dir.exists(file.path(user_data_dir, "ISCIII")))
+  testthat::expect_true(dir.exists(file.path(user_data_dir, "training_answers_not_saved")))
+  testthat::expect_true(dir.exists(file.path(user_data_dir, "institute1")))
   
   # Clean up
   unlink(test_base, recursive = TRUE)

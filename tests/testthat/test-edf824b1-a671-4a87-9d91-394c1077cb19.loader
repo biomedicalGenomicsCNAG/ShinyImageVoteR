@@ -1,0 +1,60 @@
+
+# NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
+
+# This file modifies the original behavior of the testthat::testthat::test_that and testthat::describe methods
+# such that they trigger only the tests specified by the 'desc' argument.
+# Please report any unwanted effects at https://github.com/meakbiyik/vscode-r-test-adapter/issues.
+
+# Entry point for the 'home/ivo/projects/bioinfo/cnag/repos/B1MG-variant-voting/tests/testthat/test-utils-functions.R&init_user_data_structure creates correct directory structure' test follows...
+
+TEST_THAT <- "testthat::test_that"
+DESCRIBE <- "describe"
+IS_DESCRIBE <- 0
+IS_DEBUG <- 1
+IS_WHOLE_FILE_TEST <- 0
+
+testthat <- loadNamespace('testthat')
+new_describe <- function(...) { }
+new_test_that <- function(...) { }
+
+if (!IS_WHOLE_FILE_TEST) {
+    if (IS_DESCRIBE) {
+        orig_describe <- testthat::describe
+        new_describe <- function(desc, ...) {
+            if ('init_user_data_structure creates correct directory structure' == desc) {
+                orig_describe(desc, ...)
+            }
+        }
+
+    } else {
+        orig_test_that <- testthat::testthat::test_that
+        new_test_that <- function(desc, ...) {
+            if ('init_user_data_structure creates correct directory structure' == desc) {
+                orig_test_that(desc, ...)
+            }
+        }
+    }
+
+    unlockBinding(DESCRIBE, testthat)
+    assignInNamespace(DESCRIBE, new_describe, ns = 'testthat')
+    assign(DESCRIBE, new_describe, envir = .GlobalEnv)
+    lockBinding(DESCRIBE, testthat)
+
+    unlockBinding(TEST_THAT, testthat)
+    assignInNamespace(TEST_THAT, new_test_that, ns = 'testthat')
+    assign(TEST_THAT, new_test_that, envir = .GlobalEnv)
+    lockBinding(TEST_THAT, testthat)
+
+}
+
+library(devtools)
+devtools::load_all('/home/ivo/.vscode/extensions/meakbiyik.vscode-r-test-adapter-0.8.1/src/testthat/reporter')
+if (IS_DEBUG) {
+    .vsc.load_all('/home/ivo/projects/bioinfo/cnag/repos/B1MG-variant-voting')
+    with_reporter(VSCodeReporter, {
+        .vsc.debugSource('/home/ivo/projects/bioinfo/cnag/repos/B1MG-variant-voting/tests/testthat/test-utils-functions.R')
+    })
+} else {
+    devtools::load_all('/home/ivo/projects/bioinfo/cnag/repos/B1MG-variant-voting')
+    devtools::test_active_file('/home/ivo/projects/bioinfo/cnag/repos/B1MG-variant-voting/tests/testthat/test-utils-functions.R', reporter=VSCodeReporter)
+}

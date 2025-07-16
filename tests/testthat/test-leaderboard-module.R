@@ -4,27 +4,27 @@ library(ShinyImgVoteR)
 
 cfg <- ShinyImgVoteR::load_config()
 
-test_that("Leaderboard module UI renders correctly", {
+testthat::test_that("Leaderboard module UI renders correctly", {
   ui_result <- leaderboardUI("test")
   expect_s3_class(ui_result, "shiny.tag.list")
   
   ui_html <- as.character(ui_result)
-  expect_true(grepl("institutes_voting_counts", ui_html))
-  expect_true(grepl("refresh_counts", ui_html))
+  testthat::expect_true(grepl("institutes_voting_counts", ui_html))
+  testthat::expect_true(grepl("refresh_counts", ui_html))
 })
 
-test_that("Leaderboard server handles tab trigger parameter", {
+testthat::test_that("Leaderboard server handles tab trigger parameter", {
   # Test that the function accepts the new tab_trigger parameter
   testServer(leaderboardServer, args = list(
     login_trigger = reactive({ list(user_id = "test", voting_institute = "CNAG") }),
     tab_trigger = reactive({ Sys.time() })
   ), {
     # Basic test that the server function loads without error
-    expect_true(TRUE)
+    testthat::expect_true(TRUE)
   })
 })
 
-test_that("Leaderboard reactive triggers correctly", {
+testthat::test_that("Leaderboard reactive triggers correctly", {
   # Test with different trigger scenarios
   login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   tab_trigger <- reactiveVal(NULL)
@@ -70,17 +70,17 @@ test_that("Leaderboard reactive triggers correctly", {
     tab_trigger = tab_trigger
   ), {
     # Test that reactive exists and can be triggered
-    expect_true(is.reactive(counts))
+    testthat::expect_true(is.reactive(counts))
     
     # Trigger tab change
     tab_trigger(Sys.time())
     
     # The counts should update
     result <- counts()
-    expect_true(is.data.frame(result))
-    expect_true("institute" %in% names(result))
-    expect_true("users" %in% names(result))
-    expect_true("total_images_voted" %in% names(result))
+    testthat::expect_true(is.data.frame(result))
+    testthat::expect_true("institute" %in% names(result))
+    testthat::expect_true("users" %in% names(result))
+    testthat::expect_true("total_images_voted" %in% names(result))
   })
   
   # Clean up
@@ -88,7 +88,7 @@ test_that("Leaderboard reactive triggers correctly", {
   unlink(test_user_data_dir, recursive = TRUE)
 })
 
-test_that("Leaderboard works without tab trigger (backward compatibility)", {
+testthat::test_that("Leaderboard works without tab trigger (backward compatibility)", {
   # Test that the module still works when tab_trigger is not provided
   login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   
@@ -105,11 +105,11 @@ test_that("Leaderboard works without tab trigger (backward compatibility)", {
     # Note: no tab_trigger parameter - testing backward compatibility
   ), {
     # Test that reactive exists and works without tab trigger
-    expect_true(is.reactive(counts))
+    testthat::expect_true(is.reactive(counts))
     
     # The counts should work even without tab trigger
     result <- counts()
-    expect_true(is.data.frame(result))
+    testthat::expect_true(is.data.frame(result))
   })
   
   # Clean up

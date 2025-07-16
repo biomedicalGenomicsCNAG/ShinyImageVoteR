@@ -10,6 +10,8 @@ makeVotingAppServer <- function(db_pool) {
     # Tracks the trigger source of the get_mutation function
     # could be "login", "next", "back", "manual url params change"
     get_mutation_trigger_source <- reactiveVal(NULL)
+
+    # browser()
     
     total_images <- DBI::dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
     cat(sprintf("Total annotations in DB: %s\n", total_images))

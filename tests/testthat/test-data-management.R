@@ -4,7 +4,7 @@ library(RSQLite)
 library(pool)
 library(ShinyImgVoteR)
 
-test_that("get_user_data_dir creates directory when it does not exist", {
+testthat::test_that("get_user_data_dir creates directory when it does not exist", {
   # Create a temporary directory for testing
   temp_base <- tempdir()
   test_base <- file.path(temp_base, "test_data_mgmt")
@@ -22,14 +22,14 @@ test_that("get_user_data_dir creates directory when it does not exist", {
   
   # Check that the directory was created and path is correct
   expected_path <- file.path(test_base, "user_data")
-  expect_equal(user_data_dir, expected_path)
-  expect_true(dir.exists(user_data_dir))
+  testthat::expect_equal(user_data_dir, expected_path)
+  testthat::expect_true(dir.exists(user_data_dir))
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
-test_that("get_user_data_dir returns existing directory path", {
+testthat::test_that("get_user_data_dir returns existing directory path", {
   # Create a temporary directory for testing
   temp_base <- tempdir()
   test_base <- file.path(temp_base, "test_existing")
@@ -42,19 +42,19 @@ test_that("get_user_data_dir returns existing directory path", {
   # Create base directory and user_data directory
   user_data_path <- file.path(test_base, "user_data")
   dir.create(user_data_path, recursive = TRUE)
-  expect_true(dir.exists(user_data_path))
+  testthat::expect_true(dir.exists(user_data_path))
   
   # Test that function returns existing directory
   result <- get_user_data_dir(test_base)
   
-  expect_equal(result, user_data_path)
-  expect_true(dir.exists(result))
+  testthat::expect_equal(result, user_data_path)
+  testthat::expect_true(dir.exists(result))
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
-test_that("get_user_data_dir uses current working directory when base_dir is NULL", {
+testthat::test_that("get_user_data_dir uses current working directory when base_dir is NULL", {
   # Save current working directory
   original_wd <- getwd()
   
@@ -75,8 +75,8 @@ test_that("get_user_data_dir uses current working directory when base_dir is NUL
   
   # Should create user_data in current working directory
   expected_path <- file.path(getwd(), "user_data")
-  expect_equal(result, expected_path)
-  expect_true(dir.exists(result))
+  testthat::expect_equal(result, expected_path)
+  testthat::expect_true(dir.exists(result))
   
   # Restore original working directory
   setwd(original_wd)
@@ -85,7 +85,7 @@ test_that("get_user_data_dir uses current working directory when base_dir is NUL
   unlink(test_dir, recursive = TRUE)
 })
 
-test_that("get_user_data_dir handles nested directory creation", {
+testthat::test_that("get_user_data_dir handles nested directory creation", {
   # Create a temporary directory for testing
   temp_base <- tempdir()
   test_base <- file.path(temp_base, "test_nested", "deep", "path")
@@ -100,15 +100,15 @@ test_that("get_user_data_dir handles nested directory creation", {
   
   # Check that the nested directory structure was created
   expected_path <- file.path(test_base, "user_data")
-  expect_equal(user_data_dir, expected_path)
-  expect_true(dir.exists(user_data_dir))
-  expect_true(dir.exists(test_base))
+  testthat::expect_equal(user_data_dir, expected_path)
+  testthat::expect_true(dir.exists(user_data_dir))
+  testthat::expect_true(dir.exists(test_base))
   
   # Clean up
   unlink(file.path(temp_base, "test_nested"), recursive = TRUE)
 })
 
-test_that("get_user_data_dir handles special characters in paths", {
+testthat::test_that("get_user_data_dir handles special characters in paths", {
   # Create a temporary directory for testing
   temp_base <- tempdir()
   test_base <- file.path(temp_base, "test_special chars & symbols")
@@ -126,14 +126,14 @@ test_that("get_user_data_dir handles special characters in paths", {
   
   # Check that the directory was created correctly
   expected_path <- file.path(test_base, "user_data")
-  expect_equal(user_data_dir, expected_path)
-  expect_true(dir.exists(user_data_dir))
+  testthat::expect_equal(user_data_dir, expected_path)
+  testthat::expect_true(dir.exists(user_data_dir))
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
-test_that("get_user_data_dir works with relative paths", {
+testthat::test_that("get_user_data_dir works with relative paths", {
   # Save current working directory
   original_wd <- getwd()
   
@@ -152,8 +152,8 @@ test_that("get_user_data_dir works with relative paths", {
   
   # Check that the directory was created
   expected_path <- file.path(rel_path, "user_data")
-  expect_equal(user_data_dir, expected_path)
-  expect_true(dir.exists(user_data_dir))
+  testthat::expect_equal(user_data_dir, expected_path)
+  testthat::expect_true(dir.exists(user_data_dir))
   
   # Restore original working directory
   setwd(original_wd)
@@ -162,7 +162,7 @@ test_that("get_user_data_dir works with relative paths", {
   unlink(test_dir, recursive = TRUE)
 })
 
-test_that("get_user_data_dir is idempotent", {
+testthat::test_that("get_user_data_dir is idempotent", {
   # Create a temporary directory for testing
   temp_base <- tempdir()
   test_base <- file.path(temp_base, "test_idempotent")
@@ -181,19 +181,19 @@ test_that("get_user_data_dir is idempotent", {
   result3 <- get_user_data_dir(test_base)
   
   # All results should be identical
-  expect_equal(result1, result2)
-  expect_equal(result2, result3)
+  testthat::expect_equal(result1, result2)
+  testthat::expect_equal(result2, result3)
   
   # Directory should exist and be the same
   expected_path <- file.path(test_base, "user_data")
-  expect_equal(result1, expected_path)
-  expect_true(dir.exists(result1))
+  testthat::expect_equal(result1, expected_path)
+  testthat::expect_true(dir.exists(result1))
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
-test_that("get_user_data_dir handles empty string base_dir", {
+testthat::test_that("get_user_data_dir handles empty string base_dir", {
   # Save current working directory
   original_wd <- getwd()
   
@@ -208,8 +208,8 @@ test_that("get_user_data_dir handles empty string base_dir", {
   
   # Should create user_data in current working directory
   expected_path <- file.path(getwd(), "user_data")
-  expect_equal(user_data_dir, expected_path)
-  expect_true(dir.exists(user_data_dir))
+  testthat::expect_equal(user_data_dir, expected_path)
+  testthat::expect_true(dir.exists(user_data_dir))
   
   # Restore original working directory
   setwd(original_wd)
@@ -218,7 +218,7 @@ test_that("get_user_data_dir handles empty string base_dir", {
   unlink(test_dir, recursive = TRUE)
 })
 
-test_that("get_user_data_dir preserves permissions on existing directory", {
+testthat::test_that("get_user_data_dir preserves permissions on existing directory", {
   # Create a temporary directory for testing
   temp_base <- tempdir()
   test_base <- file.path(temp_base, "test_permissions")
@@ -240,16 +240,16 @@ test_that("get_user_data_dir preserves permissions on existing directory", {
   
   # Check that directory info is preserved
   final_info <- file.info(user_data_path)
-  expect_equal(result, user_data_path)
-  expect_equal(initial_info$mtime, final_info$mtime)
-  expect_equal(initial_info$mode, final_info$mode)
+  testthat::expect_equal(result, user_data_path)
+  testthat::expect_equal(initial_info$mtime, final_info$mtime)
+  testthat::expect_equal(initial_info$mode, final_info$mode)
   
   # Clean up
   unlink(test_base, recursive = TRUE)
 })
 
 # Tests for init_db function
-test_that("init_db creates a valid database connection pool", {
+testthat::test_that("init_db creates a valid database connection pool", {
   # Create a temporary SQLite file
   temp_db_file <- tempfile(fileext = ".sqlite")
   
@@ -257,21 +257,21 @@ test_that("init_db creates a valid database connection pool", {
   pool <- init_db(temp_db_file)
   
   # Check that pool is created and is a Pool object (R6 class)
-  expect_true(inherits(pool, "Pool"))
-  expect_true(inherits(pool, "R6"))
+  testthat::expect_true(inherits(pool, "Pool"))
+  testthat::expect_true(inherits(pool, "R6"))
   
   # Test that we can query the database (should work even with empty database)
   result <- pool::poolWithTransaction(pool, function(conn) {
     DBI::dbGetQuery(conn, "SELECT 1 as test")
   })
-  expect_equal(result$test, 1)
+  testthat::expect_equal(result$test, 1)
   
   # Clean up
   pool::poolClose(pool)
   unlink(temp_db_file)
 })
 
-test_that("init_db works with existing SQLite file", {
+testthat::test_that("init_db works with existing SQLite file", {
   # Create a temporary SQLite file with some data
   temp_db_file <- tempfile(fileext = ".sqlite")
   
@@ -289,16 +289,16 @@ test_that("init_db works with existing SQLite file", {
     DBI::dbGetQuery(conn, "SELECT * FROM test_table")
   })
   
-  expect_equal(nrow(result), 1)
-  expect_equal(result$id, 1)
-  expect_equal(result$name, "test")
+  testthat::expect_equal(nrow(result), 1)
+  testthat::expect_equal(result$id, 1)
+  testthat::expect_equal(result$name, "test")
   
   # Clean up
   pool::poolClose(pool)
   unlink(temp_db_file)
 })
 
-test_that("init_db creates database file if it doesn't exist", {
+testthat::test_that("init_db creates database file if it doesn't exist", {
   # Use a non-existent file path
   temp_db_file <- tempfile(fileext = ".sqlite")
   
@@ -312,24 +312,24 @@ test_that("init_db creates database file if it doesn't exist", {
   pool <- init_db(temp_db_file)
   
   # Check that file was created
-  expect_true(file.exists(temp_db_file))
+  testthat::expect_true(file.exists(temp_db_file))
   
   # Check that pool works
-  expect_true(inherits(pool, "Pool"))
-  expect_true(inherits(pool, "R6"))
+  testthat::expect_true(inherits(pool, "Pool"))
+  testthat::expect_true(inherits(pool, "R6"))
   
   # Test basic functionality
   result <- pool::poolWithTransaction(pool, function(conn) {
     DBI::dbGetQuery(conn, "SELECT sqlite_version() as version")
   })
-  expect_true(nchar(result$version) > 0)
+  testthat::expect_true(nchar(result$version) > 0)
   
   # Clean up
   pool::poolClose(pool)
   unlink(temp_db_file)
 })
 
-test_that("init_db handles invalid database paths gracefully", {
+testthat::test_that("init_db handles invalid database paths gracefully", {
   # Test with invalid path (directory that doesn't exist)
   temp_dir <- tempdir()
   nonexistent_dir <- file.path(temp_dir, "nonexistent")
@@ -340,21 +340,21 @@ test_that("init_db handles invalid database paths gracefully", {
   
   # This should work now
   pool <- init_db(invalid_path)
-  expect_true(inherits(pool, "Pool"))
-  expect_true(inherits(pool, "R6"))
+  testthat::expect_true(inherits(pool, "Pool"))
+  testthat::expect_true(inherits(pool, "R6"))
   
   # Test that it actually works
   result <- pool::poolWithTransaction(pool, function(conn) {
     DBI::dbGetQuery(conn, "SELECT 1 as test")
   })
-  expect_equal(result$test, 1)
+  testthat::expect_equal(result$test, 1)
   
   # Clean up
   pool::poolClose(pool)
   unlink(nonexistent_dir, recursive = TRUE)
 })
 
-test_that("init_db pool can execute transactions", {
+testthat::test_that("init_db pool can execute transactions", {
   # Create a temporary SQLite file
   temp_db_file <- tempfile(fileext = ".sqlite")
   
@@ -373,14 +373,14 @@ test_that("init_db pool can execute transactions", {
     DBI::dbGetQuery(conn, "SELECT COUNT(*) as count FROM transaction_test")
   })
   
-  expect_equal(result$count, 2)
+  testthat::expect_equal(result$count, 2)
   
   # Clean up
   pool::poolClose(pool)
   unlink(temp_db_file)
 })
 
-test_that("init_db pool supports multiple concurrent connections", {
+testthat::test_that("init_db pool supports multiple concurrent connections", {
   # Create a temporary SQLite file
   temp_db_file <- tempfile(fileext = ".sqlite")
   
@@ -406,7 +406,7 @@ test_that("init_db pool supports multiple concurrent connections", {
     DBI::dbGetQuery(conn, "SELECT COUNT(*) as count FROM concurrent_test")
   })
   
-  expect_equal(final_result$count, 3)
+  testthat::expect_equal(final_result$count, 3)
   
   # Clean up
   pool::poolClose(pool)

@@ -1,0 +1,1 @@
+Result: /tmp/Rtmpqs71Kf/test_complete_env/user_data, /tmp/Rtmpqs71Kf/test_complete_env/db.sqlite, /tmp/Rtmpqs71Kf/test_complete_env

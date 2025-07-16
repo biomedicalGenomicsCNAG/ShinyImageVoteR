@@ -14,7 +14,7 @@ library(ShinyImgVoteR)
 
 cfg <- ShinyImgVoteR::load_config()
 
-test_that("color_seq colors nucleotides correctly", {
+testthat::test_that("color_seq colors nucleotides correctly", {
   seq <- "ACGT-"
   expected <- paste0(
     '<span style="color:', cfg$nt2color_map["A"], '">A</span>',
@@ -24,52 +24,52 @@ test_that("color_seq colors nucleotides correctly", {
     '<span style="color:', cfg$nt2color_map["-"], '">-</span>'
   )
   result <- ShinyImgVoteR:::color_seq(seq, cfg$nt2color_map)
-  expect_equal(result, expected)
+  testthat::expect_equal(result, expected)
 })
 
-test_that("votingUI returns valid Shiny UI", {
+testthat::test_that("votingUI returns valid Shiny UI", {
   ui <- votingUI("test")
-  expect_true(inherits(ui, "shiny.tag.list"))
+  testthat::expect_true(inherits(ui, "shiny.tag.list"))
 })
 
-test_that("voting module namespace works correctly", {
+testthat::test_that("voting module namespace works correctly", {
   ui <- votingUI("voting_module")
   # Check that namespaced IDs are present in the UI
   ui_html <- as.character(ui)
-  expect_true(grepl("voting_module-agreement", ui_html))
-  expect_true(grepl("voting_module-observation", ui_html))
-  expect_true(grepl("voting_module-comment", ui_html))
+  testthat::expect_true(grepl("voting_module-agreement", ui_html))
+  testthat::expect_true(grepl("voting_module-observation", ui_html))
+  testthat::expect_true(grepl("voting_module-comment", ui_html))
 })
 
 # Test for UI elements structure
-test_that("votingUI contains expected UI elements", {
+testthat::test_that("votingUI contains expected UI elements", {
   ui <- votingUI("test")
   ui_html <- as.character(ui)
   
   # Check for radio buttons
-  expect_true(grepl("radioButtons", ui_html) || grepl('type="radio"', ui_html))
+  testthat::expect_true(grepl("radioButtons", ui_html) || grepl('type="radio"', ui_html))
   
   # Check for action buttons
-  expect_true(grepl("nextBtn", ui_html))
-  expect_true(grepl("backBtn", ui_html))
+  testthat::expect_true(grepl("nextBtn", ui_html))
+  testthat::expect_true(grepl("backBtn", ui_html))
   
   # Check for conditional panels
-  expect_true(grepl("shiny-panel-conditional", ui_html))
+  testthat::expect_true(grepl("shiny-panel-conditional", ui_html))
 })
 
-test_that("hotkey configuration is consistent", {
+testthat::test_that("hotkey configuration is consistent", {
   # Check that observation hotkeys match the number of observations
-  expect_equal(length(cfg$observation_hotkeys), length(cfg$observations_dict))
+  testthat::expect_equal(length(cfg$observation_hotkeys), length(cfg$observations_dict))
   
   # Check that hotkeys are single characters
-  expect_true(all(nchar(cfg$observation_hotkeys) == 1))
+  testthat::expect_true(all(nchar(cfg$observation_hotkeys) == 1))
   
   # Check that hotkeys are unique
-  expect_equal(length(cfg$observation_hotkeys), length(unique(cfg$observation_hotkeys)))
+  testthat::expect_equal(length(cfg$observation_hotkeys), length(unique(cfg$observation_hotkeys)))
 })
 
 # Test: module can be invoked
-test_that("votingServer can be called within testServer", {
+testthat::test_that("votingServer can be called within testServer", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
@@ -85,12 +85,12 @@ test_that("votingServer can be called within testServer", {
       session$userData$shinyauthr_session_id <- "test_session_123"
       
       # If we reach here without error, the module initialized successfully
-      expect_true(TRUE)
+      testthat::expect_true(TRUE)
     }
   )
 })
 
-test_that("votingServer handles different agreement types", {
+testthat::test_that("votingServer handles different agreement types", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
@@ -108,22 +108,22 @@ test_that("votingServer handles different agreement types", {
       # Just test that inputs can be set without triggering nextBtn
       # Test 'yes' agreement
       session$setInputs(agreement = "yes")
-      expect_equal(input$agreement, "yes")
+      testthat::expect_equal(input$agreement, "yes")
 
       # Test 'no' agreement
       session$setInputs(agreement = "no")
-      expect_equal(input$agreement, "no")
+      testthat::expect_equal(input$agreement, "no")
 
       # Test 'not_confident' agreement
       session$setInputs(agreement = "not_confident")
-      expect_equal(input$agreement, "not_confident")
+      testthat::expect_equal(input$agreement, "not_confident")
       
-      expect_true(TRUE)  # If we reach here, it worked
+      testthat::expect_true(TRUE)  # If we reach here, it worked
     }
   )
 })
 
-test_that("votingServer handles comment and observation inputs", {
+testthat::test_that("votingServer handles comment and observation inputs", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
@@ -143,14 +143,14 @@ test_that("votingServer handles comment and observation inputs", {
       session$setInputs(observation = "Test observation")
 
       # Verify that inputs were set correctly
-      expect_equal(input$comment, "Test comment")
-      expect_equal(input$observation, "Test observation")
+      testthat::expect_equal(input$comment, "Test comment")
+      testthat::expect_equal(input$observation, "Test observation")
     }
   )
 })
 
 # Test: module reacts to nextBtn click
-test_that("votingServer responds to nextBtn click", {
+testthat::test_that("votingServer responds to nextBtn click", {
   env <- setup_voting_env(c("chr1:1000", "chr1:2000"))
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
@@ -169,12 +169,12 @@ test_that("votingServer responds to nextBtn click", {
       session$setInputs(agreement = "yes")
       session$setInputs(nextBtn = 1)
       
-      expect_true(TRUE)
+      testthat::expect_true(TRUE)
     }
   )
 })
 
-test_that("votingServer writes agreement to annotations file on nextBtn", {
+testthat::test_that("votingServer writes agreement to annotations file on nextBtn", {
   # Set up test environment
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
@@ -211,13 +211,13 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
 
       # Simulate the user clicking Next with an agreement
       session$setInputs(agreement = "no")
-      expect_equal(input$agreement, "no")
+      testthat::expect_equal(input$agreement, "no")
 
       session$setInputs(alternative_vartype = "A>T")
-      expect_equal(input$alternative_vartype, "A>T")
+      testthat::expect_equal(input$alternative_vartype, "A>T")
 
       session$setInputs(observation = "Test observation")
-      expect_equal(input$observation, "Test observation")
+      testthat::expect_equal(input$observation, "Test observation")
 
       # Now simulate clicking the “Next” button
       session$setInputs(nextBtn = 1)
@@ -237,12 +237,12 @@ test_that("votingServer writes agreement to annotations file on nextBtn", {
       )
 
       # Check that the annotations file has the expected headers
-      expect_equal(colnames(annotations), expected_headers)     
+      testthat::expect_equal(colnames(annotations), expected_headers)     
     }
   )
 })
 
-test_that("votingServer handles duplicate voting from same session", {
+testthat::test_that("votingServer handles duplicate voting from same session", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
@@ -275,12 +275,12 @@ test_that("votingServer handles duplicate voting from same session", {
       session$setInputs(nextBtn = 2)
       
       # Verify duplicate vote handling (covers lines 221-231)
-      expect_true(TRUE)
+      testthat::expect_true(TRUE)
     }
   )
 })
 
-test_that("get_mutation returns done tibble when all variants voted", {
+testthat::test_that("get_mutation returns done tibble when all variants voted", {
   env <- setup_voting_env(c("chr1:1000"))
   ann <- read.delim(env$annotations_file, stringsAsFactors = FALSE)
   ann$agreement <- "yes"
@@ -307,12 +307,12 @@ test_that("get_mutation returns done tibble when all variants voted", {
       session$setInputs(nextBtn = 1)
       session$flushReact()
       res <- get_mutation()
-      expect_equal(res$coordinates, "done")
+      testthat::expect_equal(res$coordinates, "done")
     }
   )
 })
 
-test_that("get_mutation gets triggered with not existing coordinates", {
+testthat::test_that("get_mutation gets triggered with not existing coordinates", {
   env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
@@ -335,7 +335,7 @@ test_that("get_mutation gets triggered with not existing coordinates", {
       session$setInputs(nextBtn = 1)
       session$flushReact()
       res <- get_mutation()
-      expect_equal(res$coordinates, NULL)
+      testthat::expect_equal(res$coordinates, NULL)
     }
   )
 })

@@ -8,7 +8,7 @@ library(pool)
 library(later)
 library(ShinyImgVoteR)
 
-test_that("Logout scheduling functions work correctly", {
+testthat::test_that("Logout scheduling functions work correctly", {
   mock_db <- create_mock_db()
   test_pool <- mock_db$pool
 
@@ -16,9 +16,9 @@ test_that("Logout scheduling functions work correctly", {
   expect_silent(ShinyImgVoteR::cancel_pending_logout("non_existent_session"))
   
   # Debug: Check if functions exist
-  expect_true(exists("schedule_logout_update"))
-  expect_true(exists("cancel_pending_logout"))
-  expect_true(exists("pending_logout_tasks"))
+  testthat::expect_true(exists("schedule_logout_update"))
+  testthat::expect_true(exists("cancel_pending_logout"))
+  testthat::expect_true(exists("pending_logout_tasks"))
   
   # Test schedule_logout_update with longer delay to check scheduling
   callback_executed <- FALSE
@@ -31,7 +31,7 @@ test_that("Logout scheduling functions work correctly", {
   schedule_logout_update("test_session", callback, delay = 0.5)
   
   # Check that task was scheduled (should exist immediately after scheduling)
-  expect_true(exists("test_session", envir = pending_logout_tasks))
+  testthat::expect_true(exists("test_session", envir = pending_logout_tasks))
   
   # Cancel it before execution
   cancel_pending_logout("test_session")
@@ -58,7 +58,7 @@ test_that("Logout scheduling functions work correctly", {
   }
   
   cat("Callback 2 executed status:", callback_executed_2, "\n")
-  expect_true(callback_executed_2)
+  testthat::expect_true(callback_executed_2)
   
   # Check that task was cleaned up after execution
   expect_false(exists("test_session_2", envir = pending_logout_tasks))
