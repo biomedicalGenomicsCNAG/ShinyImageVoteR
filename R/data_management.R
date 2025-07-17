@@ -401,14 +401,13 @@ init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
 }
 
 
-#' Initialize external environment for the application
-#'
-#' Sets up the external directory structure, database, and configuration for the application.
-#'
-#' @param base_dir Character. Base directory for external files. 
-#'   Defaults to current working directory.
-#' @return List with paths to user_data directory, database file, and config file
-#' @export
+#' Copy a directory from the app to a target path
+#' This function copies a directory from the app's default environment to a specified target path.
+#' 
+#' @keywords internal
+#' @param target_dir_path Character. Path to the target directory where the app directory will be copied.
+#' 
+#' @return Character path to the copied directory
 copy_dir_from_app <- function(target_dir_path) {
   app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
@@ -427,6 +426,43 @@ copy_dir_from_app <- function(target_dir_path) {
   return(normalizePath(target_dir_path, mustWork = TRUE))
 }
 
+# Ensure that .gitignore in dir contains the given patterns# 
+#'
+#' This function checks if a .gitignore file exists in the specified directory.
+#' If it does not exist, it creates one. It then ensures that the specified patterns
+#' are present in the .gitignore file, adding them if they are missing.
+#' 
+#' @keywords internal
+#' @param dir Character. Directory path where the .gitignore file should be checked/created.
+#' @param patterns Character vector. Patterns to ensure in the .gitignore file.
+#' 
+#' @return Character path to the .gitignore file
+#' 
+ensure_gitignore <- function(dir, patterns) {
+  dir <- normalizePath(dir, mustWork = TRUE)
+  gi_path <- file.path(dir, ".gitignore")
+  
+  existing <- character(0)
+  if (file.exists(gi_path)) {
+    existing <- readLines(gi_path, warn = FALSE)
+    message(glue::glue("Found existing .gitignore at {gi_path}"))
+  } 
+  
+  # Determine which patterns are missing
+  missing <- setdiff(patterns, existing)
+  if (length(missing)) {
+    new_contents <- c(existing, missing)
+    writeLines(new_contents, gi_path)
+    message(glue::glue(
+      "Added {length(missing)} pattern{?s} to .gitignore:",
+      "{?s,}{paste(missing, collapse=', ')}"
+    ))
+  } else {
+    message("All specified patterns already present in .gitignore.")
+  }
+  
+  invisible(gi_path)
+}
 
 #' Initialize environment for the application
 #'
@@ -441,7 +477,6 @@ init_environment <- function(
   base_dir = getwd()
 ) {
 
-  browser()
   default_file_path <- file.path(
     get_app_dir(), "default_env", "config", "config.yaml"
   )
@@ -452,56 +487,50 @@ init_environment <- function(
 
   if(!dir.exists(config_dir)) {
     copy_dir_from_app(config_dir)
+    config_file_path <- file.path(config_dir, "config.yaml")
   }
 
-  cfg <- load_config2(config_file_path)
+  cfg <- load_config(config_file_path)
+  Sys.setenv(
+    IMGVOTER_CONFIG_FILE_PATH = normalizePath(config_file_path, mustWork = TRUE)
+  )
+  # TODO use this for every load_config call
 
   # Set up expected directories
   expected_dirs <- c("images", "user_data", "server_data")
-  for (directory in expected_dirs) {
-    target_dir_path <- cfg[[glue::glue("{directory}_dir")]]
-    full_path <- file.path(base_dir, target_dir_path)
-    cat("Checking directory:", target_dir_path, "\n")
-    if(!dir.exists(target_dir_path)) {
-      full_path <- copy_dir_from_app(target_dir_path)
-    }
-    if (directory == "images") {
-      Sys.setenv(IMGVOTER_IMAGES_DIR = full_path)
-    }
-  }
 
-  # # Initialize database
-  # db_file <- init_external_database(base_dir)
-  
-  # # Initialize configuration
-  # config_file <- init_external_config(base_dir)
-  
-  # # Initialize images with symlinks
-  # images_dir <- init_external_images(base_dir)
-  
-  # # Initialize server_data directory
-  # server_data_dir <- init_external_server_data(base_dir)
-  
-  # # Set environment variables for the application to use
-  # Sys.setenv(IMGVOTER_USER_DATA_DIR = user_data_dir)
-  # Sys.setenv(IMGVOTER_DATABASE_PATH = db_file)
-  # Sys.setenv(IMGVOTER_CONFIG_PATH = config_file)
-  # Sys.setenv(IMGVOTER_IMAGES_DIR = images_dir)
-  # Sys.setenv(IMGVOTER_SERVER_DATA_DIR = server_data_dir)
-  
-  # cat("\nExternal environment initialized successfully!\n")
-  # cat("Environment variables set:\n")
-  # cat("  IMGVOTER_USER_DATA_DIR =", Sys.getenv("IMGVOTER_USER_DATA_DIR"), "\n")
-  # cat("  IMGVOTER_DATABASE_PATH =", Sys.getenv("IMGVOTER_DATABASE_PATH"), "\n")
-  # cat("  IMGVOTER_CONFIG_PATH =", Sys.getenv("IMGVOTER_CONFIG_PATH"), "\n")
-  # cat("  IMGVOTER_IMAGES_DIR =", Sys.getenv("IMGVOTER_IMAGES_DIR"), "\n")
-  # cat("  IMGVOTER_SERVER_DATA_DIR =", Sys.getenv("IMGVOTER_SERVER_DATA_DIR"), "\n")
-  
-  # return(list(
-  #   user_data_dir = user_data_dir,
-  #   db_file = db_file,
-  #   config_file = config_file,
-  #   images_dir = images_dir,
-  #   server_data_dir = server_data_dir
-  # ))
+  purrr::walk(expected_dirs, function(name) {
+    key        <- glue::glue("{name}_dir")
+    rel_path   <- cfg[[key]]
+    abs_path   <- normalizePath(file.path(base_dir, rel_path))
+    
+    cat("Checking directory:", rel_path, "\n") 
+    if (!dir.exists(abs_path)) {
+      abs_path <<- copy_dir_from_app(rel_path)
+    }
+    
+    if (name == "images") {
+      Sys.setenv(IMGVOTER_IMAGES_DIR = abs_path)
+      message("Set IMGVOTER_IMAGES_DIR to: ", abs_path)
+    }
+  })
+
+  # get the directory in which the sqlite file is located
+  sqlite_file_full_path <- normalizePath(cfg$sqlite_file)
+
+  if (!file.exists(sqlite_file_full_path)) {
+    create_database(
+      sqlite_file_full_path,
+      normalizePath(cfg$to_be_voted_images_file, mustWork = TRUE),
+      normalizePath(cfg$grouped_credentials_file, mustWork = TRUE)
+    )
+  } 
+  Sys.setenv(IMGVOTER_DB_PATH = sqlite_file_full_path)
+
+  sqlite_file_dir <- dirname(sqlite_file_full_path)
+
+  ensure_gitignore(
+    sqlite_file_dir, 
+    patterns = c("*.sqlite", "*.db")
+  )  
 }

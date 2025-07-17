@@ -2,8 +2,11 @@
 images_dir: "./app_env/images"
 user_data_dir: "./app_env/user_data"
 server_data_dir: "./app_env/server_data"
+
+to_be_voted_images_file: "./app_env/images/to_be_voted_images.tsv"
+grouped_credentials_file: "./app_env/config/institute2userids2password.yaml"
 sqlite_file: "./app_env/db.sqlite"
-to_be_voted_images_file: "./screenshots/uro003_paths_mock.txt"
+
 application_title: ShinyImgVoteR (B1MG Somatic Mutation Voting)
 radioBtns_label: Is the somatic mutation above correct? [num keys 1-4]
 checkboxes_label: Please select the reason for your uncertainty [keyboard keys a-h]

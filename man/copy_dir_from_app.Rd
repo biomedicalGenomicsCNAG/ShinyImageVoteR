@@ -2,17 +2,19 @@
 % Please edit documentation in R/data_management.R
 \name{copy_dir_from_app}
 \alias{copy_dir_from_app}
-\title{Initialize external environment for the application}
+\title{Copy a directory from the app to a target path
+This function copies a directory from the app's default environment to a specified target path.}
 \usage{
 copy_dir_from_app(target_dir_path)
 }
 \arguments{
-\item{base_dir}{Character. Base directory for external files.
-Defaults to current working directory.}
+\item{target_dir_path}{Character. Path to the target directory where the app directory will be copied.}
 }
 \value{
-List with paths to user_data directory, database file, and config file
+Character path to the copied directory
 }
 \description{
-Sets up the external directory structure, database, and configuration for the application.
+Copy a directory from the app to a target path
+This function copies a directory from the app's default environment to a specified target path.
 }
+\keyword{internal}

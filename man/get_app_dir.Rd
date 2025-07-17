@@ -5,16 +5,10 @@
 \title{Get the path to the Shiny app directory}
 \usage{
 get_app_dir()
-
-get_app_dir()
 }
 \value{
 Character path to the Shiny app directory
-
-Character path to the Shiny app directory
 }
 \description{
-Get the path to the Shiny app directory
-
 Get the path to the Shiny app directory
 }

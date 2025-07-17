@@ -155,3 +155,6 @@ setup-dev: setup-userdata
 		mv inst/shiny-app/db.sqlite . || true; \
 	fi
 	@echo "Development environment setup complete"
+
+stop:
+	fuser -k 8000/tcp

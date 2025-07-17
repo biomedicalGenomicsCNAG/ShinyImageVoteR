@@ -3,7 +3,10 @@
 #' @return A Shiny UI object (tagList)
 #' @export
 votingAppUI <- function() {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  )  
+
   fluidPage(
     shiny::conditionalPanel(
       condition = "!output.logged_in",

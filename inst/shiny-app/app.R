@@ -1,5 +1,4 @@
 library(ShinyImgVoteR)
-cfg <- ShinyImgVoteR::load_config()
 
 if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTER_STARTED") != "1") {
   print("vscode-shiny detected -> delegating to app wrapper")
@@ -15,24 +14,15 @@ if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTE
   quit(save = "no")
 }
 
-print("Configuration loaded:")
-print(cfg)
-
-print("IMGVOTER_CURRENT_DIR:")
-print(Sys.getenv("IMGVOTER_CURRENT_DIR"))
-
 shiny::addResourcePath(
   prefix = "images",
-  directoryPath = paste0(
-    Sys.getenv("IMGVOTER_CURRENT_DIR"),
-    cfg$images_dir
-  )
+  directoryPath = Sys.getenv("IMGVOTER_IMAGES_DIR")
 )
 
-# browser()
+browser()
 
 # GLOBAL pool object shared by all sessions
-db_pool <- init_db(cfg$sqlite_file)
+db_pool <- init_db(Sys.getenv("IMGVOTER_DB_PATH"))
 
 shiny::onStop(function() {
   if (inherits(db_pool, "Pool")) {

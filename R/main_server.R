@@ -5,7 +5,9 @@
 makeVotingAppServer <- function(db_pool) {
   function (input, output, session) {
 
-    cfg <- ShinyImgVoteR::load_config()
+    cfg <- ShinyImgVoteR::load_config(
+      config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+    )
 
     # Tracks the trigger source of the get_mutation function
     # could be "login", "next", "back", "manual url params change"
@@ -37,6 +39,7 @@ makeVotingAppServer <- function(db_pool) {
     login_data <- login_return$login_data
 
     observeEvent(login_data(), {
+      browser()
       req(login_data())
       user_id <- login_data()$user_id
       voting_institute <- login_data()$institute

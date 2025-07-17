@@ -12,7 +12,9 @@ library(shiny)
 #' @export
 loginUI <- function(id) {
   ns <- shiny::NS(id)
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  )
   shiny::wellPanel(
     id = ns("loginPanel"),
     h3(paste0("Welcome to ", cfg$application_title)),
@@ -61,11 +63,13 @@ loginUI <- function(id) {
 #' @export
 loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
-    cfg <- ShinyImgVoteR::load_config()
+    cfg <- ShinyImgVoteR::load_config(
+      config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+    )
 
     add_sessionid_to_db <- function(user, sessionid, conn = db_conn) {
       tibble::tibble(
-        user = user,
+        userid = userid,
         sessionid = sessionid,
         login_time = as.character(lubridate::now()),
         logout_time = NA_character_
@@ -81,23 +85,46 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
       )
     }
 
+    # get_sessionids_from_db <- function(conn = db_conn, expiry = cfg$cookie_expiry) {
+    #   DBI::dbReadTable(conn, "sessionids") %>%
+    #     dplyr::mutate(login_time = lubridate::ymd_hms(login_time)) %>%
+    #     tibble::as_tibble() %>%
+    #     dplyr::filter(
+    #       is.na(logout_time),
+    #       login_time > lubridate::now() - lubridate::days(expiry)
+    #     )
+    # }
+
     get_sessionids_from_db <- function(conn = db_conn, expiry = cfg$cookie_expiry) {
-      DBI::dbReadTable(conn, "sessionids") %>%
-        dplyr::mutate(login_time = lubridate::ymd_hms(login_time)) %>%
+      DBI::dbGetQuery(conn,
+        "SELECT userid, sessionid, login_time, logout_time
+         FROM sessionids"
+      ) %>%
         tibble::as_tibble() %>%
+        dplyr::mutate(
+          login_time = lubridate::ymd_hms(login_time)
+        ) %>%
         dplyr::filter(
           is.na(logout_time),
           login_time > lubridate::now() - lubridate::days(expiry)
         )
     }
 
-    print("cfg_credentials_df:")
-    print(cfg$credentials_df)
+    # --- Load credentials once at session start -------------------------------
+    user_base <- DBI::dbGetQuery(db_conn,
+      "SELECT userid, password, institute
+       FROM passwords"
+    ) %>%
+      tibble::as_tibble()
 
+    print("Loaded user base:")
+    print(user_base)
+
+    browser()
     credentials <- shinyauthr::loginServer(
       id = "auth",
-      data = cfg$credentials_df,
-      user_col = user,
+      data = user_base,
+      user_col = userid,
       pwd_col = password,
       sodium_hashed = FALSE,
       cookie_logins = TRUE,
@@ -110,7 +137,7 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
     login_data <- reactive({
       req(credentials()$user_auth)
       list(
-        user_id = credentials()$info$user,
+        user_id = credentials()$info$userid,
         institute = credentials()$info$institute,
         session_id = credentials()$info$sessionid
       )

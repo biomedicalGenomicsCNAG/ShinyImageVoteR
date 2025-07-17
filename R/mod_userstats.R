@@ -60,6 +60,7 @@ userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
         dplyr::group_by(shinyauthr_session_id) %>%
         dplyr::summarise(images_voted = dplyr::n(), .groups = 'drop')
 
+      # TODO dbReadTable does not seem to work with pool
       session_df <- DBI::dbReadTable(db_pool, "sessionids") %>%
         dplyr::filter(user == session$userData$userId) %>%
         dplyr::mutate(

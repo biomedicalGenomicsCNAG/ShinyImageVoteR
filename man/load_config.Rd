@@ -4,7 +4,12 @@
 \alias{load_config}
 \title{Load voting app configuration}
 \usage{
-load_config(config_dir)
+load_config(
+  config_file_path = file.path(get_app_dir(), "default_env", "config", "config.yaml")
+)
+}
+\arguments{
+\item{config_file_path}{Character. Path to the configuration file. Default is the one in the app directory}
 }
 \value{
 A named list of configuration values (e.g., \code{cfg_sqlite_file}, \code{cfg_radio_options2val_map}, etc.)
