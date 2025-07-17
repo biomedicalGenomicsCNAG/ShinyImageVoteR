@@ -127,6 +127,8 @@ init_user_data_structure <- function(base_dir = getwd()) {
 #' @export
 init_external_database <- function(base_dir = getwd(), db_name = "db.sqlite") {
   db_path <- file.path(base_dir, db_name)
+
+  browser()
   
   # Check if database already exists
   if (file.exists(db_path)) {

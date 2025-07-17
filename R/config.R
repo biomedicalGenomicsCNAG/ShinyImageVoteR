@@ -2,11 +2,67 @@
 #'
 #' Returns a list of configuration values, optionally overridden by environment
 #' variables or external files.
+#' @param config_file_path Character. Path to the configuration file. Default is the one in the app directory
 #'
 #' @return A named list of configuration values (e.g., `cfg_sqlite_file`, `cfg_radio_options2val_map`, etc.)
 #' @import yaml
 #' @export
-load_config <- function() {
+
+load_config2 <- function(
+  config_file_path = file.path(
+    get_app_dir(), "default_env", "config", "config.yaml"
+  )
+) {
+  cfg <- yaml::read_yaml(config_file_path)
+
+  cfg$radio_options2val_map <- setNames(
+    as.vector(cfg$radio_options2val_map),
+    paste0(names(cfg$radio_options2val_map), " [", seq_along(cfg$radio_options2val_map), "]")
+  )
+
+  cfg$observations2val_map <- setNames(
+    as.vector(cfg$observations_dict),
+    paste0(names(cfg$observations_dict), " [", cfg$observation_hotkeys, "]")
+  )
+
+  cfg$vote_counts_cols <- c(unlist(cfg$vote2dbcolumn_map, use.names = FALSE), "vote_count_total")
+  cfg$db_cols <- c(cfg$db_general_cols, cfg$vote_counts_cols)
+
+  con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
+  on.exit(DBI::dbDisconnect(con))
+
+  if ("passwords" %in% DBI::dbListTables(con)) {
+    pwd_tbl <- DBI::dbReadTable(con, "passwords")
+    cfg$credentials_df <- data.frame(
+      user = pwd_tbl$userid,
+      institute = pwd_tbl$institute,
+      password = pwd_tbl$password,
+      stringsAsFactors = FALSE
+    )
+  } else {
+    cfg$credentials_df <- data.frame(
+      user = character(0),
+      institute = character(0),
+      password = character(0),
+      stringsAsFactors = FALSE
+    )
+  }
+  
+  # sanitize paths
+  # cfg$images_dir <- gsub("^\\./", "/", cfg$images_dir)
+  
+  return(cfg)
+}
+
+#' Load voting app configuration
+#'
+#' Returns a list of configuration values, optionally overridden by environment
+#' variables or external files.
+#'
+#' @return A named list of configuration values (e.g., `cfg_sqlite_file`, `cfg_radio_options2val_map`, etc.)
+#' @import yaml
+#' @export
+load_config <- function(config_dir) {
   app_dir <- get_app_dir()
   print("app_dir:")
   print(app_dir)

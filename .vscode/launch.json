@@ -9,7 +9,7 @@
       "name": "Run Shiny",
       "request": "launch",
       "debugMode": "file",
-      "workingDirectory": "${workspaceFolder}/inst/shiny-app",
+      "workingDirectory": "${workspaceFolder}",
       "file": "${workspaceFolder}/dev_scripts/run_shinyimgvoter.R",
       "allowGlobalDebugging": false
     },

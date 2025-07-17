@@ -1,3 +1,11 @@
+#' Get the path to the Shiny app directory
+#'
+#' @return Character path to the Shiny app directory
+#' @export
+get_app_dir <- function() {
+  system.file("shiny-app", package = "ShinyImgVoteR")
+}
+
 #' Run B1MG Variant Voting Shiny Application
 #'
 #' This function launches the B1MG Variant Voting Shiny application.
@@ -5,9 +13,7 @@
 #' @param host Character. Host to run the application on. Default is "127.0.0.1"
 #' @param port Integer. Port to run the application on. Default is NULL (random port)
 #' @param launch.browser Logical. Should the browser be launched? Default is TRUE
-#' @param user_data_dir Character. Path to the user_data directory. If NULL, uses get_user_data_dir()
-#' @param database_path Character. Path to the database file. If NULL, creates/uses db.sqlite in current directory
-#' @param ... Additional arguments passed to shiny::runApp()
+#' @param config_file_path Character. Path to the configuration file. Default is the on in the app directory
 #'
 #' @return Runs the Shiny application
 #' @export
@@ -22,51 +28,43 @@ run_voting_app <- function(
     host = "127.0.0.1", 
     port = 8000, 
     launch.browser = TRUE, 
-    config_dir = NULL,
-    user_data_dir = NULL, 
-    database_path = NULL, 
+    config_file_path = file.path(
+      get_app_dir(), "default_env", "config", "config.yaml"
+    ),
     ...
   ) {
   app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
-  
-  if (app_dir == "") {
-    stop("Could not find Shiny app directory. Please reinstall the package.")
-  }
 
-  if (is.null(config_dir) || config_dir == "") {
-    config_dir <- file.path(getwd(), "config")
-  }
-  Sys.setenv(IMGVOTER_CONFIG_DIR = config_dir)
-  print(paste("Using config directory:", config_dir))
- 
-  # Set up external environment
-  if (is.null(user_data_dir)) {
-    user_data_dir <- get_user_data_dir()
-  }
+  init_environment(config_file_path)
   
-  # Initialize the user_data structure
-  init_user_data_structure(base_dir = dirname(user_data_dir))
+  # Set up external environment
+  # if (is.null(cfg$user_data_dir)) {
+  #   user_data_dir <- get_user_data_dir()
+  # }
+  
+  # # Initialize the user_data structure
+  # init_user_data_structure(base_dir = dirname(user_data_dir))
   
   # Initialize external database
-  if (is.null(database_path)) {
-    database_path <- init_external_database(base_dir = dirname(user_data_dir))
-  }
+  # if (is.null(database_path)) {
+  #   database_path <- init_external_database(base_dir = dirname(user_data_dir))
+  # }
   
-  # Set environment variables for the app to use
-  Sys.setenv(IMGVOTER_USER_DATA_DIR = user_data_dir)
-  Sys.setenv(IMGVOTER_DATABASE_PATH = database_path)
+  # # Set environment variables for the app to use
+  # Sys.setenv(IMGVOTER_USER_DATA_DIR = user_data_dir)
+  # Sys.setenv(IMGVOTER_DATABASE_PATH = database_path)
   
-  # Change to app directory but remember current directory
-  old_wd <- getwd()
-  on.exit(setwd(old_wd))
-  setwd(app_dir)
+  # # Change to app directory but remember current directory
+  # old_wd <- getwd()
+  # on.exit(setwd(old_wd))
+  # setwd(app_dir)
 
-  Sys.setenv("IMGVOTER_CURRENT_DIR" = old_wd)
+  # Sys.setenv("IMGVOTER_CURRENT_DIR" = old_wd)
   
-  message("Starting B1MG Variant Voting App...")
-  message("App directory: ", app_dir)
-  message("User data directory: ", user_data_dir)
-  message("Database path: ", database_path)
+  # message("Starting B1MG Variant Voting App...")
+  # message("App directory: ", app_dir)
+  # message("User data directory: ", user_data_dir)
+  # message("Database path: ", database_path)
   
   shiny::runApp(
     appDir = app_dir,
@@ -75,12 +73,4 @@ run_voting_app <- function(
     launch.browser = launch.browser,
     ...
   )
-}
-
-#' Get the path to the Shiny app directory
-#'
-#' @return Character path to the Shiny app directory
-#' @export
-get_app_dir <- function() {
-  system.file("shiny-app", package = "ShinyImgVoteR")
 }
