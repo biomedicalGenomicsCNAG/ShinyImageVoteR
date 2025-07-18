@@ -2,17 +2,16 @@
 % Please edit documentation in R/db.R
 \name{populate_users_table}
 \alias{populate_users_table}
-\title{Populate the users table with data from institute2userids2password.yaml
-#' @keywords internal
-#' @param conn Database connection object}
+\title{Populate the users table with data from the grouped credentials file}
 \usage{
-populate_users_table(conn, grouped_credentials_file)
+populate_users_table(conn, grouped_credentials)
 }
 \arguments{
-\item{grouped_credentials_file}{Character. Path to the grouped_credentials.yaml file}
+\item{conn}{Database connection object}
+
+\item{grouped_credentials}{Object. Loaded grouped credentials from the config file}
 }
 \description{
-Populate the users table with data from institute2userids2password.yaml
-#' @keywords internal
-#' @param conn Database connection object
+Populate the users table with data from the grouped credentials file
 }
+\keyword{internal}

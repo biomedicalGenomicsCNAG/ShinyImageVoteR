@@ -19,16 +19,14 @@ shiny::addResourcePath(
   directoryPath = Sys.getenv("IMGVOTER_IMAGES_DIR")
 )
 
-browser()
-
 # GLOBAL pool object shared by all sessions
 db_pool <- init_db(Sys.getenv("IMGVOTER_DB_PATH"))
 
-shiny::onStop(function() {
-  if (inherits(db_pool, "Pool")) {
-    pool::poolClose(db_pool)
-  }
-})
+# shiny::onStop(function() {
+#   if (inherits(db_pool, "Pool")) {
+#     pool::poolClose(db_pool)
+#   }
+# })
 
 shiny::shinyApp(
   ui = votingAppUI(),

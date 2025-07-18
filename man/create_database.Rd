@@ -4,7 +4,7 @@
 \alias{create_database}
 \title{Initialize external database}
 \usage{
-create_database(db_path, to_be_voted_images_file, grouped_credentials_file)
+create_database(db_path, to_be_voted_images_file, grouped_credentials)
 }
 \arguments{
 \item{base_dir}{Character. Base directory for database (default: current working directory)}

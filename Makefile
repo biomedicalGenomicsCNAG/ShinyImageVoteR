@@ -83,7 +83,8 @@ setup-userdata: install
 
 # Run the Shiny application with external user_data
 .PHONY: run
-run: install setup-userdata
+# run: install setup-userdata
+run: install 
 	@echo "Starting Shiny application with external user_data..."
 	$(RSCRIPT) -e "library($(PACKAGE_NAME)); run_voting_app()"
 
@@ -158,3 +159,11 @@ setup-dev: setup-userdata
 
 stop:
 	fuser -k 8000/tcp
+
+vignettes-build:
+	@echo "Building vignettes..."
+	$(R) -e "devtools::build_vignettes()"
+
+vignettes-run: vignettes-build
+	@echo "Running vignettes..."
+	$(R) -e "devtools::load_all(); rmarkdown::run('vignettes/shinyImgVoter.Rmd')"

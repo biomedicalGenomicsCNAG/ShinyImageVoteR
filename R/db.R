@@ -9,13 +9,16 @@
 create_database <- function(
   db_path, 
   to_be_voted_images_file,
-  grouped_credentials_file
+  grouped_credentials
 ) {
   # Look for data file in config/annotation_screenshots_paths first
   config_data_file <- to_be_voted_images_file
+  db_full_path <- normalizePath(db_path)
+
+  print(paste0("Creating database at:", db_path))
   
   # Create database structure
-  conn <- DBI::dbConnect(RSQLite::SQLite(), db_path)
+  conn <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_full_path)
   
   DBI::dbExecute(conn, "
     CREATE TABLE annotations (
@@ -74,12 +77,12 @@ create_database <- function(
 
   populate_users_table(
     conn, 
-    grouped_credentials_file
+    grouped_credentials
   )
 
   DBI::dbDisconnect(conn)
+  return(normalizePath(db_path))
 }
-
 
 #' Populate the annotations table with data from a file
 #' 
@@ -106,10 +109,15 @@ populate_annotations_table <- function(
     stringsAsFactors = FALSE
   )
 
-  # set column names
-  # TODO get this info from the config file
-  colnames(annotations_df) <- c(
-    "coordinates", "REF", "ALT", "variant", "path"
+  # TODO
+  # This should be not hardcoded but read from the config file
+  colnames(annotations_df) <- c("coordinates", "REF", "ALT", "variant", "path")
+
+  # TODO
+  # This should be not hardcoded but read from the config file
+  annotations_df$path <- gsub(
+    "/vol/b1mg/", "images/", 
+    annotations_df$path
   )
 
   # Insert data into the annotations table
@@ -119,19 +127,17 @@ populate_annotations_table <- function(
   cat("Populated annotations table with", nrow(annotations_df), "rows\n")
 }
 
-#' Populate the users table with data from institute2userids2password.yaml
-#' #' @keywords internal
-#' #' @param conn Database connection object
-#' @param grouped_credentials_file Character. Path to the grouped_credentials.yaml file
+#' Populate the users table with data from the grouped credentials file
+#' @keywords internal
+#' @param conn Database connection object
+#' @param grouped_credentials Object. Loaded grouped credentials from the config file
 #' @return NULL
 populate_users_table <- function(
   conn,
-  grouped_credentials_file
+  grouped_credentials
 ) {
   cat("Found grouped_credentials_file, populating users...\n")
-  
-  institute_data <- yaml::read_yaml(grouped_credentials_file)
-  
+   
   # Extract all userids with their institutes and preset passwords
   user_institute_map <- data.frame(
     userid = character(0), 
@@ -139,10 +145,10 @@ populate_users_table <- function(
     preset_password = character(0),
     stringsAsFactors = FALSE
   )
-  
-  for (institute in names(institute_data)) {
-    users <- institute_data[[institute]]
-    
+
+  for (institute in names(grouped_credentials)) {
+    users <- grouped_credentials[[institute]]
+
     # Process each user entry
     for (user_entry in users) {
       if (is.list(user_entry) && length(user_entry) == 1) {
@@ -196,4 +202,22 @@ populate_users_table <- function(
   for (i in 1:nrow(user_data)) {
     cat("User:", user_data$userid[i], "Institute:", user_data$institute[i], "Password:", user_data$password[i], "\n")
   }
+}
+
+#' Initialize the database connection pool
+#' @keywords internal
+#' @param cfg_sqlite_file Path to an existing SQLite file
+#' @return A DBI pool object
+#' @export
+init_db <- function(cfg_sqlite_file) {
+  pool <- pool::dbPool(
+    RSQLite::SQLite(),
+    dbname = cfg_sqlite_file
+  )
+
+  shiny::onStop(function() {
+    pool::poolClose(pool)
+  })
+
+  return(pool)
 }

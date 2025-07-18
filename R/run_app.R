@@ -37,35 +37,6 @@ run_voting_app <- function(
 
   init_environment(config_file_path)
   
-  # Set up external environment
-  # if (is.null(cfg$user_data_dir)) {
-  #   user_data_dir <- get_user_data_dir()
-  # }
-  
-  # # Initialize the user_data structure
-  # init_user_data_structure(base_dir = dirname(user_data_dir))
-  
-  # Initialize external database
-  # if (is.null(database_path)) {
-  #   database_path <- init_external_database(base_dir = dirname(user_data_dir))
-  # }
-  
-  # # Set environment variables for the app to use
-  # Sys.setenv(IMGVOTER_USER_DATA_DIR = user_data_dir)
-  # Sys.setenv(IMGVOTER_DATABASE_PATH = database_path)
-  
-  # # Change to app directory but remember current directory
-  # old_wd <- getwd()
-  # on.exit(setwd(old_wd))
-  # setwd(app_dir)
-
-  # Sys.setenv("IMGVOTER_CURRENT_DIR" = old_wd)
-  
-  # message("Starting B1MG Variant Voting App...")
-  # message("App directory: ", app_dir)
-  # message("User data directory: ", user_data_dir)
-  # message("Database path: ", database_path)
-  
   shiny::runApp(
     appDir = app_dir,
     host = host,

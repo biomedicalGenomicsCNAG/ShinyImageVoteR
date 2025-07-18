@@ -29,7 +29,11 @@ votingUI <- function(id) {
   fluidPage(
     shinyjs::useShinyjs(),
     shiny::singleton(
-      includeScript("www/hotkeys.js")
+      includeScript(
+        file.path(
+          get_app_dir(),"www","hotkeys.js"
+        )
+      )
     ),
     uiOutput(ns("voting_image_div")),
     div(

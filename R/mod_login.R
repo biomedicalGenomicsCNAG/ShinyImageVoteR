@@ -19,14 +19,6 @@ loginUI <- function(id) {
     id = ns("loginPanel"),
     h3(paste0("Welcome to ", cfg$application_title)),
     br(),
-    # h4("First select your institute"),
-    # selectInput(
-    #   inputId = ns("institutes_id"),
-    #   label = "Institute",
-    #   choices = cfg$institute_ids,
-    #   selected = cfg$selected_institute_id
-    # ),
-    # h4("Then enter your user name and password"),
     shinyauthr::loginUI(
       ns("auth"),
       ""
@@ -67,7 +59,7 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
       config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
     )
 
-    add_sessionid_to_db <- function(user, sessionid, conn = db_conn) {
+    add_sessionid_to_db <- function(userid, sessionid, conn = db_conn) {
       tibble::tibble(
         userid = userid,
         sessionid = sessionid,
@@ -120,7 +112,6 @@ loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
     print("Loaded user base:")
     print(user_base)
 
-    browser()
     credentials <- shinyauthr::loginServer(
       id = "auth",
       data = user_base,

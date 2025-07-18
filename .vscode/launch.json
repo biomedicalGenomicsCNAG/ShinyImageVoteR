@@ -15,6 +15,15 @@
     },
     {
       "type": "R-Debugger",
+      "name": "Debug Vignettes",
+      "request": "launch",
+      "debugMode": "file",
+      "workingDirectory": "${workspaceFolder}",
+      "file": "${workspaceFolder}/vignettes/shinyImgVoter.R",
+      "allowGlobalDebugging": false
+    },
+    {
+      "type": "R-Debugger",
       "name": "Debug R-Package",
       "request": "launch",
       "debugMode": "workspace",

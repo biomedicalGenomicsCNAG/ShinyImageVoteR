@@ -7,3 +7,6 @@ user_data/*
 
 db.sqlite
 .Rproj.user
+inst/doc
+/doc/
+/Meta/

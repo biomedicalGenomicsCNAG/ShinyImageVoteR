@@ -39,7 +39,6 @@ makeVotingAppServer <- function(db_pool) {
     login_data <- login_return$login_data
 
     observeEvent(login_data(), {
-      browser()
       req(login_data())
       user_id <- login_data()$user_id
       voting_institute <- login_data()$institute
@@ -50,7 +49,11 @@ makeVotingAppServer <- function(db_pool) {
       session$userData$userId <- user_id
       session$userData$votingInstitute <- voting_institute
 
-      user_dir <- file.path(cfg$user_data_dir, voting_institute, user_id)
+      user_dir <- file.path(
+        Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+        voting_institute,
+        user_id
+      )
 
       print(paste("User directory:", user_dir))
       print(paste("User ID:", user_id)) 
@@ -60,10 +63,12 @@ makeVotingAppServer <- function(db_pool) {
 
       print(paste("User Annotations File:", session$userData$userAnnotationsFile))
 
-      if (!dir.exists(user_dir)) {
-        cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
-        dir.create(user_dir, recursive = TRUE)
-      }
+      safe_dir_create(user_dir)
+
+      # if (!dir.exists(user_dir)) {
+      #   cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
+      #   dir.create(user_dir, recursive = TRUE)
+      # }
 
       if (file.exists(session$userData$userInfoFile)) {
         get_mutation_trigger_source("login")
@@ -205,11 +210,9 @@ makeVotingAppServer <- function(db_pool) {
     # every 2 seconds, check for external shutdown file
     observe({
       invalidateLater(2000, session)
-      # print("Checking for external shutdown request…")
-      # print(cfg_shutdown_file)
-      if (file.exists(cfg$shutdown_file)) {
+      if (file.exists(cfg$shutdown_trigger_file)) {
         print("External shutdown request received.")
-        file.remove(cfg$shutdown_file)
+        file.remove(cfg$shutdown_trigger_file)
         showNotification("External shutdown request received…", type="warning")
         stopApp()
       }

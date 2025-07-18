@@ -51,12 +51,20 @@ leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
     
     counts <- eventReactive(c(login_trigger(), input$refresh_counts, tab_change_trigger()), {
       req(login_trigger())
-      counts_list <- lapply(cfg$institute_ids, function(institute) {
-        institutes_dir <- file.path(cfg$user_data_dir, institute)
-        if (!dir.exists(institutes_dir)) {
+      institute_ids <- unlist(strsplit(
+        Sys.getenv("IMGVOTER_USER_GROUPS_COMMA_SEPARATED"), ","
+      ))
+
+      browser()
+      counts_list <- lapply(institute_ids, function(institute) {
+        institutes_dir <- file.path(
+          Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+          institute
+        )
+        user_dirs <- list.dirs(institutes_dir, full.names = TRUE, recursive = FALSE)
+        if (length(user_dirs) == 0) {
           return(data.frame(institute = institute, users = 0, total_images_voted = 0))
         }
-        user_dirs <- list.dirs(institutes_dir, full.names = TRUE, recursive = FALSE)
         total_users <- length(user_dirs)
         total_images <- 0
         for (user_dir in user_dirs) {
@@ -77,7 +85,7 @@ leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
       })
       counts_df <- do.call(rbind, counts_list)
       counts_df <- counts_df %>%
-        dplyr::mutate(institute = factor(institute, levels = cfg$institute_ids)) %>%
+        dplyr::mutate(institute = factor(institute, levels = institute_ids)) %>%
         dplyr::arrange(desc(total_images_voted))
       counts_df
     })

@@ -6,6 +6,7 @@ server_data_dir: "./app_env/server_data"
 to_be_voted_images_file: "./app_env/images/to_be_voted_images.tsv"
 grouped_credentials_file: "./app_env/config/institute2userids2password.yaml"
 sqlite_file: "./app_env/db.sqlite"
+shutdown_trigger_file: "./app_env/config/STOP"
 
 application_title: ShinyImgVoteR (B1MG Somatic Mutation Voting)
 radioBtns_label: Is the somatic mutation above correct? [num keys 1-4]

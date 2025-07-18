@@ -62,7 +62,7 @@ userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
 
       # TODO dbReadTable does not seem to work with pool
       session_df <- DBI::dbReadTable(db_pool, "sessionids") %>%
-        dplyr::filter(user == session$userData$userId) %>%
+        dplyr::filter(userid == session$userData$userId) %>%
         dplyr::mutate(
           login_time = lubridate::ymd_hms(login_time),
           logout_time = lubridate::ymd_hms(logout_time)

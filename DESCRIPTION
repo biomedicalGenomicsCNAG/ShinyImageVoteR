@@ -32,5 +32,8 @@ Suggests:
     pak,
     DT,
     devtools,
-    vscDebugger
+    vscDebugger,
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
+VignetteBuilder: knitr
