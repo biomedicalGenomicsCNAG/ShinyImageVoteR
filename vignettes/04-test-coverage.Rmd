@@ -1,0 +1,13 @@
+---
+title: "Test Coverage"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Test Coverage}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<!-- ```{r cov, echo=FALSE, message=FALSE}
+library(magrittr)
+covr::package_coverage() %>% covr::report(file = NULL, browse = FALSE)
+``` -->

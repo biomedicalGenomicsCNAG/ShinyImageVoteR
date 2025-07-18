@@ -167,3 +167,7 @@ vignettes-build:
 vignettes-run: vignettes-build
 	@echo "Running vignettes..."
 	$(R) -e "devtools::load_all(); rmarkdown::run('vignettes/shinyImgVoter.Rmd')"
+
+# NOTE: below is only working directly in R
+pkgdown:
+	$(R) -e "pkgdown::build_site()"
