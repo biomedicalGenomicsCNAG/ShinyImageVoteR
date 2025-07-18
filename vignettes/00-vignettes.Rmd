@@ -1,0 +1,12 @@
+---
+title: "ShinyImgVoteR"
+author: "Ivo Christopher Leist"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ShinyImgVoteR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction

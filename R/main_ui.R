@@ -23,7 +23,13 @@ votingAppUI <- function() {
           tabPanel("Leaderboard", leaderboardUI("leaderboard")),
           tabPanel("User stats", userStatsUI("userstats")),
           tabPanel("About", aboutUI("about")),
-          tabPanel("FAQ", includeMarkdown("docs/faq.md")),
+          tabPanel("FAQ", includeMarkdown(
+            file.path(
+              get_app_dir(),
+              "docs",
+              "faq.md"
+            )
+          )),
           header = div(
             style = "position:absolute; right:1em; top:0.5em; z-index:1000;",
             shinyauthr::logoutUI("logout")

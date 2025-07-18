@@ -1,8 +1,10 @@
 ---
-title: "ShinyImgVoteR"
+title: "03. Usage"
+author: "Ivo Chritopher Leist"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{ShinyImgVoteR}
+  %\VignetteIndexEntry{03. Usage}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 runtime: shiny_prerendered
@@ -48,12 +50,9 @@ fluidPage(
 )
 ```
 
-
-<!-- ```{r ui2, echo=FALSE}
+```{r ui2, echo=FALSE}
 votingAppUI()
-``` -->
-
-## Server logic (runs only when you “Run Document”)
+```
 
 ```{r server, context="server"}
 output$cwd <- renderText({
@@ -63,14 +62,3 @@ con <- DBI::dbConnect(RSQLite::SQLite(), dbname = cfg$sqlite_file)
 on.exit(DBI::dbDisconnect(con), add = TRUE)
 makeVotingAppServer(con)
 ```
-
-
-
-<!-- ```{r server, context="server"}
-con <- dbConnect(RSQLite::SQLite(), dbname = cfg$sqlite_file)
-on.exit(dbDisconnect(con), add = TRUE)
-
-# this *starts* the app server; because it's in context="server",
-# it won't run during the knit step, only when Shiny actually launches
-makeVotingAppServer(con)
-``` -->
