@@ -21,6 +21,59 @@
 #'
 #' @return A Shiny UI element (`fluidPage`) representing the voting interface.
 #' @export
+
+numberedRadioButtons <- function(inputId, label, choices, selected = NULL,
+                         inline = FALSE, width = NULL, choiceNames = NULL,
+                         choiceValues = NULL) {
+
+  # Use original logic unless numbered style requested
+  use_numbered <- is.null(choiceNames) && all(nchar(names(choices)) > 0)
+
+  if (!use_numbered) {
+    return(shiny::radioButtons(
+      inputId, label, choices, selected,
+      inline, width, choiceNames, choiceValues
+    ))
+  }
+
+  # Use shiny namespace if present (for module use)
+  ns <- if (is.function(inputId)) inputId else identity
+  inputId_chr <- if (is.function(inputId)) deparse(substitute(inputId)) else inputId
+  inputId_ns <- ns(inputId_chr)
+
+  # Build numbered radio HTML
+  choice_tags <- Map(function(value, label_text, index) {
+    checked <- if (!is.null(selected) && selected == value) TRUE else NULL
+    tags$label(class = "numbered-radio",
+      tags$input(
+        type = "radio", 
+        name = inputId_ns, 
+        value = value,
+        checked = if (!is.null(checked)) NA else NULL
+      ),
+      tags$span(class = "circle", as.character(index)),
+      label_text
+    )
+  },
+  value = names(choices),
+  label_text = unname(choices),
+  index = seq_along(choices))
+
+  tagList(
+    tags$div(class = "form-group shiny-input-radiogroup shiny-input-container",
+      if (!is.null(label)) tags$label(`for` = inputId_ns, label),
+      tags$div(class = "numbered-radio-group", choice_tags)
+    ),
+    tags$script(HTML(sprintf("
+      document.querySelectorAll(\"input[name='%s']\").forEach(el => {
+        el.addEventListener('change', (e) => {
+          Shiny.setInputValue('%s', e.target.value, {priority: 'event'});
+        });
+      });
+    ", inputId_ns, inputId_ns)))
+  )
+}
+
 votingUI <- function(id) {
   cfg <- ShinyImgVoteR::load_config(
     config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
@@ -58,10 +111,54 @@ votingUI <- function(id) {
           ),
           div(
             id = ns("voting_questions_div"),
-            radioButtons(
+            # radioButtons(
+            #   inputId = ns("agreement"),
+            #   label   = cfg$radioBtns_label,
+            #   choices = cfg$radio_options2val_map
+            # ),
+
+            tags$head(
+                tags$style(HTML("
+                  .numbered-radio-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                  }
+                  .numbered-radio {
+                    display: flex;
+                    align-items: center;
+                    cursor: pointer;
+                    user-select: none;
+                    font-size: 16px;
+                  }
+                  .numbered-radio input[type='radio'] {
+                    display: none;
+                  }
+                  .numbered-radio .circle {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    background-color: white;
+                    border: 2px solid #007BFF;
+                    color: #007BFF;
+                    font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 10px;
+                    transition: all 0.2s ease;
+                  }
+                  .numbered-radio input[type='radio']:checked + .circle {
+                    background-color: #007BFF;
+                    color: white;
+                  }
+                "))
+              ),
+
+            numberedRadioButtons(
               inputId = ns("agreement"),
               label   = cfg$radioBtns_label,
-              choices = cfg$radio_options2val_map
+              choices = cfg$radio_options2val_map,
             ),
             
             conditionalPanel(
