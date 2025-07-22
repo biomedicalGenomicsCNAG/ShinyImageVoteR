@@ -10,7 +10,7 @@ shutdown_trigger_file: "./app_env/config/STOP"
 
 application_title: ShinyImgVoteR (B1MG Somatic Mutation Voting)
 radioBtns_label: Is the somatic mutation above correct? [num keys 1-4]
-checkboxes_label: Please select the reason for your uncertainty [keyboard keys a-h]
+checkboxes_label: Please select the reason(s) for your uncertainty [keyboard keys a-h]
 radio_options2val_map:
   Yes, it is: 'yes'
   There is no variant: 'no'

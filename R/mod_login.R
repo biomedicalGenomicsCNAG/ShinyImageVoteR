@@ -11,12 +11,13 @@ library(shiny)
 #' @return A Shiny UI element (typically a login panel) rendered within a namespace.
 #' @export
 loginUI <- function(id) {
-  ns <- shiny::NS(id)
   cfg <- ShinyImgVoteR::load_config(
     config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
   )
+  ns <- shiny::NS(id)
   shiny::wellPanel(
     id = ns("loginPanel"),
+    theme = cfg$theme,
     h3(paste0("Welcome to ", cfg$application_title)),
     br(),
     shinyauthr::loginUI(

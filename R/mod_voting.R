@@ -26,7 +26,9 @@ votingUI <- function(id) {
     config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
   )
   ns <- shiny::NS(id)
+
   fluidPage(
+    theme = cfg$theme,
     shinyjs::useShinyjs(),
     shiny::singleton(
       includeScript(
@@ -35,46 +37,72 @@ votingUI <- function(id) {
         )
       )
     ),
-    uiOutput(ns("voting_image_div")),
-    div(
-      id = ns("voting_questions_div"),
-      radioButtons(
-        inputId = ns("agreement"),
-        label   = cfg$radioBtns_label,
-        choices = cfg$radio_options2val_map
+
+    # Responsive layout: image on left, controls on right for larger screens
+    fluidRow(
+      class = "voting-row",
+      column(
+        width = 10,
+        class = "img-col",
+        uiOutput(ns("voting_image_div"))
       ),
       
-      conditionalPanel(
-        condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
-        checkboxGroupInput(
-          inputId = ns("observation"),
-          label   = cfg$checkboxes_label,
-          choices = cfg$observations2val_map
-        )
-      ),
+      # Voting controls column - stacks below on small screens, right side on larger screens
+      column(
+        width = 2,
+        class = "ctrl-col",
+        div(
+          id = "voting_controls_div", 
+          uiOutput(
+            ns("somatic_mutation"),
+          ),
+          div(
+            id = ns("voting_questions_div"),
+            radioButtons(
+              inputId = ns("agreement"),
+              label   = cfg$radioBtns_label,
+              choices = cfg$radio_options2val_map
+            ),
+            
+            conditionalPanel(
+              condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
+              shinyWidgets::checkboxGroupButtons(
+                inputId = ns("observation"),
+                label = cfg$checkboxes_label,
+                direction = "vertical",
+                choices = cfg$observations2val_map,
+                individual = TRUE,
+                size="xs", 
+                justified = TRUE
+              ),
+              verbatimTextOutput("value1"),
+            ),
 
-      conditionalPanel(
-        condition = sprintf(
-          "input['%1$s'] == 'diff_var' || input['%1$s'] == 'not_confident'",
-          ns("agreement")
-        ),
-        textInput(
-          inputId = ns("comment"),
-          label   = "Comments",
-          value   = ""
+            conditionalPanel(
+              condition = sprintf(
+                "input['%1$s'] == 'diff_var' || input['%1$s'] == 'not_confident'",
+                ns("agreement")
+              ),
+              textInput(
+                inputId = ns("comment"),
+                label   = "Comments",
+                value   = ""
+              )
+            )
+          ),
+          shinyjs::hidden(
+            shinyjs::disabled(
+              actionButton(
+                ns("backBtn"),
+                "Back (press Backspace)",
+                onclick = "history.back(); return false;"
+              )
+            )
+          ),
+          actionButton(ns("nextBtn"), "Next (press Enter)")
         )
       )
-    ),
-    shinyjs::hidden(
-      shinyjs::disabled(
-        actionButton(
-          ns("backBtn"),
-          "Back (press Backspace)",
-          onclick = "history.back(); return false;"
-        )
-      )
-    ),
-    actionButton(ns("nextBtn"), "Next (press Enter)")
+    )
   )
 }
 
@@ -480,16 +508,20 @@ votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source
         img(
           src = paste0(mut_df$path),
           style = "max-width: 100%;"
-        ),
-        div(
-          HTML(paste0(
-            "Somatic mutation: ", 
-            color_seq(mut_df$REF, cfg$nt2color_map),
-            " > ", 
-            color_seq(mut_df$ALT, cfg$nt2color_map)
-          ))
-        ),
-        br()
+        )
+      )
+    })
+
+    output$somatic_mutation <- renderText({
+      mut_df <- get_mutation()
+      if (is.null(mut_df)) {
+        return("No mutation available.")
+      }
+      paste0(
+        "Somatic mutation: ", 
+        color_seq(mut_df$REF, cfg$nt2color_map),
+        " > ", 
+        color_seq(mut_df$ALT, cfg$nt2color_map)
       )
     })
   })

@@ -12,8 +12,13 @@ library(magrittr)
 #' @return A Shiny UI element (`fluidPage`) for displaying the leaderboard.
 #' @export
 leaderboardUI <- function(id) {
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  )
+
   ns <- shiny::NS(id)
   fluidPage(
+    theme = cfg$theme,
     tableOutput(ns("institutes_voting_counts")),
     actionButton(ns("refresh_counts"), "Refresh counts")
   )

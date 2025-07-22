@@ -5,9 +5,10 @@
 votingAppUI <- function() {
   cfg <- ShinyImgVoteR::load_config(
     config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  )  
+  )
 
   fluidPage(
+    theme = cfg$theme,
     shiny::conditionalPanel(
       condition = "!output.logged_in",
       loginUI("login")
@@ -17,6 +18,7 @@ votingAppUI <- function() {
       condition = "output.logged_in",
       tagList(
         navbarPage(
+          theme = cfg$theme,
           cfg$application_title,
           id = "main_navbar",
           tabPanel("Vote", votingUI("voting")),

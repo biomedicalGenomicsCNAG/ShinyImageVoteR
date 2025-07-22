@@ -9,8 +9,13 @@
 #' @return A Shiny UI element (`fluidPage`) for rendering user statistics.
 #' @export
 userStatsUI <- function(id) {
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  )
+
   ns <- shiny::NS(id)
   fluidPage(
+    theme = cfg$theme,
     tableOutput(ns("user_stats_table")),
     actionButton(ns("refresh_user_stats"), "Refresh user stats")
   )

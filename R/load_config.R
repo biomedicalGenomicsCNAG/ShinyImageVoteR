@@ -25,6 +25,17 @@ load_config <- function(
   cfg_sqlite_file <- Sys.getenv("IMGVOTER_DB_PATH", cfg$sqlite_file)
   cfg$sqlite_file <- normalizePath(cfg_sqlite_file, mustWork = TRUE)
 
+  cfg$images_dir <- Sys.getenv("IMGVOTER_IMAGES_DIR", cfg$images_dir)
+  cfg$images_dir <- normalizePath(cfg$images_dir, mustWork = TRUE)
+
+  cfg$server_data_dir <- Sys.getenv(
+    "IMGVOTER_SERVER_DATA_DIR", cfg$server_data_dir
+  )
+  cfg$server_data_dir <- normalizePath(cfg$server_data_dir, mustWork = TRUE)
+
+  cfg$user_data_dir <- Sys.getenv("IMGVOTER_USER_DATA_DIR", cfg$user_data_dir)
+  cfg$user_data_dir <- normalizePath(cfg$user_data_dir, mustWork = TRUE)
+
   cfg$radio_options2val_map <- setNames(
     as.vector(cfg$radio_options2val_map),
     paste0(names(cfg$radio_options2val_map), " [", seq_along(cfg$radio_options2val_map), "]")
@@ -45,6 +56,8 @@ load_config <- function(
 
   # TODO
   # missing annotations_cols
+
+  cfg$theme <- bslib::bs_theme(version = 5)
 
   return(cfg)
 }

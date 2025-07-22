@@ -8,8 +8,13 @@
 #' @return A Shiny UI element (`fluidPage`) for rendering the about page.
 #' @export
 aboutUI <- function(id) {
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  )
+
   ns <- shiny::NS(id)
   fluidPage(
+    theme = cfg$theme,
     h3("About this app"),
     p("This app allows users to vote on somatic mutations in images."),
     p("Users can log in, view images, and provide their votes and comments."),

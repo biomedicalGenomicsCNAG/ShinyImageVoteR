@@ -13,13 +13,26 @@ if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTE
   # get the parent directory of the app
   app_dir <- normalizePath(dirname(commandArgs(trailingOnly = TRUE)[1]), mustWork = TRUE)
   # get two directories up
-  root_dir <- normalizePath(file.path(app_dir, "../.."), mustWork = TRUE)
+  app_env_dir <- normalizePath(file.path(app_dir, "../..", "app_env"), mustWork = TRUE)
   print(glue::glue("App directory: {app_dir}"))
-  print(glue::glue("Root directory: {root_dir}"))
+  print(glue::glue("App environment directory: {app_env_dir}"))
 
   Sys.setenv(
-    IMGVOTER_DB_PATH = file.path(root_dir, "app_env", "db.sqlite")
+    IMGVOTER_DB_PATH = file.path(app_env_dir, "db.sqlite"),
+    IMGVOTER_IMAGES_DIR = file.path(app_env_dir, "images"),
+    IMGVOTER_SERVER_DATA_DIR = file.path(app_env_dir, "server_data"),
+    IMGVOTER_USER_DATA_DIR = file.path(app_env_dir, "user_data")
   )
+
+  print("Environment variables set:")
+  print(
+    Sys.getenv(c(
+      "IMGVOTER_DB_PATH", 
+      "IMGVOTER_IMAGES_DIR", 
+      "IMGVOTER_SERVER_DATA_DIR", 
+      "IMGVOTER_USER_DATA_DIR"
+    )
+  ))
 
   # Run the wrapped app
   ShinyImgVoteR::run_voting_app(

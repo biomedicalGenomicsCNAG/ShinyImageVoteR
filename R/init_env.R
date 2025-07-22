@@ -34,15 +34,28 @@ init_environment <- function(
   expected_dirs <- c("images", "user_data", "server_data")
 
   purrr::walk(expected_dirs, function(name) {
-    key        <- glue::glue("{name}_dir")
-    rel_path   <- cfg[[key]]
-    abs_path   <- normalizePath(file.path(base_dir, rel_path))
-    
-    cat("Checking directory:", rel_path, "\n") 
-    if (!dir.exists(abs_path)) {
-      abs_path <<- copy_dir_from_app(rel_path)
+    key      <- glue::glue("{name}_dir")
+    cfg_path <- cfg[[key]]
+
+    # Determine if path is relative or absolute
+    is_relative <- !grepl("^(/|[A-Za-z]:)", cfg_path)  # Unix or Windows absolute path
+    abs_path <- if (is_relative) {
+      rel_path <- cfg_path
+      normalizePath(file.path(base_dir, rel_path), mustWork = FALSE)
+    } else {
+      cfg_path
     }
-    
+
+    cat("Checking directory:", abs_path, "\n") 
+
+    if (!dir.exists(abs_path)) {
+      if (is_relative) {
+        abs_path <<- copy_dir_from_app(rel_path)
+      } else {
+        stop("Directory does not exist and path is absolute: ", abs_path)
+      }
+    }
+
     if (name == "images") {
       Sys.setenv(IMGVOTER_IMAGES_DIR = abs_path)
       message("Set IMGVOTER_IMAGES_DIR to: ", abs_path)
