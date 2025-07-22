@@ -21,6 +21,10 @@ load_config <- function(
 ) {
   cfg <- yaml::read_yaml(config_file_path)
 
+  # Override with environment variables if they exist
+  cfg_sqlite_file <- Sys.getenv("IMGVOTER_DB_PATH", cfg$sqlite_file)
+  cfg$sqlite_file <- normalizePath(cfg_sqlite_file, mustWork = TRUE)
+
   cfg$radio_options2val_map <- setNames(
     as.vector(cfg$radio_options2val_map),
     paste0(names(cfg$radio_options2val_map), " [", seq_along(cfg$radio_options2val_map), "]")

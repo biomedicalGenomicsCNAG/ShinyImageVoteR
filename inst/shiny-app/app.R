@@ -1,10 +1,26 @@
-library(ShinyImgVoteR)
+# Load package in development mode
+if (requireNamespace("devtools", quietly = TRUE)) {
+  devtools::load_all("../..")  # Load from package root
+} else {
+  library(ShinyImgVoteR)
+}
 
 if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTER_STARTED") != "1") {
   print("vscode-shiny detected -> delegating to app wrapper")
 
   Sys.setenv(IMGVOTER_STARTED = "1")
   
+  # get the parent directory of the app
+  app_dir <- normalizePath(dirname(commandArgs(trailingOnly = TRUE)[1]), mustWork = TRUE)
+  # get two directories up
+  root_dir <- normalizePath(file.path(app_dir, "../.."), mustWork = TRUE)
+  print(glue::glue("App directory: {app_dir}"))
+  print(glue::glue("Root directory: {root_dir}"))
+
+  Sys.setenv(
+    IMGVOTER_DB_PATH = file.path(root_dir, "app_env", "db.sqlite")
+  )
+
   # Run the wrapped app
   ShinyImgVoteR::run_voting_app(
     host = "127.0.0.1",

@@ -88,9 +88,9 @@ safe_dir_create <- function(
 #' 
 #' @return Character path to the .gitignore file
 #' 
-ensure_gitignore <- function(dir, patterns) {
-  dir <- normalizePath(dir, mustWork = TRUE)
-  gi_path <- file.path(dir, ".gitignore")
+ensure_gitignore <- function(directory, patterns) {
+  dir_full_path <- normalizePath(directory, mustWork = TRUE)
+  gi_path <- file.path(dir_full_path, ".gitignore")
   
   existing <- character(0)
   if (file.exists(gi_path)) {
@@ -101,7 +101,7 @@ ensure_gitignore <- function(dir, patterns) {
   # Determine which patterns are missing
   missing <- setdiff(patterns, existing)
   message(glue::glue(
-    "Checking .gitignore in {dir} for patterns: {paste(patterns, collapse=', ')}"
+    "Checking .gitignore in {dir_full_path} for patterns: {paste(patterns, collapse=', ')}"
   ))
   message("missing patterns:")
   print(missing)
