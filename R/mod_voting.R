@@ -151,16 +151,16 @@ votingUI <- function(id) {
                   }
 
                   /* When the radio is checked, recolor the circle */
-                  .shiny-options-group .radio > label > input[type='radio']:checked ~ .numbered-radio .circle {
-                    background: #007BFF;
-                    color: #fff;
+                  .shiny-options-group .radio > label > input[type='radio']:checked ~ span .circle {
+                      background: #007BFF;
+                      color: #fff;
                   }
                   "))
               ),
 
             radioButtons(
               inputId = ns("agreement"),
-              label   = NULL,
+              label   = cfg$radioBtns_label,
               choiceNames = lapply(seq_along(cfg$radio_options2val_map), function(i) {
                 tags$span(class = "numbered-radio",
                   tags$span(class = "circle", i),
@@ -177,7 +177,7 @@ votingUI <- function(id) {
             # ),
 
             # div to show the currenly selected value of the radio buttons
-            verbatimTextOutput(ns("selected_agreement")),
+            # verbatimTextOutput(ns("selected_agreement")),
             
             conditionalPanel(
               condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
@@ -187,8 +187,7 @@ votingUI <- function(id) {
                 direction = "vertical",
                 choices = cfg$observations2val_map,
                 individual = TRUE,
-                size="xs", 
-                justified = TRUE
+                size="xs"
               ),
             ),
 
