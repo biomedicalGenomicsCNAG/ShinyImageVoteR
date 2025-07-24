@@ -21,8 +21,7 @@ get_app_dir <- function() {
 #' @examples
 #' \dontrun{
 #' run_voting_app()
-#' run_voting_app(user_data_dir = "/path/to/my/user_data")
-#' run_voting_app(database_path = "/path/to/my/database.sqlite")
+#' run_voting_app(config_file_path = "path/to/config.yaml")
 #' }
 run_voting_app <- function(
     host = "127.0.0.1", 
@@ -35,12 +34,15 @@ run_voting_app <- function(
   ) {
   app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
-  init_environment(config_file_path)
-  
+  print("Working directory:")
+  print(getwd())
+  init_environment(config_file_path, base_dir = getwd())
+
   shiny::runApp(
     appDir = app_dir,
     host = host,
     port = port,
+    base_dir = getwd(),
     launch.browser = launch.browser,
     ...
   )

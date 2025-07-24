@@ -1,11 +1,7 @@
-# Load package in development mode
-if (requireNamespace("devtools", quietly = TRUE)) {
-  devtools::load_all("../..")  # Load from package root
-} else {
-  library(ShinyImgVoteR)
-}
 
 if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTER_STARTED") != "1") {
+  devtools::load_all("../..")  # Load from package root
+
   print("vscode-shiny detected -> delegating to app wrapper")
 
   Sys.setenv(IMGVOTER_STARTED = "1")
@@ -41,6 +37,12 @@ if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTE
     launch.browser = FALSE
   )
   quit(save = "no")
+}
+
+if (requireNamespace("devtools", quietly = TRUE)) {
+  devtools::load_all()  # Load from package root
+} else {
+  library(ShinyImgVoteR)
 }
 
 shiny::addResourcePath(

@@ -13,6 +13,9 @@ RSCRIPT = Rscript
 # DEBUG_TESTS = dev_scripts/debug-tests.sh
 DEBUG_TESTS = dev_scripts/debug-tests.R
 
+CONFIG_FILE_RELATIVE_PATH = app_env/config/config.yaml
+CONFIG_FILE_PATH = $(realpath $(CONFIG_FILE_RELATIVE_PATH))
+
 # SHELL := /usr/bin/env bash
 
 # Default target
@@ -86,7 +89,7 @@ setup-userdata: install
 # run: install setup-userdata
 run: install 
 	@echo "Starting Shiny application with external user_data..."
-	$(RSCRIPT) -e "library($(PACKAGE_NAME)); run_voting_app()"
+	$(RSCRIPT) -e "devtools::load_all(); run_voting_app(config_file_path = '$(CONFIG_FILE_PATH)')"
 
 # Generate documentation
 .PHONY: document

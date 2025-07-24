@@ -6,12 +6,12 @@
 If it does not exist, it creates one. It then ensures that the specified patterns
 are present in the .gitignore file, adding them if they are missing.}
 \usage{
-ensure_gitignore(dir, patterns)
+ensure_gitignore(directory, patterns)
 }
 \arguments{
-\item{dir}{Character. Directory path where the .gitignore file should be checked/created.}
-
 \item{patterns}{Character vector. Patterns to ensure in the .gitignore file.}
+
+\item{dir}{Character. Directory path where the .gitignore file should be checked/created.}
 }
 \value{
 Character path to the .gitignore file

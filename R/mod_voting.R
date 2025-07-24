@@ -170,12 +170,6 @@ votingUI <- function(id) {
               choiceValues = c("yes", "no", "diff_var", "not_confident"),
             ),
 
-            # numberedRadioButtons(
-            #   inputId = ns("agreement_new"),
-            #   label   = cfg$radioBtns_label,
-            #   choices = cfg$radio_options2val_map,
-            # ),
-
             # div to show the currenly selected value of the radio buttons
             # verbatimTextOutput(ns("selected_agreement")),
             

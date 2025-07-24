@@ -17,11 +17,11 @@ init_environment <- function(
 
   if (config_file_path == default_file_path) {
     config_dir <- file.path(base_dir, "app_env", "config")
-  }
 
-  if(!dir.exists(config_dir)) {
-    copy_dir_from_app(config_dir)
-    config_file_path <- file.path(config_dir, "config.yaml")
+    if(!dir.exists(config_dir)) {
+      copy_dir_from_app(config_dir)
+      config_file_path <- file.path(config_dir, "config.yaml")
+    }
   }
 
   cfg <- load_config(config_file_path)

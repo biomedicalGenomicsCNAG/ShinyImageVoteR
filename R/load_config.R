@@ -31,6 +31,11 @@ load_config <- function(
   cfg$server_data_dir <- Sys.getenv(
     "IMGVOTER_SERVER_DATA_DIR", cfg$server_data_dir
   )
+
+  print("cwd")
+  print(getwd())
+  print("server_data_dir")
+  print(cfg$server_data_dir)
   cfg$server_data_dir <- normalizePath(cfg$server_data_dir, mustWork = TRUE)
 
   cfg$user_data_dir <- Sys.getenv("IMGVOTER_USER_DATA_DIR", cfg$user_data_dir)
