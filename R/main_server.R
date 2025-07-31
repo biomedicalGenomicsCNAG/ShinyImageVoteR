@@ -2,12 +2,12 @@
 #' @param db_pool A database connection pool
 #' @return A Shiny server function
 #' @export
-makeVotingAppServer <- function(db_pool) {
+makeVotingAppServer <- function(db_pool, cfg) {
   function (input, output, session) {
 
-    cfg <- ShinyImgVoteR::load_config(
-      config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-    )
+    # cfg <- ShinyImgVoteR::load_config(
+    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+    # )
 
     # Tracks the trigger source of the get_mutation function
     # could be "login", "next", "back", "manual url params change"
@@ -21,6 +21,7 @@ makeVotingAppServer <- function(db_pool) {
     # Initialize the login module
     login_return <- loginServer(
       "login",
+      cfg,
       db_conn = db_pool,
       log_out = reactive(logout_init())
     )
@@ -199,10 +200,10 @@ makeVotingAppServer <- function(db_pool) {
       }
     })
     
-    votingServer("voting", login_data, db_pool, get_mutation_trigger_source)
-    leaderboardServer("leaderboard", login_data, leaderboard_tab_trigger)
-    userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
-    aboutServer("about")
+    votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source)
+    leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
+    userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)
+    aboutServer("about", cfg)
 
     # TODO
     # below is not working

@@ -54,7 +54,7 @@ fluidPage(
 
 ```{r ui2, echo=FALSE, include=FALSE}
 Sys.setenv("IMGVOTER_CONFIG_FILE" = config_file_path)
-votingAppUI()
+votingAppUI(cfg)
 ```
 
 ```{r server, context="server"}

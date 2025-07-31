@@ -8,10 +8,10 @@
 #'
 #' @return A Shiny UI element (`fluidPage`) for rendering user statistics.
 #' @export
-userStatsUI <- function(id) {
-  cfg <- ShinyImgVoteR::load_config(
-    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  )
+userStatsUI <- function(id, cfg) {
+  # cfg <- ShinyImgVoteR::load_config(
+  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  # )
 
   ns <- shiny::NS(id)
   fluidPage(
@@ -33,7 +33,7 @@ userStatsUI <- function(id) {
 #'                   This enables automatic refresh of stats when navigating to the page
 #' @return Reactive containing user statistics data frame
 #' @export
-userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
+userStatsServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
     # Create a reactive that triggers when the user stats tab is selected
     # This allows automatic refresh when navigating to the stats page

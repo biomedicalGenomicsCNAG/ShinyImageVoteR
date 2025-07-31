@@ -67,6 +67,6 @@ db_pool <- init_db(cfg$sqlite_file)
 # })
 
 shiny::shinyApp(
-  ui = votingAppUI(),
-  server = makeVotingAppServer(db_pool)
+  ui = votingAppUI(cfg),
+  server = makeVotingAppServer(db_pool, cfg)
 )

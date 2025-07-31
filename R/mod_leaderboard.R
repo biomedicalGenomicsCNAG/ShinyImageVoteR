@@ -11,10 +11,10 @@ library(magrittr)
 #'
 #' @return A Shiny UI element (`fluidPage`) for displaying the leaderboard.
 #' @export
-leaderboardUI <- function(id) {
-  cfg <- ShinyImgVoteR::load_config(
-    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  )
+leaderboardUI <- function(id, cfg) {
+  # cfg <- ShinyImgVoteR::load_config(
+  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  # )
 
   ns <- shiny::NS(id)
   fluidPage(
@@ -35,12 +35,12 @@ leaderboardUI <- function(id) {
 #'                   This enables automatic refresh of counts when navigating to the page
 #' @return Reactive containing leaderboard data frame
 #' @export
-leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
+leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
 
-    cfg <- ShinyImgVoteR::load_config(
-      config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-    )
+    # cfg <- ShinyImgVoteR::load_config(
+    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+    # )
 
     # cfg <- ShinyImgVoteR::load_config()
 

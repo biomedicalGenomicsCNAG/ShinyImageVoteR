@@ -10,10 +10,10 @@ library(shiny)
 #' @param id A string identifier for the module namespace.
 #' @return A Shiny UI element (typically a login panel) rendered within a namespace.
 #' @export
-loginUI <- function(id) {
-  cfg <- ShinyImgVoteR::load_config(
-    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  )
+loginUI <- function(id, cfg) {
+  # cfg <- ShinyImgVoteR::load_config(
+  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  # )
   ns <- shiny::NS(id)
   shiny::wellPanel(
     id = ns("loginPanel"),
@@ -54,11 +54,11 @@ loginUI <- function(id) {
 #' }
 #' @importFrom magrittr %>%
 #' @export
-loginServer <- function(id, db_conn = NULL, log_out = reactive(NULL)) {
+loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
-    cfg <- ShinyImgVoteR::load_config(
-      config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-    )
+    # cfg <- ShinyImgVoteR::load_config(
+    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+    # )
 
     add_sessionid_to_db <- function(userid, sessionid, conn = db_conn) {
       tibble::tibble(

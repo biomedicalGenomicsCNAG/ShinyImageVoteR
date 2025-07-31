@@ -7,10 +7,10 @@
 #'
 #' @return A Shiny UI element (`fluidPage`) for rendering the about page.
 #' @export
-aboutUI <- function(id) {
-  cfg <- ShinyImgVoteR::load_config(
-    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  )
+aboutUI <- function(id, cfg) {
+  # cfg <- ShinyImgVoteR::load_config(
+  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  # )
 
   ns <- shiny::NS(id)
   fluidPage(
@@ -32,7 +32,7 @@ aboutUI <- function(id) {
 #'
 #' @return None. Side effect only: registers a module server.
 #' @export
-aboutServer <- function(id) {
+aboutServer <- function(id, cfg) {
   moduleServer(id, function(input, output, session) {
     # No server-side logic needed for the about page
   })

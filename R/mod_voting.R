@@ -66,10 +66,10 @@ numberedRadioButtons <- function(inputId, label, choices, selected = NULL,
   )
 }
 
-votingUI <- function(id) {
-  cfg <- ShinyImgVoteR::load_config(
-    config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  )
+votingUI <- function(id, cfg) {
+  # cfg <- ShinyImgVoteR::load_config(
+  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  # )
   ns <- shiny::NS(id)
 
   fluidPage(
@@ -234,12 +234,12 @@ votingUI <- function(id) {
 #'
 #' @return None. Side effect only: registers reactive observers and UI updates.
 #' @export
-votingServer <- function(id, login_trigger, db_pool, get_mutation_trigger_source) {
+votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_source) {
   moduleServer(id, function(input, output, session) {
 
-    cfg <- ShinyImgVoteR::load_config(
-      config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-    )
+    # cfg <- ShinyImgVoteR::load_config(
+    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+    # )
 
     # Helper function to create the "done" tibble
     create_done_tibble <- function() {
