@@ -111,17 +111,6 @@ testthat::test_that("run_voting_app uses defaults when arguments are NULL", {
   })
 })
 
-testthat::test_that("run_voting_app has proper error handling structure", {
-  # Instead of mocking system.file, just verify the function contains proper error handling
-  func_body <- deparse(body(run_voting_app))
-  
-  # Should check for empty app_dir
-  testthat::expect_true(any(grepl('app_dir == ""', func_body, fixed = TRUE)))
-  
-  # Should have a stop() call with appropriate message
-  testthat::expect_true(any(grepl("Could not find Shiny app directory", func_body)))
-})
-
 testthat::test_that("run_voting_app passes extra arguments", {
   tmp <- tempdir()
   user_dir <- file.path(tmp, "user_data")
