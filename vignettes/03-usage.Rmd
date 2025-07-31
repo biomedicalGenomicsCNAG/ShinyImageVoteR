@@ -21,6 +21,7 @@ This vignette demonstrates…
 library(ShinyImgVoteR)
 library(shiny)
 
+Sys.setenv("IMGVOTER_BASE_DIR" = getwd())
 config_file_path <- file.path(get_app_dir(), "default_env", "config", "config.yaml")
 cfg <- load_config(config_file_path)
 
@@ -30,6 +31,7 @@ shiny::addResourcePath(
   prefix = "images",
   directoryPath = cfg$images_dir
 )
+
 shiny::addResourcePath(
   "www",
   system.file("shiny-app","www",package="ShinyImgVoteR")
@@ -50,7 +52,8 @@ fluidPage(
 )
 ```
 
-```{r ui2, echo=FALSE}
+```{r ui2, echo=FALSE, include=FALSE}
+Sys.setenv("IMGVOTER_CONFIG_FILE" = config_file_path)
 votingAppUI()
 ```
 

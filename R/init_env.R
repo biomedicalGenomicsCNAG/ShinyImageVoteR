@@ -7,9 +7,10 @@
 #' @return List with paths to user_data directory, database file, and config file
 #' @export  
 init_environment <- function(
-  config_file_path,
-  base_dir = getwd()
+  config_file_path
 ) {
+  # check if "IMGVOTER_BASE_DIR" is set, then set it as base directory
+  base_dir <- Sys.getenv("IMGVOTER_BASE_DIR", unset = getwd())
 
   default_file_path <- file.path(
     get_app_dir(), "default_env", "config", "config.yaml"
@@ -25,7 +26,11 @@ init_environment <- function(
   }
 
   cfg <- load_config(config_file_path)
+  print("Configuration loaded:")  
+  print(cfg)
+  
   Sys.setenv(
+    IMGVOTER_BASE_DIR = normalizePath(base_dir, mustWork = TRUE),
     IMGVOTER_CONFIG_FILE_PATH = normalizePath(config_file_path, mustWork = TRUE)
   )
   # TODO use this for every load_config call
@@ -57,13 +62,19 @@ init_environment <- function(
     }
 
     if (name == "images") {
-      Sys.setenv(IMGVOTER_IMAGES_DIR = abs_path)
-      message("Set IMGVOTER_IMAGES_DIR to: ", abs_path)
+      # only set the IMGVOTER_IMAGES_DIR if it is not already set
+      if (Sys.getenv("IMGVOTER_IMAGES_DIR") == "") {
+        Sys.setenv(IMGVOTER_IMAGES_DIR = abs_path)
+        message("Set IMGVOTER_IMAGES_DIR to: ", abs_path)
+      }
+
     }
   })
 
   # get the directory in which the sqlite file is located
   sqlite_file_full_path <- normalizePath(cfg$sqlite_file)
+  print("SQLite file path:")
+  print(sqlite_file_full_path)
 
   grouped_credentials <- yaml::read_yaml(normalizePath(
     cfg$grouped_credentials_file, mustWork = TRUE
@@ -76,8 +87,6 @@ init_environment <- function(
       grouped_credentials
     )
   }
-  Sys.setenv(IMGVOTER_DB_PATH = sqlite_file_full_path)
-  print(paste0("IMGVOTER_DB_PATH set to:", sqlite_file_full_path))
 
   sqlite_file_dir <- dirname(sqlite_file_full_path)
 

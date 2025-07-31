@@ -31,18 +31,18 @@ run_voting_app <- function(
       get_app_dir(), "default_env", "config", "config.yaml"
     ),
     ...
-  ) {
+) {
   app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
   print("Working directory:")
   print(getwd())
-  init_environment(config_file_path, base_dir = getwd())
+  Sys.setenv(IMGVOTER_BASE_DIR  = getwd())
+  init_environment(config_file_path)
 
   shiny::runApp(
     appDir = app_dir,
     host = host,
     port = port,
-    base_dir = getwd(),
     launch.browser = launch.browser,
     ...
   )

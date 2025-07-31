@@ -30,7 +30,6 @@ This function launches the B1MG Variant Voting Shiny application.
 \examples{
 \dontrun{
 run_voting_app()
-run_voting_app(user_data_dir = "/path/to/my/user_data")
-run_voting_app(database_path = "/path/to/my/database.sqlite")
+run_voting_app(config_file_path = "path/to/config.yaml")
 }
 }

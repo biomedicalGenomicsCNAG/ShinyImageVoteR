@@ -4,7 +4,7 @@
 \alias{init_environment}
 \title{Initialize environment for the application}
 \usage{
-init_environment(config_file_path, base_dir = getwd())
+init_environment(config_file_path)
 }
 \arguments{
 \item{config_file_path}{Character. Path to the configuration file.

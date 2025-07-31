@@ -10,6 +10,8 @@ if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTE
   app_dir <- normalizePath(dirname(commandArgs(trailingOnly = TRUE)[1]), mustWork = TRUE)
   # get two directories up
   app_env_dir <- normalizePath(file.path(app_dir, "../..", "app_env"), mustWork = TRUE)
+  # set the base directory
+  Sys.setenv(IMGVOTER_BASE_DIR = file.path(app_env_dir, ".."))
   print(glue::glue("App directory: {app_dir}"))
   print(glue::glue("App environment directory: {app_env_dir}"))
 
@@ -17,7 +19,8 @@ if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTE
     IMGVOTER_DB_PATH = file.path(app_env_dir, "db.sqlite"),
     IMGVOTER_IMAGES_DIR = file.path(app_env_dir, "images"),
     IMGVOTER_SERVER_DATA_DIR = file.path(app_env_dir, "server_data"),
-    IMGVOTER_USER_DATA_DIR = file.path(app_env_dir, "user_data")
+    IMGVOTER_USER_DATA_DIR = file.path(app_env_dir, "user_data"),
+    IMG_VOTER_GROUPED_CREDENTIALS = file.path(app_env_dir,"config","institute2userids2password.yaml")
   )
 
   print("Environment variables set:")
@@ -26,7 +29,8 @@ if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTE
       "IMGVOTER_DB_PATH", 
       "IMGVOTER_IMAGES_DIR", 
       "IMGVOTER_SERVER_DATA_DIR", 
-      "IMGVOTER_USER_DATA_DIR"
+      "IMGVOTER_USER_DATA_DIR",
+      "IMG_VOTER_GROUPED_CREDENTIALS"
     )
   ))
 
@@ -51,7 +55,10 @@ shiny::addResourcePath(
 )
 
 # GLOBAL pool object shared by all sessions
-db_pool <- init_db(Sys.getenv("IMGVOTER_DB_PATH"))
+cfg <- ShinyImgVoteR::load_config(
+  config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+)
+db_pool <- init_db(cfg$sqlite_file)
 
 # shiny::onStop(function() {
 #   if (inherits(db_pool, "Pool")) {
