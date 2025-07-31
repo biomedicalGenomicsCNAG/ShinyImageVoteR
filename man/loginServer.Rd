@@ -4,7 +4,7 @@
 \alias{loginServer}
 \title{Login module server logic}
 \usage{
-loginServer(id, db_conn = NULL, log_out = reactive(NULL))
+loginServer(id, cfg, db_conn = NULL, log_out = reactive(NULL))
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}

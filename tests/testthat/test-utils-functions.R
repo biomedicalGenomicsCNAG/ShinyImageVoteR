@@ -31,9 +31,14 @@ testthat::test_that("populates users from institute2userids2password.yaml", {
   app_dir <- ShinyImgVoteR::get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_db_user_population")
-  config_dir <- file.path(app_dir, "config")
+  config_dir <- file.path(app_dir,"default_env","config")
+  images_dir <- file.path(app_dir, "default_env", "images")
 
-  Sys.setenv("IMGVOTER_CONFIG_DIR" = config_dir)
+  Sys.setenv(
+    IMGVOTER_BASE_DIR = test_base,
+    IMGVOTER_IMAGES_DIR = images_dir,
+    IMGVOTER_TO_BE_VOTED_IMAGES_FILE = file.path(images_dir, "to_be_voted_images.tsv")
+  )
   
   # Clean up any existing directory
   if (dir.exists(test_base)) {
@@ -41,11 +46,13 @@ testthat::test_that("populates users from institute2userids2password.yaml", {
   }
   dir.create(test_base, recursive = TRUE)
   
-  # Test database creation with user population
   # browser()
+  cfg <- ShinyImgVoteR::load_config()
+  ShinyImgVoteR::init_environment(
+    config_file_path = file.path(config_dir,"config.yaml")
+  )
 
-  test_db <- create_mock_db()
-  con <- test_db$pool
+  con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
   
   # Check database structure includes passwords table
   # con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
@@ -75,13 +82,14 @@ testthat::test_that("populates users from institute2userids2password.yaml", {
   testthat::expect_true(all(nchar(passwords$password) == 12))  # Default password length
   testthat::expect_true(length(unique(passwords$password)) == 2)  # All passwords should be unique
 
-  pool::poolClose(con)
+  DBI::dbDisconnect(con)
   
   # Test that running again doesn't duplicate users and does not change existing passwords
-  db_path2 <- ShinyImgVoteR::init_external_database(test_base, "test_users_db.sqlite")
-  testthat::expect_equal(db_path, db_path2)
+  ShinyImgVoteR::init_environment(
+    config_file_path = file.path(config_dir,"config.yaml")
+  )
 
-  con2 <- DBI::dbConnect(RSQLite::SQLite(), db_path2)
+  con2 <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
   users2 <- DBI::dbGetQuery(con2, "SELECT userid, institute, password FROM passwords ORDER BY userid")
   testthat::expect_equal(nrow(users2), 4)  # Should still be 4 users, not 8
 
@@ -90,7 +98,7 @@ testthat::test_that("populates users from institute2userids2password.yaml", {
   testthat::expect_equal(users2$institute, users$institute)
   testthat::expect_equal(users2$password, users$password)
 
-  pool::poolClose(con2)
+  DBI::dbDisconnect(con2)
 
   # Clean up
   unlink(test_base, recursive = TRUE)
@@ -101,20 +109,27 @@ testthat::test_that("database handles preset passwords correctly", {
   app_dir <- ShinyImgVoteR::get_app_dir()
   temp_dir <- tempdir()
   test_base <- file.path(temp_dir, "test_db_preset_passwords")
-  config_dir <- file.path(app_dir, "config")
+  config_dir <- file.path(app_dir,"default_env","config")
+  images_dir <- file.path(app_dir, "default_env", "images")
 
-  Sys.setenv("IMGVOTER_CONFIG_DIR" = config_dir)
+  Sys.setenv(
+    IMGVOTER_BASE_DIR = test_base,
+    IMGVOTER_IMAGES_DIR = images_dir,
+    IMGVOTER_TO_BE_VOTED_IMAGES_FILE = file.path(images_dir, "to_be_voted_images.tsv")
+  )
   
   # Clean up any existing directory
   if (dir.exists(test_base)) {
     unlink(test_base, recursive = TRUE)
   }
   dir.create(test_base, recursive = TRUE)
-  
-  # Test database creation with user population
-  
-  test_db <- create_mock_db()
-  con <- test_db$pool
+
+  cfg <- ShinyImgVoteR::load_config()
+  ShinyImgVoteR::init_environment(
+    config_file_path = file.path(config_dir,"config.yaml")
+  )
+
+  con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
    
   tables <- dbListTables(con)
   testthat::expect_true("passwords" %in% tables)
@@ -143,7 +158,7 @@ testthat::test_that("database handles preset passwords correctly", {
   
   testthat::expect_true(test3_user$password != test4_user$password)
   
-  pool::poolClose(con)
+  DBI::dbDisconnect(con)
   
   # Clean up
   unlink(test_base, recursive = TRUE)

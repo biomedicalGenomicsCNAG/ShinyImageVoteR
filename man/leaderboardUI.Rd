@@ -4,7 +4,7 @@
 \alias{leaderboardUI}
 \title{Leaderboard module UI}
 \usage{
-leaderboardUI(id)
+leaderboardUI(id, cfg)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}

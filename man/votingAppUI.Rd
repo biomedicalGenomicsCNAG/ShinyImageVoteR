@@ -4,7 +4,7 @@
 \alias{votingAppUI}
 \title{Voting app UI}
 \usage{
-votingAppUI()
+votingAppUI(cfg)
 }
 \value{
 A Shiny UI object (tagList)

@@ -37,7 +37,7 @@ init_environment <- function(
 
   # Set up expected directories
   expected_dirs <- c("images", "user_data", "server_data")
-
+  # browser()
   purrr::walk(expected_dirs, function(name) {
     key      <- glue::glue("{name}_dir")
     cfg_path <- cfg[[key]]
@@ -54,11 +54,7 @@ init_environment <- function(
     cat("Checking directory:", abs_path, "\n") 
 
     if (!dir.exists(abs_path)) {
-      if (is_relative) {
-        abs_path <<- copy_dir_from_app(rel_path)
-      } else {
-        stop("Directory does not exist and path is absolute: ", abs_path)
-      }
+      abs_path <<- copy_dir_from_app(abs_path)
     }
 
     if (name == "images") {

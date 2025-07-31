@@ -4,7 +4,7 @@
 \alias{userStatsServer}
 \title{User Stats Server Module}
 \usage{
-userStatsServer(id, login_trigger, db_pool, tab_trigger = NULL)
+userStatsServer(id, cfg, login_trigger, db_pool, tab_trigger = NULL)
 }
 \arguments{
 \item{id}{Module namespace ID}

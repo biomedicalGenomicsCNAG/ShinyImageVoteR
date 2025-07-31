@@ -4,7 +4,7 @@
 \alias{aboutUI}
 \title{About module UI}
 \usage{
-aboutUI(id)
+aboutUI(id, cfg)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}

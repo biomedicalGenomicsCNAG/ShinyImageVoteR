@@ -108,10 +108,19 @@ ensure_gitignore <- function(directory, patterns) {
   if (length(missing) > 0) {
     new_contents <- c(existing, missing)
     writeLines(new_contents, gi_path)
-    message(glue::glue(
-      "Added {length(missing)} pattern{?s} to .gitignore:",
-      "{?s,}{paste(missing, collapse=', ')}"
-    ))
+    tryCatch(
+      {
+        message(glue::glue(
+          "Added {length(missing)} pattern{?s} to .gitignore:",
+          "{?s,}{paste(missing, collapse=', ')}"
+        ))
+      },
+      error = function(e) {
+        # Handle the error—e$message contains the error text
+        message("Failed to explain .gitignore updates: ", e$message)
+        # You could also stop(), warning(), or take other recovery actions here
+      }
+    )
   } else {
     message("All specified patterns already present in .gitignore.")
   }

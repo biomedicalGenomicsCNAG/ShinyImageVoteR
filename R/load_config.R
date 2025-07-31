@@ -48,6 +48,7 @@ load_config <- function(
     "IMGVOTER_USER_DATA_DIR" = "user_data_dir",
     "IMGVOTER_SERVER_DATA_DIR" = "server_data_dir",
     "IMGVOTER_IMAGES_DIR" = "images_dir",
+    "IMGVOTER_TO_BE_VOTED_IMAGES_FILE" = "to_be_voted_images_file",
     "IMGVOTER_DB_PATH" = "sqlite_file",
     "IMG_VOTER_GROUPED_CREDENTIALS" = "grouped_credentials_file"
   )
@@ -67,6 +68,7 @@ load_config <- function(
   cfg$images_dir <- overwrite_if_relative(cfg$images_dir)
   cfg$sqlite_file <- overwrite_if_relative(cfg$sqlite_file)
   cfg$grouped_credentials_file <- overwrite_if_relative(cfg$grouped_credentials_file)
+  cfg$to_be_voted_images_file <- overwrite_if_relative(cfg$to_be_voted_images_file)
 
   # # Override with environment variables if they exist
   # cfg_sqlite_file <- Sys.getenv("IMGVOTER_DB_PATH", cfg$sqlite_file)

@@ -4,7 +4,7 @@
 \alias{userStatsUI}
 \title{User statistics module UI}
 \usage{
-userStatsUI(id)
+userStatsUI(id, cfg)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}
