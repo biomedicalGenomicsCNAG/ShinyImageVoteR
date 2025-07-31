@@ -190,7 +190,7 @@ testthat::test_that("votingServer writes agreement to annotations file on nextBt
   on.exit(cleanup_db())
 
   my_session <- MockShinySession$new()
-  my_session$clientData <- reactiveValues(
+  my_session$clientData <- shiny::reactiveValues(
     url_search = "?coords=chr1:1000"
   )
 
@@ -207,7 +207,7 @@ testthat::test_that("votingServer writes agreement to annotations file on nextBt
       
       # Manually set current_mutation to simulate a loaded variant
       # This bypasses the complex get_mutation reactive chain
-      current_mutation <- reactiveVal(list(
+      current_mutation <- shiny::reactiveVal(list(
         coordinates = "chr1:1000",
         REF = "A",
         ALT = "T", 
@@ -301,7 +301,7 @@ testthat::test_that("get_mutation returns done tibble when all variants voted", 
   on.exit(cleanup_db())
 
   my_session <- MockShinySession$new()
-  my_session$clientData <- reactiveValues(
+  my_session$clientData <- shiny::reactiveValues(
     url_search = "?coords=done"
   )
 
@@ -330,7 +330,7 @@ testthat::test_that("get_mutation gets triggered with not existing coordinates",
   on.exit(cleanup_db())
 
   my_session <- MockShinySession$new()
-  my_session$clientData <- reactiveValues(
+  my_session$clientData <- shiny::reactiveValues(
     url_search = "?coords=not_existing"
   )
 

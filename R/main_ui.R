@@ -7,7 +7,7 @@ votingAppUI <- function(cfg) {
   #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
   # )
 
-  fluidPage(
+  shiny::fluidPage(
     theme = cfg$theme,
     shiny::conditionalPanel(
       condition = "!output.logged_in",

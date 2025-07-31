@@ -46,7 +46,7 @@ message("SQLITE DB:\t", normalizePath(cfg$sqlite_file))
 ## UI (this becomes part of the HTML shell)
 
 ```{r ui, echo=FALSE}
-fluidPage(
+shiny::fluidPage(
   tags$h3("Current Working Directory"),
   verbatimTextOutput("cwd")
 )

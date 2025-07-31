@@ -13,7 +13,7 @@ aboutUI <- function(id, cfg) {
   # )
 
   ns <- shiny::NS(id)
-  fluidPage(
+  shiny::fluidPage(
     theme = cfg$theme,
     h3("About this app"),
     p("This app allows users to vote on somatic mutations in images."),

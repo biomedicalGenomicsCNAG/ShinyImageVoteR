@@ -17,7 +17,7 @@ leaderboardUI <- function(id, cfg) {
   # )
 
   ns <- shiny::NS(id)
-  fluidPage(
+  shiny::fluidPage(
     theme = cfg$theme,
     tableOutput(ns("institutes_voting_counts")),
     actionButton(ns("refresh_counts"), "Refresh counts")
@@ -89,6 +89,7 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
         data.frame(institute = institute, users = total_users, total_images_voted = total_images)
       })
       counts_df <- do.call(rbind, counts_list)
+      
       counts_df <- counts_df %>%
         dplyr::mutate(institute = factor(institute, levels = institute_ids)) %>%
         dplyr::arrange(desc(total_images_voted))

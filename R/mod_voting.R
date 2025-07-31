@@ -72,7 +72,7 @@ votingUI <- function(id, cfg) {
   # )
   ns <- shiny::NS(id)
 
-  fluidPage(
+  shiny::fluidPage(
     theme = cfg$theme,
     shinyjs::useShinyjs(),
     shiny::singleton(
@@ -266,10 +266,10 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
     # get_mutation_trigger_source <- reactiveVal(NULL)
 
     # Holds the data of the currently displayed mutation
-    current_mutation <- reactiveVal(NULL)
+    current_mutation <- shiny::reactiveVal(NULL)
 
     # Track when the current voting image was rendered
-    vote_start_time <- reactiveVal(Sys.time())
+    vote_start_time <- shiny::reactiveVal(Sys.time())
 
     observeEvent(input$nextBtn, {
       req(login_trigger())

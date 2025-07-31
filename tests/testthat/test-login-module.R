@@ -37,21 +37,21 @@ testthat::test_that("Database session management functions work", {
     session$setInputs(institutes_id = "CNAG")
     
     # Simulate adding a session ID
-    user <- "test_user"
+    userid <- "test_user"
     sessionid <- "test_session_123"
     
     # The function should be accessible within the module
 #testthat::expect_true(exists("add_sessionid_to_db", envir = session))
     
     # Add session to database
-    add_sessionid_to_db(user, sessionid, conn)
+    add_sessionid_to_db(userid, sessionid, conn)
     
     # Verify the session was added
     sessions <- dbReadTable(conn, "sessionids")
     print("Sessions in DB:")
     print(sessions)
     testthat::expect_equal(nrow(sessions), 1)
-    testthat::expect_equal(sessions$user[1], user)
+    testthat::expect_equal(sessions$userid[1], userid)
     testthat::expect_equal(sessions$sessionid[1], sessionid)
     expect_false(is.na(sessions$login_time[1]))
     testthat::expect_true(is.na(sessions$logout_time[1]))
@@ -70,7 +70,7 @@ testthat::test_that("Logout time update works correctly", {
   # Insert a test session
   sessionid <- "test_session_456"
   DBI::dbExecute(conn, "
-    INSERT INTO sessionids (user, sessionid, login_time, logout_time)
+    INSERT INTO sessionids (userid, sessionid, login_time, logout_time)
     VALUES (?, ?, ?, ?)
   ", params = list("test_user", sessionid, as.character(now()), NA_character_))
   
@@ -100,19 +100,19 @@ testthat::test_that("Session filtering works correctly", {
   
   # Active session (recent, no logout)
   DBI::dbExecute(conn, "
-    INSERT INTO sessionids (user, sessionid, login_time, logout_time)
+    INSERT INTO sessionids (userid, sessionid, login_time, logout_time)
     VALUES (?, ?, ?, ?)
   ", params = list("user1", "session1", as.character(current_time), NA_character_))
   
   # Expired session (old, no logout)
   DBI::dbExecute(conn, "
-    INSERT INTO sessionids (user, sessionid, login_time, logout_time)
+    INSERT INTO sessionids (userid, sessionid, login_time, logout_time)
     VALUES (?, ?, ?, ?)
   ", params = list("user2", "session2", as.character(old_time), NA_character_))
   
   # Logged out session (recent, has logout)
   DBI::dbExecute(conn, "
-    INSERT INTO sessionids (user, sessionid, login_time, logout_time)
+    INSERT INTO sessionids (userid, sessionid, login_time, logout_time)
     VALUES (?, ?, ?, ?)
   ", params = list("user3", "session3", as.character(current_time), as.character(current_time)))
   

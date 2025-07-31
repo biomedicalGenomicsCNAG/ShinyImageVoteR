@@ -6,7 +6,7 @@ cfg <- ShinyImgVoteR::load_config()
 
 testthat::test_that("Leaderboard module UI renders correctly", {
   cfg <- ShinyImgVoteR::load_config()
-  ui_result <- leaderboardUI("test", cfg)
+  ui_result <- ShinyImgVoteR::leaderboardUI("test", cfg)
   expect_s3_class(ui_result, "shiny.tag.list")
   
   ui_html <- as.character(ui_result)
@@ -29,10 +29,16 @@ testthat::test_that("Leaderboard server handles tab trigger parameter", {
 
 testthat::test_that("Leaderboard reactive triggers correctly", {
   cfg <- ShinyImgVoteR::load_config()
+  Sys.setenv(
+    IMGVOTER_USER_GROUPS_COMMA_SEPARATED = paste(cfg$institute_ids, collapse = ",")
+  )
+
   # Test with different trigger scenarios
-  login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
-  tab_trigger <- reactiveVal(NULL)
+  login_trigger <- shiny::reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
+  tab_trigger <- shiny::reactiveVal(NULL)
   
+  # browser()
+
   # Create test directory structure
   temp_dir <- tempdir()
   test_user_data_dir <- file.path(temp_dir, "user_data")
@@ -69,11 +75,12 @@ testthat::test_that("Leaderboard reactive triggers correctly", {
     )
   }
   
-  testServer(leaderboardServer, args = list(
+  shiny::testServer(ShinyImgVoteR::leaderboardServer, args = list(
     cfg,
     login_trigger = login_trigger,
     tab_trigger = tab_trigger
   ), {
+    # browser()
     # Test that reactive exists and can be triggered
     testthat::expect_true(is.reactive(counts))
     
@@ -96,17 +103,17 @@ testthat::test_that("Leaderboard reactive triggers correctly", {
 testthat::test_that("Leaderboard works without tab trigger (backward compatibility)", {
   cfg <- ShinyImgVoteR::load_config()
   # Test that the module still works when tab_trigger is not provided
-  login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
+  login_trigger <- shiny::reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   
   # Create minimal test environment
-  temp_dir <- tempdir()
+  temp_dir <- base::tempdir()
   old_wd <- getwd()
   setwd(temp_dir)
   
   # Create minimal directory structure
   dir.create(file.path("user_data", cfg$institute_ids[1]), recursive = TRUE, showWarnings = FALSE)
   
-  testServer(leaderboardServer, args = list(
+  shiny::testServer(leaderboardServer, args = list(
     cfg,
     login_trigger = login_trigger
     # Note: no tab_trigger parameter - testing backward compatibility

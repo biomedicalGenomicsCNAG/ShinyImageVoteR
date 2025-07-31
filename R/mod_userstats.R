@@ -14,7 +14,7 @@ userStatsUI <- function(id, cfg) {
   # )
 
   ns <- shiny::NS(id)
-  fluidPage(
+  shiny::fluidPage(
     theme = cfg$theme,
     tableOutput(ns("user_stats_table")),
     actionButton(ns("refresh_user_stats"), "Refresh user stats")

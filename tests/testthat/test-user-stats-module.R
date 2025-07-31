@@ -81,8 +81,8 @@ testthat::test_that("User stats reactive triggers correctly", {
   ")
   
   # Test with different trigger scenarios
-  login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
-  tab_trigger <- reactiveVal(NULL)
+  login_trigger <- shiny::reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
+  tab_trigger <- shiny::reactiveVal(NULL)
   
   cfg <- ShinyImgVoteR::load_config()
   testServer(userStatsServer, args = list(

@@ -11,7 +11,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
     # Tracks the trigger source of the get_mutation function
     # could be "login", "next", "back", "manual url params change"
-    get_mutation_trigger_source <- reactiveVal(NULL)
+    get_mutation_trigger_source <- shiny::reactiveVal(NULL)
 
     # browser()
     

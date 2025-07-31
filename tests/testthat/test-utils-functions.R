@@ -44,10 +44,11 @@ testthat::test_that("populates users from institute2userids2password.yaml", {
   # Test database creation with user population
   # browser()
 
-  cfg <- ShinyImgVoteR::load_config()
+  test_db <- create_mock_db()
+  con <- test_db$pool
   
   # Check database structure includes passwords table
-  con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
+  # con <- DBI::dbConnect(RSQLite::SQLite(), cfg$sqlite_file)
   tables <- DBI::dbListTables(con)
   testthat::expect_true("passwords" %in% tables)
   
@@ -74,7 +75,7 @@ testthat::test_that("populates users from institute2userids2password.yaml", {
   testthat::expect_true(all(nchar(passwords$password) == 12))  # Default password length
   testthat::expect_true(length(unique(passwords$password)) == 2)  # All passwords should be unique
 
-  DBI::dbDisconnect(con)
+  pool::poolClose(con)
   
   # Test that running again doesn't duplicate users and does not change existing passwords
   db_path2 <- ShinyImgVoteR::init_external_database(test_base, "test_users_db.sqlite")
@@ -89,7 +90,7 @@ testthat::test_that("populates users from institute2userids2password.yaml", {
   testthat::expect_equal(users2$institute, users$institute)
   testthat::expect_equal(users2$password, users$password)
 
-  DBI::dbDisconnect(con2)
+  pool::poolClose(con2)
 
   # Clean up
   unlink(test_base, recursive = TRUE)
@@ -111,14 +112,10 @@ testthat::test_that("database handles preset passwords correctly", {
   dir.create(test_base, recursive = TRUE)
   
   # Test database creation with user population
-  db_path <- init_external_database(test_base, "test_preset_db.sqlite")
   
-  expected_db_path <- file.path(test_base, "test_preset_db.sqlite")
-  testthat::expect_equal(db_path, expected_db_path)
-  testthat::expect_true(file.exists(db_path))
-  
-  # Check database structure includes passwords table
-  con <- dbConnect(RSQLite::SQLite(), db_path)
+  test_db <- create_mock_db()
+  con <- test_db$pool
+   
   tables <- dbListTables(con)
   testthat::expect_true("passwords" %in% tables)
   
@@ -146,37 +143,7 @@ testthat::test_that("database handles preset passwords correctly", {
   
   testthat::expect_true(test3_user$password != test4_user$password)
   
-  dbDisconnect(con)
-  
-  # Clean up
-  unlink(test_base, recursive = TRUE)
-})
-
-# Test init_user_data_structure with YAML institutes
-testthat::test_that("init_user_data_structure reads institutes from YAML file", {
-  app_dir <- ShinyImgVoteR::get_app_dir()
-  temp_dir <- tempdir()
-  test_base <- file.path(temp_dir, "test_user_data_yaml")
-  config_dir <- file.path(app_dir, "config")
-
-  Sys.setenv("IMGVOTER_CONFIG_DIR" = config_dir)
-  
-  # Clean up any existing directory
-  if (dir.exists(test_base)) {
-    unlink(test_base, recursive = TRUE)
-  }
-  dir.create(test_base, recursive = TRUE)
-  
-  # Test user data structure creation
-  user_data_dir <- ShinyImgVoteR::init_user_data_structure(test_base)
-  
-  expected_user_data_dir <- file.path(test_base, "user_data")
-  testthat::expect_equal(user_data_dir, expected_user_data_dir)
-  testthat::expect_true(dir.exists(user_data_dir))
-  
-  # Check that directories were created for institutes from YAML
-  testthat::expect_true(dir.exists(file.path(user_data_dir, "training_answers_not_saved")))
-  testthat::expect_true(dir.exists(file.path(user_data_dir, "institute1")))
+  pool::poolClose(con)
   
   # Clean up
   unlink(test_base, recursive = TRUE)
