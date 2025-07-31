@@ -15,11 +15,11 @@ aboutUI <- function(id, cfg) {
   ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,
-    h3("About this app"),
-    p("This app allows users to vote on somatic mutations in images."),
-    p("Users can log in, view images, and provide their votes and comments."),
-    p("The app tracks user sessions and stores annotations in a SQLite database."),
-    p("Developed by Ivo Christopher Leist")
+    shiny::h3("About this app"),
+    shiny::p("This app allows users to vote on somatic mutations in images."),
+    shiny::p("Users can log in, view images, and provide their votes and comments."),
+    shiny::p("The app tracks user sessions and stores annotations in a SQLite database."),
+    shiny::p("Developed by Ivo Christopher Leist")
   )
 }
 

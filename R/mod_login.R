@@ -18,8 +18,8 @@ loginUI <- function(id, cfg) {
   shiny::wellPanel(
     id = ns("loginPanel"),
     theme = cfg$theme,
-    h3(paste0("Welcome to ", cfg$application_title)),
-    br(),
+    shiny::h3(paste0("Welcome to ", cfg$application_title)),
+    shiny::br(),
     shinyauthr::loginUI(
       ns("auth"),
       ""

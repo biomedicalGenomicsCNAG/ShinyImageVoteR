@@ -16,23 +16,23 @@ votingAppUI <- function(cfg) {
 
     shiny::conditionalPanel(
       condition = "output.logged_in",
-      tagList(
-        navbarPage(
+      shiny::tagList(
+        shiny::navbarPage(
           theme = cfg$theme,
           cfg$application_title,
           id = "main_navbar",
-          tabPanel("Vote", votingUI("voting", cfg)),
-          tabPanel("Leaderboard", leaderboardUI("leaderboard",  cfg)),
-          tabPanel("User stats", userStatsUI("userstats",  cfg)),
-          tabPanel("About", aboutUI("about", cfg)),
-          tabPanel("FAQ", includeMarkdown(
+          shiny::tabPanel("Vote", votingUI("voting", cfg)),
+          shiny::tabPanel("Leaderboard", leaderboardUI("leaderboard",  cfg)),
+          shiny::tabPanel("User stats", userStatsUI("userstats",  cfg)),
+          shiny::tabPanel("About", aboutUI("about", cfg)),
+          shiny::tabPanel("FAQ", shiny::includeMarkdown(
             file.path(
               get_app_dir(),
               "docs",
               "faq.md"
             )
           )),
-          header = div(
+          header = shiny::div(
             style = "position:absolute; right:1em; top:0.5em; z-index:1000;",
             shinyauthr::logoutUI("logout")
           )

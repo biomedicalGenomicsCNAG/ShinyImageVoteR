@@ -19,8 +19,8 @@ leaderboardUI <- function(id, cfg) {
   ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,
-    tableOutput(ns("institutes_voting_counts")),
-    actionButton(ns("refresh_counts"), "Refresh counts")
+    shiny::tableOutput(ns("institutes_voting_counts")),
+    shiny::actionButton(ns("refresh_counts"), "Refresh counts")
   )
 }
 

@@ -21,51 +21,6 @@
 #'
 #' @return A Shiny UI element (`fluidPage`) representing the voting interface.
 #' @export
-
-numberedRadioButtons <- function(inputId, label, choices, selected = NULL,
-                                 inline = FALSE, width = NULL,
-                                 choiceNames = NULL, choiceValues = NULL) {
-
-  use_numbered <- is.null(choiceNames) && all(nchar(names(choices)) > 0)
-  if (!use_numbered) {
-    return(shiny::radioButtons(
-      inputId, label, choices, selected,
-      inline, width, choiceNames, choiceValues
-    ))
-  }
-
-  inputId_ns <- inputId
-
-  choice_tags <- Map(function(value, label_text, index) {
-    opt_id  <- paste0(inputId_ns, "-", index)      # unique id
-    checked <- if (!is.null(selected) && selected == value) "checked" else NULL
-
-    tags$div(class = "radio",
-      tags$input(
-        id    = opt_id,
-        type  = "radio",
-        name  = inputId_ns,   # same name for the group
-        value = value,
-        checked = checked
-      ),
-      tags$label(`for` = opt_id, class = "numbered-radio",
-        tags$span(class = "circle", as.character(index)),
-        label_text
-      )
-    )
-  },
-  value = names(choices),
-  label_text = unname(choices),
-  index = seq_along(choices))
-
-  tags$div(
-    class = "form-group shiny-input-radiogroup shiny-input-container",
-    id = inputId_ns,
-    if (!is.null(label)) tags$label(class = "control-label", `for` = inputId_ns, label),
-    tags$div(class = "shiny-options-group numbered-radio-group", choice_tags)
-  )
-}
-
 votingUI <- function(id, cfg) {
   # cfg <- ShinyImgVoteR::load_config(
   #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
@@ -76,7 +31,7 @@ votingUI <- function(id, cfg) {
     theme = cfg$theme,
     shinyjs::useShinyjs(),
     shiny::singleton(
-      includeScript(
+      shiny::includeScript(
         file.path(
           get_app_dir(),"www","hotkeys.js"
         )
@@ -84,33 +39,27 @@ votingUI <- function(id, cfg) {
     ),
 
     # Responsive layout: image on left, controls on right for larger screens
-    fluidRow(
+    shiny::fluidRow(
       class = "voting-row",
-      column(
+      shiny::column(
         width = 10,
         class = "img-col",
-        uiOutput(ns("voting_image_div"))
+        shiny::uiOutput(ns("voting_image_div"))
       ),
       
       # Voting controls column - stacks below on small screens, right side on larger screens
-      column(
+      shiny::column(
         width = 2,
         class = "ctrl-col",
-        div(
+        shiny::div(
           id = "voting_controls_div", 
-          uiOutput(
+          shiny::uiOutput(
             ns("somatic_mutation"),
           ),
-          div(
+          shiny::div(
             id = ns("voting_questions_div"),
-            # radioButtons(
-            #   inputId = ns("agreement_old"),
-            #   label   = cfg$radioBtns_label,
-            #   choices = cfg$radio_options2val_map
-            # ),
-
-            tags$head(
-                tags$style(HTML("
+            shiny::tags$head(
+                shiny::tags$style(shiny::HTML("
                   /* Put label content on one line */
                   .shiny-options-group .radio > label {
                     display: block;          /* label itself can stay block */
@@ -158,12 +107,12 @@ votingUI <- function(id, cfg) {
                   "))
               ),
 
-            radioButtons(
+            shiny::radioButtons(
               inputId = ns("agreement"),
               label   = cfg$radioBtns_label,
               choiceNames = lapply(seq_along(cfg$radio_options2val_map), function(i) {
-                tags$span(class = "numbered-radio",
-                  tags$span(class = "circle", i),
+                shiny::tags$span(class = "numbered-radio",
+                  shiny::tags$span(class = "circle", i),
                   cfg$radio_options2val_map[[i]]
                 )
               }),
@@ -173,7 +122,7 @@ votingUI <- function(id, cfg) {
             # div to show the currenly selected value of the radio buttons
             # verbatimTextOutput(ns("selected_agreement")),
             
-            conditionalPanel(
+            shiny::conditionalPanel(
               condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
               shinyWidgets::checkboxGroupButtons(
                 inputId = ns("observation"),
@@ -185,12 +134,12 @@ votingUI <- function(id, cfg) {
               ),
             ),
 
-            conditionalPanel(
+            shiny::conditionalPanel(
               condition = sprintf(
                 "input['%1$s'] == 'diff_var' || input['%1$s'] == 'not_confident'",
                 ns("agreement")
               ),
-              textInput(
+              shiny::textInput(
                 inputId = ns("comment"),
                 label   = "Comments",
                 value   = ""
@@ -199,14 +148,14 @@ votingUI <- function(id, cfg) {
           ),
           shinyjs::hidden(
             shinyjs::disabled(
-              actionButton(
+              shiny::actionButton(
                 ns("backBtn"),
                 "Back (press Backspace)",
                 onclick = "history.back(); return false;"
               )
             )
           ),
-          actionButton(ns("nextBtn"), "Next (press Enter)")
+          shiny::actionButton(ns("nextBtn"), "Next (press Enter)")
         )
       )
     )

@@ -88,15 +88,16 @@ testthat::test_that("Navigation structure is present", {
 })
 
 testthat::test_that("Required CSS and JavaScript dependencies are included", {
-  ui_result <- votingAppUI(cfg)
+  cfg <- ShinyImgVoteR::load_config()
+  ui_result <- ShinyImgVoteR::votingAppUI(cfg)
   ui_html <- as.character(ui_result)
   
+
   # Check for shinyjs (if used)
   testthat::expect_true(grepl("shinyjs", ui_html))
   
   # Check for any custom CSS/JS files
-  # Since we created the hotkeys.js file, it should be included
-  testthat::expect_true(grepl("hotkeys.js", ui_html))
+  testthat::expect_true(grepl("keydown", ui_html))
 })
 
 testthat::test_that("Module UIs are properly namespaced", {

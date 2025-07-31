@@ -47,8 +47,8 @@ message("SQLITE DB:\t", normalizePath(cfg$sqlite_file))
 
 ```{r ui, echo=FALSE}
 shiny::fluidPage(
-  tags$h3("Current Working Directory"),
-  verbatimTextOutput("cwd")
+  shiny::tags$h3("Current Working Directory"),
+  shiny::verbatimTextOutput("cwd")
 )
 ```
 
