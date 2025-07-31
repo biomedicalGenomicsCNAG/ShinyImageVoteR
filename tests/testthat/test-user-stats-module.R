@@ -67,7 +67,7 @@ testthat::test_that("User stats reactive triggers correctly", {
   # Create sessionids table
   DBI::dbExecute(pool, "
     CREATE TABLE sessionids (
-      user TEXT,
+      userid TEXT,
       sessionid TEXT,
       login_time TEXT,
       logout_time TEXT
@@ -76,7 +76,7 @@ testthat::test_that("User stats reactive triggers correctly", {
   
   # Insert some test session data
   DBI::dbExecute(pool, "
-    INSERT INTO sessionids (user, sessionid, login_time, logout_time)
+    INSERT INTO sessionids (userid, sessionid, login_time, logout_time)
     VALUES ('test_user', 'session123', '2023-01-01 10:00:00', '2023-01-01 10:30:00')
   ")
   
@@ -142,7 +142,7 @@ testthat::test_that("User stats server works without tab trigger (backward compa
   # Create sessionids table
   DBI::dbExecute(pool, "
     CREATE TABLE sessionids (
-      user TEXT,
+      userid TEXT,
       sessionid TEXT,
       login_time TEXT,
       logout_time TEXT
