@@ -52,7 +52,7 @@ shiny::fluidPage(
 )
 ```
 
-```{r ui2, echo=FALSE, include=FALSE}
+```{r ui2, echo=FALSE, include=TRUE}
 Sys.setenv("IMGVOTER_CONFIG_FILE" = config_file_path)
 votingAppUI(cfg)
 ```
