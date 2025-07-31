@@ -15,7 +15,9 @@ library(ShinyImgVoteR)
 # source(file.path(app_dir, "modules", "user_stats_module.R"))
 
 testthat::test_that("User stats module UI renders correctly", {
-  ui_result <- userStatsUI("test")
+  cfg <- ShinyImgVoteR::load_config()
+
+  ui_result <- userStatsUI("test", cfg)
   expect_s3_class(ui_result, "shiny.tag.list")
   
   ui_html <- as.character(ui_result)
@@ -37,11 +39,13 @@ testthat::test_that("User stats server handles tab trigger parameter", {
       logout_time TEXT
     )
   ")
+  cfg <- ShinyImgVoteR::load_config()
   
   # Test that the function accepts the new tab_trigger parameter
   expect_silent({
     testServer(userStatsServer, args = list(
-      login_trigger = reactive({ list(user_id = "test", voting_institute = "CNAG") }),
+      cfg,
+      login_trigger = reactive({list(user_id = "test", voting_institute = "CNAG") }),
       db_pool = pool,
       tab_trigger = reactive({ Sys.time() })
     ), {
@@ -80,7 +84,9 @@ testthat::test_that("User stats reactive triggers correctly", {
   login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   tab_trigger <- reactiveVal(NULL)
   
+  cfg <- ShinyImgVoteR::load_config()
   testServer(userStatsServer, args = list(
+    cfg,
     login_trigger = login_trigger,
     db_pool = pool,
     tab_trigger = tab_trigger
@@ -146,7 +152,9 @@ testthat::test_that("User stats server works without tab trigger (backward compa
   # Test that the module still works when tab_trigger is not provided
   login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   
+  cfg <- ShinyImgVoteR::load_config()
   testServer(userStatsServer, args = list(
+    cfg,
     login_trigger = login_trigger,
     db_pool = pool
     # Note: no tab_trigger parameter - testing backward compatibility

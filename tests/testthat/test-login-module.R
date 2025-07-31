@@ -15,7 +15,8 @@ library(ShinyImgVoteR)
 # source(file.path(app_dir, "modules", "login_module.R"))
 
 testthat::test_that("Login UI renders correctly", {
-  ui <- loginUI("test")
+  cfg <- ShinyImgVoteR::load_config()
+  ui <- loginUI("test", cfg)
   expect_s3_class(ui, "shiny.tag")
   
   # Check that the UI contains expected elements
@@ -25,13 +26,13 @@ testthat::test_that("Login UI renders correctly", {
 })
 
 testthat::test_that("Database session management functions work", {
-  
+  cfg <- ShinyImgVoteR::load_config()
   # Create test database
   test_db <- create_mock_db()
   conn <- test_db$pool
   
   # Test session ID insertion
-  testServer(loginServer, args = list(db_conn = conn), {
+  testServer(loginServer, args = list(cfg, db_conn = conn), {
     # Test add_sessionid_to_db function
     session$setInputs(institutes_id = "CNAG")
     
@@ -60,6 +61,7 @@ testthat::test_that("Database session management functions work", {
 })
 
 testthat::test_that("Logout time update works correctly", {
+  cfg <- ShinyImgVoteR::load_config()
   
   # Create test database
   test_db <- create_mock_db()
@@ -72,7 +74,7 @@ testthat::test_that("Logout time update works correctly", {
     VALUES (?, ?, ?, ?)
   ", params = list("test_user", sessionid, as.character(now()), NA_character_))
   
-  testServer(loginServer, args = list(db_conn = conn), {
+  testServer(loginServer, args = list(cfg, db_conn = conn), {
     # Update logout time
     update_logout_time_in_db(sessionid, conn)
     
@@ -87,7 +89,7 @@ testthat::test_that("Logout time update works correctly", {
 })
 
 testthat::test_that("Session filtering works correctly", {
-  
+  cfg <- ShinyImgVoteR::load_config()
   # Create test database
   test_db <- create_mock_db()
   conn <- test_db$pool
@@ -114,7 +116,7 @@ testthat::test_that("Session filtering works correctly", {
     VALUES (?, ?, ?, ?)
   ", params = list("user3", "session3", as.character(current_time), as.character(current_time)))
   
-  testServer(loginServer, args = list(db_conn = conn), {
+  testServer(loginServer, args = list(cfg, db_conn = conn), {
     # Get active sessions (should only return session1)
     active_sessions <- get_sessionids_from_db(conn, expiry = 1)
     testthat::expect_equal(nrow(active_sessions), 1)
@@ -127,11 +129,13 @@ testthat::test_that("Session filtering works correctly", {
 })
 
 testthat::test_that("Login data reactive works correctly", {
+  cfg <- ShinyImgVoteR::load_config()
+
   # Create test database
   test_db <- create_mock_db()
   conn <- test_db$pool
   
-  testServer(loginServer, args = list(db_conn = conn), {
+  testServer(loginServer, args = list(cfg, db_conn = conn), {
     # Set institute input
     session$setInputs(institutes_id = "CNAG")
     

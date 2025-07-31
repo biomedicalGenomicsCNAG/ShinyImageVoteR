@@ -28,12 +28,14 @@ testthat::test_that("color_seq colors nucleotides correctly", {
 })
 
 testthat::test_that("votingUI returns valid Shiny UI", {
-  ui <- votingUI("test")
+  cfg <- ShinyImgVoteR::load_config()
+  ui <- votingUI("test",cfg)
   testthat::expect_true(inherits(ui, "shiny.tag.list"))
 })
 
 testthat::test_that("voting module namespace works correctly", {
-  ui <- votingUI("voting_module")
+  cfg <- ShinyImgVoteR::load_config()
+  ui <- votingUI("voting_module",cfg)
   # Check that namespaced IDs are present in the UI
   ui_html <- as.character(ui)
   testthat::expect_true(grepl("voting_module-agreement", ui_html))
@@ -43,7 +45,8 @@ testthat::test_that("voting module namespace works correctly", {
 
 # Test for UI elements structure
 testthat::test_that("votingUI contains expected UI elements", {
-  ui <- votingUI("test")
+  cfg <- ShinyImgVoteR::load_config()
+  ui <- votingUI("test",cfg)
   ui_html <- as.character(ui)
   
   # Check for radio buttons
@@ -74,6 +77,8 @@ testthat::test_that("votingServer can be called within testServer", {
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
+
+  args$cfg <- ShinyImgVoteR::load_config()
   
   testServer(
     votingServer,
@@ -96,6 +101,7 @@ testthat::test_that("votingServer handles different agreement types", {
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
   
+  args$cfg <- ShinyImgVoteR::load_config()
   testServer(
     votingServer,
     args = args,
@@ -129,6 +135,7 @@ testthat::test_that("votingServer handles comment and observation inputs", {
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
 
+  args$cfg <- ShinyImgVoteR::load_config()
   testServer(
     votingServer,
     args = args,
@@ -156,6 +163,7 @@ testthat::test_that("votingServer responds to nextBtn click", {
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
   
+  args$cfg <- ShinyImgVoteR::load_config()
   testServer(
     votingServer,
     args = args,
@@ -186,6 +194,7 @@ testthat::test_that("votingServer writes agreement to annotations file on nextBt
     url_search = "?coords=chr1:1000"
   )
 
+  args$cfg <- ShinyImgVoteR::load_config()
   testServer(
     votingServer, 
     session = my_session,
@@ -248,6 +257,7 @@ testthat::test_that("votingServer handles duplicate voting from same session", {
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
 
+  args$cfg <- ShinyImgVoteR::load_config()
   testServer(
     votingServer,
     args = args,
@@ -295,6 +305,7 @@ testthat::test_that("get_mutation returns done tibble when all variants voted", 
     url_search = "?coords=done"
   )
 
+  args$cfg <- ShinyImgVoteR::load_config()
   testServer(
     votingServer,
     session = my_session,
@@ -323,6 +334,7 @@ testthat::test_that("get_mutation gets triggered with not existing coordinates",
     url_search = "?coords=not_existing"
   )
 
+  args$cfg <- ShinyImgVoteR::load_config()
   testServer(
     votingServer,
     session = my_session,

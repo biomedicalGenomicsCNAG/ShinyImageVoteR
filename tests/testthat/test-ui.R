@@ -5,8 +5,8 @@ library(ShinyImgVoteR)
 
 # locate the directory where inst/shiny-app was installed
 # app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
-
-ui <- votingAppUI()
+cfg <- ShinyImgVoteR::load_config()
+ui <- votingAppUI(cfg)
 
 # source necessary files
 # source(file.path(app_dir, "config.R"))
@@ -36,7 +36,7 @@ writeLines(faq_content, file.path(temp_docs_dir, "faq.md"))
 
 testthat::test_that("Main UI structure is correct", {
   # Test that UI function exists and returns a valid UI
-  ui_result <- ui
+  ui_result <- votingAppUI(cfg)
   expect_s3_class(ui_result, "shiny.tag.list")
   
   # Convert to HTML to check structure
@@ -55,7 +55,7 @@ testthat::test_that("Main UI structure is correct", {
 })
 
 testthat::test_that("Conditional panels are properly configured", {
-  ui_result <- ui
+  ui_result <- votingAppUI(cfg)
   ui_html <- as.character(ui_result)
   
   # Check for logged in condition
@@ -67,7 +67,7 @@ testthat::test_that("Conditional panels are properly configured", {
 
 testthat::test_that("UI configuration values are used correctly", {
   # Test that application title is used
-  ui_result <- ui
+  ui_result <- votingAppUI(cfg)
   ui_html <- as.character(ui_result)
   
   # Should contain the configured application title
@@ -75,7 +75,7 @@ testthat::test_that("UI configuration values are used correctly", {
 })
 
 testthat::test_that("Navigation structure is present", {
-  ui_result <- ui
+  ui_result <- votingAppUI(cfg)
   ui_html <- as.character(ui_result)
   
   # Check for navigation elements (tabs, menu items, etc.)
@@ -88,7 +88,7 @@ testthat::test_that("Navigation structure is present", {
 })
 
 testthat::test_that("Required CSS and JavaScript dependencies are included", {
-  ui_result <- ui
+  ui_result <- votingAppUI(cfg)
   ui_html <- as.character(ui_result)
   
   # Check for shinyjs (if used)
@@ -100,12 +100,14 @@ testthat::test_that("Required CSS and JavaScript dependencies are included", {
 })
 
 testthat::test_that("Module UIs are properly namespaced", {
+  cfg <- ShinyImgVoteR::load_config()
+  
   # Test individual module UIs if they're exported
   # This assumes you have separate UI functions for modules
-  
+
   # Example for login module UI
   if (exists("loginUI")) {
-    login_ui <- loginUI("test")
+    login_ui <- loginUI("test",  cfg)
     expect_s3_class(login_ui, "shiny.tag")
     
     login_html <- as.character(login_ui)

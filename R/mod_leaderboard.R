@@ -60,7 +60,7 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
         Sys.getenv("IMGVOTER_USER_GROUPS_COMMA_SEPARATED"), ","
       ))
 
-      browser()
+      # browser()
       counts_list <- lapply(institute_ids, function(institute) {
         institutes_dir <- file.path(
           Sys.getenv("IMGVOTER_USER_DATA_DIR"),

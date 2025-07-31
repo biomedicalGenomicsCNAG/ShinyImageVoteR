@@ -5,7 +5,8 @@ library(ShinyImgVoteR)
 cfg <- ShinyImgVoteR::load_config()
 
 testthat::test_that("Leaderboard module UI renders correctly", {
-  ui_result <- leaderboardUI("test")
+  cfg <- ShinyImgVoteR::load_config()
+  ui_result <- leaderboardUI("test", cfg)
   expect_s3_class(ui_result, "shiny.tag.list")
   
   ui_html <- as.character(ui_result)
@@ -14,8 +15,10 @@ testthat::test_that("Leaderboard module UI renders correctly", {
 })
 
 testthat::test_that("Leaderboard server handles tab trigger parameter", {
+  cfg <- ShinyImgVoteR::load_config()
   # Test that the function accepts the new tab_trigger parameter
   testServer(leaderboardServer, args = list(
+    cfg,
     login_trigger = reactive({ list(user_id = "test", voting_institute = "CNAG") }),
     tab_trigger = reactive({ Sys.time() })
   ), {
@@ -25,6 +28,7 @@ testthat::test_that("Leaderboard server handles tab trigger parameter", {
 })
 
 testthat::test_that("Leaderboard reactive triggers correctly", {
+  cfg <- ShinyImgVoteR::load_config()
   # Test with different trigger scenarios
   login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   tab_trigger <- reactiveVal(NULL)
@@ -66,6 +70,7 @@ testthat::test_that("Leaderboard reactive triggers correctly", {
   }
   
   testServer(leaderboardServer, args = list(
+    cfg,
     login_trigger = login_trigger,
     tab_trigger = tab_trigger
   ), {
@@ -89,6 +94,7 @@ testthat::test_that("Leaderboard reactive triggers correctly", {
 })
 
 testthat::test_that("Leaderboard works without tab trigger (backward compatibility)", {
+  cfg <- ShinyImgVoteR::load_config()
   # Test that the module still works when tab_trigger is not provided
   login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   
@@ -101,6 +107,7 @@ testthat::test_that("Leaderboard works without tab trigger (backward compatibili
   dir.create(file.path("user_data", cfg$institute_ids[1]), recursive = TRUE, showWarnings = FALSE)
   
   testServer(leaderboardServer, args = list(
+    cfg,
     login_trigger = login_trigger
     # Note: no tab_trigger parameter - testing backward compatibility
   ), {
