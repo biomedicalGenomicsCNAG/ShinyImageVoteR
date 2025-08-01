@@ -83,55 +83,69 @@ votingUI <- function(id, cfg) {
                 href = "voting-styles.css"
               )
             ),
-            shiny::radioButtons(
-              inputId = ns("agreement"),
-              label = cfg$radioBtns_label,
-              choiceNames = lapply(seq_along(cfg$radio_options2val_map), function(i) {
-                shiny::tags$span(
-                  class = "numbered-radio",
-                  shiny::tags$span(class = "circle", i),
-                  names(cfg$radio_options2val_map)[i]
+            shiny::div(
+              class = "voting-questions",
+              shiny::div(
+                class = "radio-section",
+                shiny::radioButtons(
+                  inputId = ns("agreement"),
+                  label = cfg$radioBtns_label,
+                  choiceNames = lapply(
+                    seq_along(cfg$radio_options2val_map), function(i) {
+                      shiny::tags$span(
+                        class = "numbered-radio",
+                        shiny::tags$span(class = "circle", i),
+                        names(cfg$radio_options2val_map)[i]
+                      )
+                    }
+                  ),
+                  choiceValues = c("yes", "no", "diff_var", "not_confident"),
                 )
-              }),
-              choiceValues = c("yes", "no", "diff_var", "not_confident"),
-            ),
-
-            # div to show the currenly selected value of the radio buttons
-            # verbatimTextOutput(ns("selected_agreement")),
-
-            shiny::conditionalPanel(
-              condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
-              shinyWidgets::checkboxGroupButtons(
-                inputId = ns("observation"),
-                label = cfg$checkboxes_label,
-                direction = "vertical",
-                choices = cfg$observations2val_map,
-                individual = TRUE,
-                size = "xs"
               ),
-            ),
-            shiny::conditionalPanel(
-              condition = sprintf(
-                "input['%1$s'] == 'diff_var' || input['%1$s'] == 'not_confident'",
-                ns("agreement")
+              shiny::div(
+                class = "conditional-section",
+                shiny::conditionalPanel(
+                  condition = sprintf(
+                    "input['%s'] == 'not_confident'",
+                    ns("agreement")
+                  ),
+                  shinyWidgets::checkboxGroupButtons(
+                    inputId = ns("observation"),
+                    label = cfg$checkboxes_label,
+                    direction = "vertical",
+                    choices = cfg$observations2val_map,
+                    individual = TRUE,
+                    size = "xs"
+                  ),
+                ),
+                shiny::conditionalPanel(
+                  condition = sprintf(
+                    "input['%1$s'] == 'diff_var' ||
+                    input['%1$s'] == 'not_confident'",
+                    ns("agreement")
+                  ),
+                  shiny::textInput(
+                    inputId = ns("comment"),
+                    label   = "Comments",
+                    value   = ""
+                  )
+                )
               ),
-              shiny::textInput(
-                inputId = ns("comment"),
-                label   = "Comments",
-                value   = ""
+              shiny::div(
+                class = "voting-btns",
+                shinyjs::hidden(
+                  shinyjs::disabled(
+                    shiny::actionButton(
+                      ns("backBtn"),
+                      "Back (press Backspace)",
+                      onclick = "history.back(); return false;"
+                    )
+                  )
+                ),
+                shiny::actionButton(ns("nextBtn"), "Next (press Enter)")
               )
             )
-          ),
-          shinyjs::hidden(
-            shinyjs::disabled(
-              shiny::actionButton(
-                ns("backBtn"),
-                "Back (press Backspace)",
-                onclick = "history.back(); return false;"
-              )
-            )
-          ),
-          shiny::actionButton(ns("nextBtn"), "Next (press Enter)")
+          )
         )
       )
     )
