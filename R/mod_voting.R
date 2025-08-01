@@ -77,52 +77,11 @@ votingUI <- function(id, cfg) {
           shiny::div(
             id = ns("voting_questions_div"),
             shiny::tags$head(
-              shiny::tags$style(shiny::HTML("
-                  /* Put label content on one line */
-                  .shiny-options-group .radio > label {
-                    display: block;          /* label itself can stay block */
-                    position: relative;
-                    cursor: pointer;
-                    user-select: none;
-                    font-size: 16px;
-                  }
-
-                  /* Hide native radio but keep it focusable */
-                  .shiny-options-group .radio > label > input[type='radio'] {
-                    position: absolute;
-                    opacity: 0;
-                    inset: 0;                /* stretch to allow keyboard focus */
-                    pointer-events: none;
-                  }
-
-                  /* Horizontal layout for number + text */
-                  .numbered-radio {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 10px;
-                  }
-
-                  /* Default circle */
-                  .numbered-radio .circle {
-                    width: 28px;
-                    height: 28px;
-                    border-radius: 50%;
-                    background: #fff;
-                    border: 2px solid #007BFF;
-                    color: #007BFF;
-                    font-weight: bold;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all .2s ease;
-                  }
-
-                  /* When the radio is checked, recolor the circle */
-                  .shiny-options-group .radio > label > input[type='radio']:checked ~ span .circle {
-                      background: #007BFF;
-                      color: #fff;
-                  }
-                  "))
+              shiny::tags$link(
+                rel = "stylesheet",
+                type = "text/css",
+                href = "voting-styles.css"
+              )
             ),
             shiny::radioButtons(
               inputId = ns("agreement"),
