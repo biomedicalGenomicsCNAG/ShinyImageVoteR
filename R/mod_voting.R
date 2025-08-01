@@ -90,7 +90,7 @@ votingUI <- function(id, cfg) {
                 shiny::tags$span(
                   class = "numbered-radio",
                   shiny::tags$span(class = "circle", i),
-                  cfg$radio_options2val_map[[i]]
+                  names(cfg$radio_options2val_map)[i]
                 )
               }),
               choiceValues = c("yes", "no", "diff_var", "not_confident"),

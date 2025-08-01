@@ -1,4 +1,3 @@
-
 # TODO
 # figure out if two defaults are possible
 # 1. default in package directory
@@ -7,7 +6,7 @@
 overwrite_if_relative <- function(path) {
   print(paste0("Checking if path is relative: ", path))
   base_dir <- Sys.getenv("IMGVOTER_BASE_DIR")
-  is_relative <- !grepl("^(/|[A-Za-z]:)", path)  # Unix or Windows absolute path
+  is_relative <- !grepl("^(/|[A-Za-z]:)", path) # Unix or Windows absolute path
   if (is_relative) {
     print(paste0("Path is relative: ", path))
     rel_path <- path
@@ -21,7 +20,7 @@ overwrite_if_env_var <- function(env_var_name, cfg_value) {
   env_path <- Sys.getenv(env_var_name)
   if (!is.na(env_path) && nchar(env_path) > 0) {
     print(paste0(env_var_name, " detected; value: ", env_path))
-    return (env_path)
+    return(env_path)
   }
   return(cfg_value)
 }
@@ -36,10 +35,9 @@ overwrite_if_env_var <- function(env_var_name, cfg_value) {
 #' @import yaml
 #' @export
 load_config <- function(
-  config_file_path = file.path(
-    get_app_dir(), "default_env", "config", "config.yaml"
-  )
-) {
+    config_file_path = file.path(
+      get_app_dir(), "default_env", "config", "config.yaml"
+    )) {
   cfg <- yaml::read_yaml(config_file_path)
 
   base_dir <- Sys.getenv("IMGVOTER_BASE_DIR")
@@ -92,19 +90,15 @@ load_config <- function(
   # cfg$user_data_dir <- Sys.getenv("IMGVOTER_USER_DATA_DIR", cfg$user_data_dir)
   # cfg$user_data_dir <- normalizePath(cfg$user_data_dir, mustWork = TRUE)
 
-  cfg$radio_options2val_map <- setNames(
-    as.vector(cfg$radio_options2val_map),
-    paste0(names(cfg$radio_options2val_map), " [", seq_along(cfg$radio_options2val_map), "]")
-  )
-
   cfg$observations2val_map <- setNames(
     as.vector(cfg$observations_dict),
     paste0(names(cfg$observations_dict), " [", cfg$observation_hotkeys, "]")
   )
 
   cfg$vote_counts_cols <- c(
-    unlist(cfg$vote2dbcolumn_map, 
-    use.names = FALSE), 
+    unlist(cfg$vote2dbcolumn_map,
+      use.names = FALSE
+    ),
     "vote_count_total"
   )
 
