@@ -44,6 +44,24 @@ votingUI <- function(id, cfg) {
       shiny::column(
         width = 10,
         class = "img-col",
+        # TODO
+        # look into making the tool tip editable
+        # https://github.com/dreamRs/shinyWidgets/issues/719
+        shiny::tags$details(
+          shiny::tags$summary("⚙️ Show image with slider"),
+          shinyWidgets::noUiSliderInput(
+            ns("image_width"),
+            label = "Image width (%)",
+            min = 10,
+            max = 100,
+            value = 100,
+            step = 1,
+            tooltips = TRUE, # show the value
+            behaviour = c("tap", "drag"),
+            width = "98%",
+            height = "20px"
+          ),
+        ),
         shiny::uiOutput(ns("voting_image_div"))
       ),
 
@@ -559,9 +577,45 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       shiny::div(
         shiny::img(
           src = paste0(mut_df$path),
-          style = "max-width: 100%;"
+          # style = "max-width: 100%;"
+          style = paste0("width: ", input$image_width, "%;")
         )
       )
+      # shinyjqui::jqui_resizable(
+      #   shiny::div(
+      #     shiny::img(
+      #       src = paste0(mut_df$path),
+      #       style = "max-width: 100%;"
+      #     )
+      #   )
+      # )
+      # 1) initial size
+      # shinyjqui::jqui_resizable(
+      #   shiny::div(
+      #     id = "voting-img-container",
+      #     style = "
+      #       width: 400px;     /* start width */
+      #       height: 300px;    /* start height */
+      #       border: 1px solid #ccc;
+      #       overflow: hidden; /* clip anything outside */
+      #       display: inline-block;
+      #     ",
+      #     # 2) img fills 100% of its wrapper
+      #     shiny::tags$img(
+      #       src   = mut_df$path,
+      #       style = "
+      #         display: block;
+      #         width: 100%;
+      #         height: 100%;
+      #         object-fit: contain; /* or 'cover' if you want to fill & crop */
+      #       "
+      #     )
+      #   ),
+      #   # 3) allow independent width+height dragging
+      #   options = list(
+      #     aspectRatio = FALSE
+      #   )
+      # )
     })
 
     output$somatic_mutation <- shiny::renderText({
