@@ -48,7 +48,7 @@ votingUI <- function(id, cfg) {
         # look into making the tool tip editable
         # https://github.com/dreamRs/shinyWidgets/issues/719
         shiny::tags$details(
-          shiny::tags$summary("⚙️ Show image with slider"),
+          shiny::tags$summary("⚙️ Show image width slider"),
           shinyWidgets::noUiSliderInput(
             ns("image_width"),
             label = "Image width (%)",
