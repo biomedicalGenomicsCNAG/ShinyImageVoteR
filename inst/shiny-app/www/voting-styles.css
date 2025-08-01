@@ -47,3 +47,19 @@
   background: #007bff;
   color: #fff;
 }
+
+@media (max-width: 990px) {
+  
+  /* make both columns take 100% width */
+  .voting-row .img-col,
+  .voting-row .ctrl-col {
+    float: none !important;
+    width: 100% !important;
+  }
+
+  /* add a little space above the controls */
+  .voting-row .ctrl-col {
+    margin-top: 1rem;
+  }
+
+}
