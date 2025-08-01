@@ -4,7 +4,7 @@
 \alias{loginUI}
 \title{Login module UI}
 \usage{
-loginUI(id)
+loginUI(id, cfg)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}

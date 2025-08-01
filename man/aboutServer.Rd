@@ -4,7 +4,7 @@
 \alias{aboutServer}
 \title{About module server logic}
 \usage{
-aboutServer(id)
+aboutServer(id, cfg)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}

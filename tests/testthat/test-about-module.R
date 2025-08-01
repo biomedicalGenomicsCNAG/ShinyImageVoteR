@@ -11,7 +11,8 @@ app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
 
 testthat::test_that("About module UI renders correctly", {
-  ui_result <- aboutUI("test")
+  cfg <- ShinyImgVoteR::load_config()
+  ui_result <- aboutUI("test", cfg)
   expect_s3_class(ui_result, "shiny.tag.list")
   ui_html <- as.character(ui_result)
   testthat::expect_true(grepl("About this app", ui_html))

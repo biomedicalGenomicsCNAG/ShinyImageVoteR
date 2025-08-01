@@ -1,0 +1,94 @@
+/* Put label content on one line */
+.shiny-options-group .radio > label {
+  display: block; /* label itself can stay block */
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  font-size: 16px;
+}
+
+/* Hide native radio but keep it focusable */
+.shiny-options-group .radio > label > input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  inset: 0; /* stretch to allow keyboard focus */
+  pointer-events: none;
+}
+
+/* Horizontal layout for number + text */
+.numbered-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Default circle */
+.numbered-radio .circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #007bff;
+  color: #007bff;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* When the radio is checked, recolor the circle */
+.shiny-options-group
+  .radio
+  > label
+  > input[type="radio"]:checked
+  ~ span
+  .circle {
+  background: #007bff;
+  color: #fff;
+}
+
+@media (max-width: 990px) {
+  
+  .voting-row .img-col,
+  .voting-row .ctrl-col {
+    float: none !important;
+    width: 100% !important;
+  }
+
+  .voting-row .ctrl-col {
+    margin-top: 1rem;
+  }
+
+  /* Grid layout for mobile controls */
+  /* .voting-questions {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    align-items: start;
+  } */
+
+  .voting-questions {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "radio conditional"
+      "next  conditional";
+    grid-gap: 1rem;
+  }
+
+  .radio-section {
+    grid-area: radio;
+    /* grid-column: 1; */
+  }
+
+  /* Only the conditional panels go to the right */
+  .conditional-section {
+    grid-area: conditional;
+    /* grid-column: 2; */
+  }
+
+  .voting-btns {
+    grid-area: next;     
+  }
+}

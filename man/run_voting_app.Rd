@@ -8,9 +8,7 @@ run_voting_app(
   host = "127.0.0.1",
   port = 8000,
   launch.browser = TRUE,
-  config_dir = NULL,
-  user_data_dir = NULL,
-  database_path = NULL,
+  config_file_path = file.path(get_app_dir(), "default_env", "config", "config.yaml"),
   ...
 )
 }
@@ -21,11 +19,7 @@ run_voting_app(
 
 \item{launch.browser}{Logical. Should the browser be launched? Default is TRUE}
 
-\item{user_data_dir}{Character. Path to the user_data directory. If NULL, uses get_user_data_dir()}
-
-\item{database_path}{Character. Path to the database file. If NULL, creates/uses db.sqlite in current directory}
-
-\item{...}{Additional arguments passed to shiny::runApp()}
+\item{config_file_path}{Character. Path to the configuration file. Default is the on in the app directory}
 }
 \value{
 Runs the Shiny application
@@ -36,7 +30,6 @@ This function launches the B1MG Variant Voting Shiny application.
 \examples{
 \dontrun{
 run_voting_app()
-run_voting_app(user_data_dir = "/path/to/my/user_data")
-run_voting_app(database_path = "/path/to/my/database.sqlite")
+run_voting_app(config_file_path = "path/to/config.yaml")
 }
 }

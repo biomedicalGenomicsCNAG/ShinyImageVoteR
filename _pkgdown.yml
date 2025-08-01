@@ -1,0 +1,13 @@
+url: ~
+template:
+  bootstrap: 5
+home:
+  title: ShinyImgVoteR
+articles:
+- title: Index
+  contents:
+  - 00-vignettes
+  - 01-introduction
+  - 02-setup
+  - 03-usage
+  - 04-test-coverage

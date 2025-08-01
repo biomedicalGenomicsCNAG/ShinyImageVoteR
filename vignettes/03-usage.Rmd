@@ -1,0 +1,67 @@
+---
+title: "03. Usage"
+author: "Ivo Chritopher Leist"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{03. Usage}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+runtime: shiny_prerendered
+---
+
+## Introduction
+
+This vignette demonstrates…
+
+## Basic App
+
+```{r setup, include=FALSE}
+# load your package and shiny
+library(ShinyImgVoteR)
+library(shiny)
+
+Sys.setenv("IMGVOTER_BASE_DIR" = getwd())
+config_file_path <- file.path(get_app_dir(), "default_env", "config", "config.yaml")
+cfg <- load_config(config_file_path)
+
+init_environment(config_file_path)
+
+shiny::addResourcePath(
+  prefix = "images",
+  directoryPath = cfg$images_dir
+)
+
+shiny::addResourcePath(
+  "www",
+  system.file("shiny-app","www",package="ShinyImgVoteR")
+)
+
+message("CONFIG YAML:\t", normalizePath(config_file_path))
+message("IMAGES DIR:\t", normalizePath(cfg$images_dir))
+message("SQLITE DB:\t", normalizePath(cfg$sqlite_file))
+```
+
+
+## UI (this becomes part of the HTML shell)
+
+```{r ui, echo=FALSE}
+shiny::fluidPage(
+  shiny::tags$h3("Current Working Directory"),
+  shiny::verbatimTextOutput("cwd")
+)
+```
+
+```{r ui2, echo=FALSE, include=TRUE}
+Sys.setenv("IMGVOTER_CONFIG_FILE" = config_file_path)
+votingAppUI(cfg)
+```
+
+```{r server, context="server"}
+output$cwd <- renderText({
+  getwd()
+})
+con <- DBI::dbConnect(RSQLite::SQLite(), dbname = cfg$sqlite_file)
+on.exit(DBI::dbDisconnect(con), add = TRUE)
+makeVotingAppServer(con)
+```

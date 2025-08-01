@@ -4,7 +4,7 @@
 \alias{makeVotingAppServer}
 \title{Factory function to create the Shiny server for the voting application}
 \usage{
-makeVotingAppServer(db_pool)
+makeVotingAppServer(db_pool, cfg)
 }
 \arguments{
 \item{db_pool}{A database connection pool}

@@ -40,3 +40,5 @@
 ^annotation_screenshots_paths$
 ^server_data$
 ^inst/shiny-app/server_data$
+^doc$
+^Meta$

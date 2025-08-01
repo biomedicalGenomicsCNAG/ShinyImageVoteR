@@ -1,0 +1,18 @@
+---
+title: "01. Introduction"
+author: "Ivo Chritopher Leist"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{01. Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## In This Vignette
+
+* Introducing `ShinyImgVoteR`
+* Basic app setup
+* UI components
+* Server logic
+* Running the app

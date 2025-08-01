@@ -42,7 +42,7 @@ create_mock_db <- function() {
   # Create sessionids table
   DBI::dbExecute(conn, "
     CREATE TABLE sessionids (
-      user TEXT,
+      userid TEXT,
       sessionid TEXT,
       login_time TEXT,
       logout_time TEXT

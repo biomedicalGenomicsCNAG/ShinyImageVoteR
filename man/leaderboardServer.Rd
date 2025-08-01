@@ -4,7 +4,7 @@
 \alias{leaderboardServer}
 \title{Leaderboard Server Module}
 \usage{
-leaderboardServer(id, login_trigger, tab_trigger = NULL)
+leaderboardServer(id, cfg, login_trigger, tab_trigger = NULL)
 }
 \arguments{
 \item{id}{Module namespace ID}

@@ -4,7 +4,7 @@
 \alias{votingServer}
 \title{Voting module server logic}
 \usage{
-votingServer(id, login_trigger, db_pool, get_mutation_trigger_source)
+votingServer(id, cfg, login_trigger, db_pool, get_mutation_trigger_source)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}

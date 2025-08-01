@@ -8,11 +8,16 @@
 #'
 #' @return A Shiny UI element (`fluidPage`) for rendering user statistics.
 #' @export
-userStatsUI <- function(id) {
+userStatsUI <- function(id, cfg) {
+  # cfg <- ShinyImgVoteR::load_config(
+  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  # )
+
   ns <- shiny::NS(id)
-  fluidPage(
-    tableOutput(ns("user_stats_table")),
-    actionButton(ns("refresh_user_stats"), "Refresh user stats")
+  shiny::fluidPage(
+    theme = cfg$theme,
+    shiny::tableOutput(ns("user_stats_table")),
+    shiny::actionButton(ns("refresh_user_stats"), "Refresh user stats")
   )
 }
 
@@ -28,7 +33,7 @@ userStatsUI <- function(id) {
 #'                   This enables automatic refresh of stats when navigating to the page
 #' @return Reactive containing user statistics data frame
 #' @export
-userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
+userStatsServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
     # Create a reactive that triggers when the user stats tab is selected
     # This allows automatic refresh when navigating to the stats page
@@ -60,8 +65,9 @@ userStatsServer <- function(id, login_trigger, db_pool, tab_trigger = NULL) {
         dplyr::group_by(shinyauthr_session_id) %>%
         dplyr::summarise(images_voted = dplyr::n(), .groups = 'drop')
 
+      # TODO dbReadTable does not seem to work with pool
       session_df <- DBI::dbReadTable(db_pool, "sessionids") %>%
-        dplyr::filter(user == session$userData$userId) %>%
+        dplyr::filter(userid == session$userData$userId) %>%
         dplyr::mutate(
           login_time = lubridate::ymd_hms(login_time),
           logout_time = lubridate::ymd_hms(logout_time)

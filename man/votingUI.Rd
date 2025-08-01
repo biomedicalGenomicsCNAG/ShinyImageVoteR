@@ -4,7 +4,7 @@
 \alias{votingUI}
 \title{Voting module UI}
 \usage{
-votingUI(id)
+votingUI(id, cfg)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}

@@ -9,8 +9,17 @@
       "name": "Run Shiny",
       "request": "launch",
       "debugMode": "file",
-      "workingDirectory": "${workspaceFolder}/inst/shiny-app",
+      "workingDirectory": "${workspaceFolder}",
       "file": "${workspaceFolder}/dev_scripts/run_shinyimgvoter.R",
+      "allowGlobalDebugging": false
+    },
+    {
+      "type": "R-Debugger",
+      "name": "Debug Vignettes",
+      "request": "launch",
+      "debugMode": "file",
+      "workingDirectory": "${workspaceFolder}",
+      "file": "${workspaceFolder}/vignettes/shinyImgVoter.R",
       "allowGlobalDebugging": false
     },
     {

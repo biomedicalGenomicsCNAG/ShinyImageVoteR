@@ -2,14 +2,16 @@
 #' @param db_pool A database connection pool
 #' @return A Shiny server function
 #' @export
-makeVotingAppServer <- function(db_pool) {
+makeVotingAppServer <- function(db_pool, cfg) {
   function (input, output, session) {
 
-    cfg <- ShinyImgVoteR::load_config()
+    # cfg <- ShinyImgVoteR::load_config(
+    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+    # )
 
     # Tracks the trigger source of the get_mutation function
     # could be "login", "next", "back", "manual url params change"
-    get_mutation_trigger_source <- reactiveVal(NULL)
+    get_mutation_trigger_source <- shiny::reactiveVal(NULL)
 
     # browser()
     
@@ -19,6 +21,7 @@ makeVotingAppServer <- function(db_pool) {
     # Initialize the login module
     login_return <- loginServer(
       "login",
+      cfg,
       db_conn = db_pool,
       log_out = reactive(logout_init())
     )
@@ -47,7 +50,11 @@ makeVotingAppServer <- function(db_pool) {
       session$userData$userId <- user_id
       session$userData$votingInstitute <- voting_institute
 
-      user_dir <- file.path(cfg$user_data_dir, voting_institute, user_id)
+      user_dir <- file.path(
+        Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+        voting_institute,
+        user_id
+      )
 
       print(paste("User directory:", user_dir))
       print(paste("User ID:", user_id)) 
@@ -57,10 +64,12 @@ makeVotingAppServer <- function(db_pool) {
 
       print(paste("User Annotations File:", session$userData$userAnnotationsFile))
 
-      if (!dir.exists(user_dir)) {
-        cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
-        dir.create(user_dir, recursive = TRUE)
-      }
+      safe_dir_create(user_dir)
+
+      # if (!dir.exists(user_dir)) {
+      #   cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
+      #   dir.create(user_dir, recursive = TRUE)
+      # }
 
       if (file.exists(session$userData$userInfoFile)) {
         get_mutation_trigger_source("login")
@@ -191,10 +200,10 @@ makeVotingAppServer <- function(db_pool) {
       }
     })
     
-    votingServer("voting", login_data, db_pool, get_mutation_trigger_source)
-    leaderboardServer("leaderboard", login_data, leaderboard_tab_trigger)
-    userStatsServer("userstats", login_data, db_pool, user_stats_tab_trigger)
-    aboutServer("about")
+    votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source)
+    leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
+    userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)
+    aboutServer("about", cfg)
 
     # TODO
     # below is not working
@@ -202,11 +211,9 @@ makeVotingAppServer <- function(db_pool) {
     # every 2 seconds, check for external shutdown file
     observe({
       invalidateLater(2000, session)
-      # print("Checking for external shutdown request…")
-      # print(cfg_shutdown_file)
-      if (file.exists(cfg$shutdown_file)) {
+      if (file.exists(cfg$shutdown_trigger_file)) {
         print("External shutdown request received.")
-        file.remove(cfg$shutdown_file)
+        file.remove(cfg$shutdown_trigger_file)
         showNotification("External shutdown request received…", type="warning")
         stopApp()
       }

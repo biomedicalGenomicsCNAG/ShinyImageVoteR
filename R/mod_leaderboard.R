@@ -11,11 +11,16 @@ library(magrittr)
 #'
 #' @return A Shiny UI element (`fluidPage`) for displaying the leaderboard.
 #' @export
-leaderboardUI <- function(id) {
+leaderboardUI <- function(id, cfg) {
+  # cfg <- ShinyImgVoteR::load_config(
+  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  # )
+
   ns <- shiny::NS(id)
-  fluidPage(
-    tableOutput(ns("institutes_voting_counts")),
-    actionButton(ns("refresh_counts"), "Refresh counts")
+  shiny::fluidPage(
+    theme = cfg$theme,
+    shiny::tableOutput(ns("institutes_voting_counts")),
+    shiny::actionButton(ns("refresh_counts"), "Refresh counts")
   )
 }
 
@@ -30,10 +35,14 @@ leaderboardUI <- function(id) {
 #'                   This enables automatic refresh of counts when navigating to the page
 #' @return Reactive containing leaderboard data frame
 #' @export
-leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
+leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
 
-    cfg <- ShinyImgVoteR::load_config()
+    # cfg <- ShinyImgVoteR::load_config(
+    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+    # )
+
+    # cfg <- ShinyImgVoteR::load_config()
 
     # Create a reactive that triggers when the leaderboard tab is selected
     # This allows automatic refresh when navigating to the leaderboard page
@@ -47,12 +56,20 @@ leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
     
     counts <- eventReactive(c(login_trigger(), input$refresh_counts, tab_change_trigger()), {
       req(login_trigger())
-      counts_list <- lapply(cfg$institute_ids, function(institute) {
-        institutes_dir <- file.path(cfg$user_data_dir, institute)
-        if (!dir.exists(institutes_dir)) {
+      institute_ids <- unlist(strsplit(
+        Sys.getenv("IMGVOTER_USER_GROUPS_COMMA_SEPARATED"), ","
+      ))
+
+      # browser()
+      counts_list <- lapply(institute_ids, function(institute) {
+        institutes_dir <- file.path(
+          Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+          institute
+        )
+        user_dirs <- list.dirs(institutes_dir, full.names = TRUE, recursive = FALSE)
+        if (length(user_dirs) == 0) {
           return(data.frame(institute = institute, users = 0, total_images_voted = 0))
         }
-        user_dirs <- list.dirs(institutes_dir, full.names = TRUE, recursive = FALSE)
         total_users <- length(user_dirs)
         total_images <- 0
         for (user_dir in user_dirs) {
@@ -72,8 +89,9 @@ leaderboardServer <- function(id, login_trigger, tab_trigger = NULL) {
         data.frame(institute = institute, users = total_users, total_images_voted = total_images)
       })
       counts_df <- do.call(rbind, counts_list)
+      
       counts_df <- counts_df %>%
-        dplyr::mutate(institute = factor(institute, levels = cfg$institute_ids)) %>%
+        dplyr::mutate(institute = factor(institute, levels = institute_ids)) %>%
         dplyr::arrange(desc(total_images_voted))
       counts_df
     })
