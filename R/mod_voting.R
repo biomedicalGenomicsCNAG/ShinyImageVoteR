@@ -33,7 +33,7 @@ votingUI <- function(id, cfg) {
     shiny::singleton(
       shiny::includeScript(
         file.path(
-          get_app_dir(),"www","hotkeys.js"
+          get_app_dir(), "www", "hotkeys.js"
         )
       )
     ),
@@ -46,20 +46,20 @@ votingUI <- function(id, cfg) {
         class = "img-col",
         shiny::uiOutput(ns("voting_image_div"))
       ),
-      
+
       # Voting controls column - stacks below on small screens, right side on larger screens
       shiny::column(
         width = 2,
         class = "ctrl-col",
         shiny::div(
-          id = "voting_controls_div", 
+          id = "voting_controls_div",
           shiny::uiOutput(
             ns("somatic_mutation"),
           ),
           shiny::div(
             id = ns("voting_questions_div"),
             shiny::tags$head(
-                shiny::tags$style(shiny::HTML("
+              shiny::tags$style(shiny::HTML("
                   /* Put label content on one line */
                   .shiny-options-group .radio > label {
                     display: block;          /* label itself can stay block */
@@ -105,13 +105,13 @@ votingUI <- function(id, cfg) {
                       color: #fff;
                   }
                   "))
-              ),
-
+            ),
             shiny::radioButtons(
               inputId = ns("agreement"),
-              label   = cfg$radioBtns_label,
+              label = cfg$radioBtns_label,
               choiceNames = lapply(seq_along(cfg$radio_options2val_map), function(i) {
-                shiny::tags$span(class = "numbered-radio",
+                shiny::tags$span(
+                  class = "numbered-radio",
                   shiny::tags$span(class = "circle", i),
                   cfg$radio_options2val_map[[i]]
                 )
@@ -121,7 +121,7 @@ votingUI <- function(id, cfg) {
 
             # div to show the currenly selected value of the radio buttons
             # verbatimTextOutput(ns("selected_agreement")),
-            
+
             shiny::conditionalPanel(
               condition = sprintf("input['%s'] == 'not_confident'", ns("agreement")),
               shinyWidgets::checkboxGroupButtons(
@@ -130,10 +130,9 @@ votingUI <- function(id, cfg) {
                 direction = "vertical",
                 choices = cfg$observations2val_map,
                 individual = TRUE,
-                size="xs"
+                size = "xs"
               ),
             ),
-
             shiny::conditionalPanel(
               condition = sprintf(
                 "input['%1$s'] == 'diff_var' || input['%1$s'] == 'not_confident'",
@@ -185,7 +184,6 @@ votingUI <- function(id, cfg) {
 #' @export
 votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_source) {
   moduleServer(id, function(input, output, session) {
-
     # cfg <- ShinyImgVoteR::load_config(
     #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
     # )
@@ -230,7 +228,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
           shinyjs::enable(session$ns("backBtn"))
         }
       )
-      
+
       mut_df <- current_mutation()
       if (is.null(mut_df)) {
         return()
@@ -292,7 +290,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       comment <- NA
       if (!is.null(input$comment) && input$comment != "") {
         comment <- input$comment
-      } 
+      }
       print("Before updating the time_till_vote_casted_in_seconds:")
 
       # calculate time spent on the current variant
@@ -300,17 +298,16 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       annotations_df[rowIdx, "time_till_vote_casted_in_seconds"] <- time_spent
 
       print(paste0("already_voted:", already_voted))
-      
+
       if (!already_voted && session$userData$votingInstitute != cfg$test_institute) {
-      
         # depending on the agreement, update the vote counts in the database
         vote_col <- cfg$vote2dbcolumn_map[[input$agreement]]
 
         DBI::dbExecute(
           db_pool,
           paste0(
-            "UPDATE annotations SET ", 
-            vote_col, 
+            "UPDATE annotations SET ",
+            vote_col,
             " = ", vote_col, " + 1 WHERE coordinates = ?"
           ),
           params = list(coords)
@@ -331,13 +328,13 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       )
 
       if (
-        already_voted && 
-        previous_agreement != input$agreement 
-        && session$userData$votingInstitute != cfg_test_institute
-        ) {
+        already_voted &&
+          previous_agreement != input$agreement &&
+          session$userData$votingInstitute != cfg_test_institute
+      ) {
         files <- list.files(
-          path = "user_data", 
-          pattern = "\\.txt$", 
+          path = "user_data",
+          pattern = "\\.txt$",
           full.names = TRUE,
           recursive = TRUE
         )
@@ -345,7 +342,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         print(files)
 
         # Exclude files from the cfg_test_institute folder
-        files <- files[!grepl(paste0(cfg_test_institute,"/"), files)]
+        files <- files[!grepl(paste0(cfg_test_institute, "/"), files)]
 
         # get all rows with the same coordinates from all user annotation files
         same_coords_df <- rbindlist(lapply(files, function(f) {
@@ -353,7 +350,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
           dt_sub <- dt[grepl(coords, coordinates)]
           if (nrow(dt_sub)) dt_sub[, file := basename(f)]
           dt_sub
-        }), use.names = TRUE, fill = TRUE) 
+        }), use.names = TRUE, fill = TRUE)
 
         print("Resulting DataFrame after reading all user annotations:")
         print(same_coords_df)
@@ -361,22 +358,22 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         # Count the different agreements (yes, no, diff_var, not_confident)
         agreement_counts_df <- same_coords_df %>%
           dplyr::group_by(agreement) %>%
-          dplyr::summarise(count = n(), .groups = 'drop')
+          dplyr::summarise(count = n(), .groups = "drop")
         print("Counts of agreements:")
         print(counts)
 
         # loop over the agreement_counts_df and update the vote counts in the database
         for (i in 1:nrow(agreement_counts_df)) {
           agreement <- agreement_counts_df$agreement[i]
-          count <- agreement_counts_df$count[i] 
+          count <- agreement_counts_df$count[i]
           vote_col <- vote2dbcolumn_map[[agreement]]
           if (!is.null(vote_col)) {
             DBI::dbExecute(
               db_pool,
               paste0(
-                "UPDATE annotations SET ", 
-                vote_col, 
-                " = ", vote_col, " + ", count, 
+                "UPDATE annotations SET ",
+                vote_col,
+                " = ", vote_col, " + ", count,
                 " WHERE coordinates = ?"
               ),
               params = list(coords)
@@ -393,7 +390,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       get_mutation_trigger_source("url-params-change")
     })
 
-    # Triggered when the user logs in, clicks the next button, 
+    # Triggered when the user logs in, clicks the next button,
     # or goes back (with the actionButton "Back" or browser back button)
     get_mutation <- eventReactive(c(login_trigger(), input$nextBtn, url_params()), {
       req(login_trigger())
@@ -468,7 +465,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
             if (length(rowIdx) > 0) {
               session$onFlushed(function() {
                 if (rowIdx == 1) {
-                  # hide & disable backBtn 
+                  # hide & disable backBtn
                   # when navigated back to the first mutation voted on in that session
                   shinyjs::hideElement(session$ns("backBtn"))
                   shinyjs::disable(session$ns("backBtn"))
@@ -479,7 +476,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
                 }
               })
             }
-          } 
+          }
           print("HERE")
           return(df[1, ])
         } else {
@@ -496,7 +493,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
       if (all(!is.na(annotations_df$agreement))) {
         res <- create_done_tibble()
-        updateQueryString(
+        shiny::updateQueryString(
           "?coords=done",
           mode = "push",
           session = session
@@ -514,7 +511,6 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
       # loop through the annotations_df to find the next variant that has not been voted on
       print("Looking for the next variant that has not been voted on...")
-      not_voted_image_found <- FALSE
       for (i in 1:nrow(annotations_df)) {
         if (is.na(annotations_df$agreement[i])) {
           # Get the coordinates of the variant
@@ -522,8 +518,8 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
           # Query the database for the variant with these coordinates
 
           query <- paste0(
-            "SELECT ", 
-            paste(cfg$db_cols, collapse = ", "), 
+            "SELECT ",
+            paste(cfg$db_cols, collapse = ", "),
             " FROM annotations WHERE coordinates = '", coordinates, "'"
           )
           # Execute the query to get the variant that has not been voted on
@@ -535,7 +531,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
             # TODO
             # Filter logic for the actual voting
             # Reasoning why this is commented out in the README
-  
+
             # inspritation for the filtering logic from legacy code:
             # filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
             # filter(!(no >= 3 & no / total_votes > 0.7))
@@ -545,8 +541,8 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
             current_mutation(df[1, ])
             vote_start_time(Sys.time())
-            updateQueryString(
-              paste0("?coords=",coords),
+            shiny::updateQueryString(
+              paste0("?coords=", coords),
               mode = "push",
               session = session
             )
@@ -555,34 +551,34 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         }
       }
     })
-    output$voting_image_div <- renderUI({
+    output$voting_image_div <- shiny::renderUI({
       mut_df <- get_mutation()
       if (is.null(mut_df)) {
         return(NULL)
       }
-      div(
-        img(
+      shiny::div(
+        shiny::img(
           src = paste0(mut_df$path),
           style = "max-width: 100%;"
         )
       )
     })
 
-    output$somatic_mutation <- renderText({
+    output$somatic_mutation <- shiny::renderText({
       mut_df <- get_mutation()
       if (is.null(mut_df)) {
         return("No mutation available.")
       }
       paste0(
-        "Somatic mutation: ", 
+        "Somatic mutation: ",
         color_seq(mut_df$REF, cfg$nt2color_map),
-        " > ", 
+        " > ",
         color_seq(mut_df$ALT, cfg$nt2color_map)
       )
     })
 
     # for debugging purposes
-    output$selected_agreement <- renderText({
+    output$selected_agreement <- shiny::renderText({
       if (is.null(input$agreement)) {
         return("No agreement selected.")
       }
