@@ -3,8 +3,7 @@
 #' @return A Shiny server function
 #' @export
 makeVotingAppServer <- function(db_pool, cfg) {
-  function (input, output, session) {
-
+  function(input, output, session) {
     # cfg <- ShinyImgVoteR::load_config(
     #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
     # )
@@ -14,9 +13,33 @@ makeVotingAppServer <- function(db_pool, cfg) {
     get_mutation_trigger_source <- shiny::reactiveVal(NULL)
 
     # browser()
-    
+
     total_images <- DBI::dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
     cat(sprintf("Total annotations in DB: %s\n", total_images))
+
+    shiny::observeEvent(TRUE,
+      {
+        path <- session$clientData$url_pathname
+        if (grepl("^/retrieve_password/", path)) {
+          token <- sub("^/retrieve_password/", "", path)
+          pwd <- retrieve_password_from_link(token, db_pool)
+          if (!is.null(pwd)) {
+            shiny::showModal(shiny::modalDialog(
+              title = "Your password",
+              paste("Password:", pwd),
+              easyClose = TRUE
+            ))
+          } else {
+            shiny::showModal(shiny::modalDialog(
+              title = "Invalid link",
+              "The password retrieval link is invalid or has already been used.",
+              easyClose = TRUE
+            ))
+          }
+        }
+      },
+      once = TRUE
+    )
 
     # Initialize the login module
     login_return <- loginServer(
@@ -31,7 +54,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
       id = "logout",
       active = reactive(login_return$credentials()$user_auth)
     )
-    
+
     output$logged_in <- reactive({
       login_return$credentials()$user_auth
     })
@@ -57,7 +80,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
       )
 
       print(paste("User directory:", user_dir))
-      print(paste("User ID:", user_id)) 
+      print(paste("User ID:", user_id))
 
       session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
       session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
@@ -86,7 +109,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
       "********"
 
       # store user info in json file
-      set.seed(seed)  # Use user_id to create a unique seed
+      set.seed(seed) # Use user_id to create a unique seed
 
       user_info <- list(
         user_id = user_id,
@@ -147,15 +170,15 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
     observeEvent(logout_init(), {
       if (!is.null(session$userData$shinyauthr_session_id)) {
-      print("Logging out user:")
-      print("Updating logout time in database")
-      print(paste("Session ID:", session$userData$shinyauthr_session_id))
-      print("login_return:")
-      print(login_return)
-      print("login_return$update_logout_time:")
-      print(login_return$update_logout_time)
-      cancel_pending_logout(session$userData$shinyauthr_session_id)
-      login_return$update_logout_time(session$userData$shinyauthr_session_id)
+        print("Logging out user:")
+        print("Updating logout time in database")
+        print(paste("Session ID:", session$userData$shinyauthr_session_id))
+        print("login_return:")
+        print(login_return)
+        print("login_return$update_logout_time:")
+        print(login_return$update_logout_time)
+        cancel_pending_logout(session$userData$shinyauthr_session_id)
+        login_return$update_logout_time(session$userData$shinyauthr_session_id)
       }
     })
 
@@ -177,7 +200,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
         )
       }
     })
-    
+
     # Track when the User stats tab is selected to trigger automatic refresh
     user_stats_tab_trigger <- reactive({
       req(input$main_navbar)
@@ -188,7 +211,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
         NULL
       }
     })
-    
+
     # Track when the Leaderboard tab is selected to trigger automatic refresh
     leaderboard_tab_trigger <- reactive({
       req(input$main_navbar)
@@ -199,7 +222,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
         NULL
       }
     })
-    
+
     votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source)
     leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
     userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)
@@ -214,7 +237,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
       if (file.exists(cfg$shutdown_trigger_file)) {
         print("External shutdown request received.")
         file.remove(cfg$shutdown_trigger_file)
-        showNotification("External shutdown request received…", type="warning")
+        showNotification("External shutdown request received…", type = "warning")
         stopApp()
       }
     })

@@ -5,10 +5,9 @@
 #' @param config_file_path Character. Path to the configuration file.
 #'    Default is app_env/config/config.yaml in the current working directory.
 #' @return List with paths to user_data directory, database file, and config file
-#' @export  
+#' @export
 init_environment <- function(
-  config_file_path
-) {
+    config_file_path) {
   # check if "IMGVOTER_BASE_DIR" is set, then set it as base directory
   base_dir <- Sys.getenv("IMGVOTER_BASE_DIR", unset = getwd())
 
@@ -19,16 +18,16 @@ init_environment <- function(
   if (config_file_path == default_file_path) {
     config_dir <- file.path(base_dir, "app_env", "config")
 
-    if(!dir.exists(config_dir)) {
+    if (!dir.exists(config_dir)) {
       copy_dir_from_app(config_dir)
       config_file_path <- file.path(config_dir, "config.yaml")
     }
   }
 
   cfg <- load_config(config_file_path)
-  print("Configuration loaded:")  
+  print("Configuration loaded:")
   print(cfg)
-  
+
   Sys.setenv(
     IMGVOTER_BASE_DIR = normalizePath(base_dir, mustWork = TRUE),
     IMGVOTER_CONFIG_FILE_PATH = normalizePath(config_file_path, mustWork = TRUE)
@@ -39,11 +38,11 @@ init_environment <- function(
   expected_dirs <- c("images", "user_data", "server_data")
   # browser()
   purrr::walk(expected_dirs, function(name) {
-    key      <- glue::glue("{name}_dir")
+    key <- glue::glue("{name}_dir")
     cfg_path <- cfg[[key]]
 
     # Determine if path is relative or absolute
-    is_relative <- !grepl("^(/|[A-Za-z]:)", cfg_path)  # Unix or Windows absolute path
+    is_relative <- !grepl("^(/|[A-Za-z]:)", cfg_path) # Unix or Windows absolute path
     abs_path <- if (is_relative) {
       rel_path <- cfg_path
       normalizePath(file.path(base_dir, rel_path), mustWork = FALSE)
@@ -51,7 +50,7 @@ init_environment <- function(
       cfg_path
     }
 
-    cat("Checking directory:", abs_path, "\n") 
+    cat("Checking directory:", abs_path, "\n")
 
     if (!dir.exists(abs_path)) {
       abs_path <<- copy_dir_from_app(abs_path)
@@ -63,7 +62,6 @@ init_environment <- function(
         Sys.setenv(IMGVOTER_IMAGES_DIR = abs_path)
         message("Set IMGVOTER_IMAGES_DIR to: ", abs_path)
       }
-
     }
   })
 
@@ -73,7 +71,8 @@ init_environment <- function(
   print(sqlite_file_full_path)
 
   grouped_credentials <- yaml::read_yaml(normalizePath(
-    cfg$grouped_credentials_file, mustWork = TRUE
+    cfg$grouped_credentials_file,
+    mustWork = TRUE
   ))
 
   if (!file.exists(sqlite_file_full_path)) {
@@ -87,7 +86,7 @@ init_environment <- function(
   sqlite_file_dir <- dirname(sqlite_file_full_path)
 
   ensure_gitignore(
-    sqlite_file_dir, 
+    sqlite_file_dir,
     patterns = c("*.sqlite", "*.db")
   )
 
@@ -98,11 +97,11 @@ init_environment <- function(
   for (group in groups) {
     # make sure the group name is valid for a directory
     safe_dir_create(file.path(
-      cfg$user_data_dir, 
+      cfg$user_data_dir,
       group
     ))
   }
-  
+
   Sys.setenv(
     IMGVOTER_USER_GROUPS_COMMA_SEPARATED = paste(groups, collapse = ","),
     IMGVOTER_USER_DATA_DIR = normalizePath(cfg$user_data_dir, mustWork = TRUE)
