@@ -1,6 +1,7 @@
 #' Admin module UI
 #'
-#' Displays password retrieval tokens for users who have not retrieved their password yet.
+#' Displays password retrieval tokens for users who have not retrieved their password yet and
+#' allows admins to add new users.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration object
@@ -13,12 +14,32 @@ adminUI <- function(id, cfg) {
     theme = cfg$theme,
     DT::dataTableOutput(ns("pwd_retrieval_table")),
     shiny::actionButton(ns("refresh_tokens"), "Refresh")
+    # shiny::br(),
+    # shiny::fluidRow(
+    #   shiny::column(
+    #     4,
+    #     shiny::textInput(ns("new_userid"), "User ID")
+    #   ),
+    #   shiny::column(
+    #     4,
+    #     shiny::textInput(ns("new_institute"), "Institute")
+    #   ),
+    #   shiny::column(
+    #     2,
+    #     shiny::actionButton(ns("add_user"), "Add user")
+    #   ),
+    #   shiny::column(
+    #     2,
+    #     shiny::actionButton(ns("refresh_tokens"), "Refresh")
+    #   )
+    # )
   )
 }
 
 #' Admin module server
 #'
-#' Shows password retrieval tokens for users who have not accessed their retrieval link.
+#' Shows password retrieval tokens for users who have not accessed their retrieval link and
+#' allows admins to add new users.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration
@@ -28,6 +49,9 @@ adminUI <- function(id, cfg) {
 #' @export
 adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
+    # Reactive trigger for table refresh
+    table_refresh_trigger <- reactiveVal(0)
+
     tab_change_trigger <- reactive({
       if (!is.null(tab_trigger)) {
         tab_trigger()
@@ -36,48 +60,86 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     })
 
-    pwd_retrieval_tbl <- eventReactive(c(login_trigger(), input$refresh_tokens, tab_change_trigger()), {
-      req(login_trigger()$admin == 1)
-      DBI::dbGetQuery(
-        db_pool,
-        paste(
-          "SELECT userid, institute, pwd_retrieval_token FROM passwords",
-          "WHERE pwd_retrieval_token IS NOT NULL AND pwd_retrieved_timestamp IS NULL"
+    pwd_retrieval_tbl <- eventReactive(
+      c(login_trigger(), input$refresh_tokens, tab_change_trigger(), table_refresh_trigger()),
+      {
+        req(login_trigger()$admin == 1)
+        DBI::dbGetQuery(
+          db_pool,
+          paste(
+            "SELECT userid, institute, pwd_retrieval_token FROM passwords",
+            "WHERE pwd_retrieval_token IS NOT NULL AND pwd_retrieved_timestamp IS NULL"
+          )
         )
+      }
+    )
+
+    output$pwd_retrieval_table <- DT::renderDT({
+      tbl <- pwd_retrieval_tbl()
+
+      # --- Build base URL
+      protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
+      hostname <- session$clientData$url_hostname
+      port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
+      base_url <- paste0(protocol, hostname, port)
+
+      # --- rows
+      tbl$link <- paste0(
+        base_url,
+        "?pwd_retrieval_token=",
+        tbl$pwd_retrieval_token
+      )
+      tbl$email_btn <- sprintf(
+        '<button class="btn btn-primary btn-sm" onclick="Shiny.setInputValue(\'%s\', \'%s\', {priority: \'event\'});">Email Template</button>',
+        session$ns("email_template_btn"),
+        tbl$userid
+      )
+      # Remove the password retrieval token column
+      tbl$pwd_retrieval_token <- NULL
+      cols <- c("User ID", "Institute", "Password Retrieval Link", "Action")
+      names(tbl) <- cols
+
+      # Ensure character cols & base df
+      tbl[] <- lapply(tbl, as.character)
+      tbl <- as.data.frame(tbl, stringsAsFactors = FALSE, check.names = FALSE)
+
+      # --- Dummy new row (names & order must match `cols`)
+      ns <- session$ns
+
+      add_new_user_btn_html <- sprintf(
+        '<button class="btn btn-success btn-sm"
+                  title="Add user"
+                  onclick="(function(){
+                    var u = document.getElementById(\'%s\').value.trim();
+                    var i = document.getElementById(\'%s\').value.trim();
+                    // nonce ensures the event fires even with same values
+                    Shiny.setInputValue(\'%s\', {userid: u, institute: i, nonce: Math.random()}, {priority:\'event\'});
+                  })()">
+            &#x2795; new user
+          </button>',
+        ns("new_userid"), ns("new_institute"), ns("add_user_btn")
+      )
+
+      new_row <- data.frame(
+        `User ID` = as.character(textInput(ns("new_userid"), NULL, width = "100%")),
+        Institute = as.character(textInput(ns("new_institute"), NULL, width = "100%")),
+        `Password Retrieval Link` = "",
+        Action = add_new_user_btn_html,
+        stringsAsFactors = FALSE, check.names = FALSE
+      )
+      new_row <- new_row[, cols, drop = FALSE] # enforce same order
+
+      # Prefer bind_rows for robustness; could also do: rbind(new_row[cols], tbl)
+      show_df <- dplyr::bind_rows(new_row, tbl)
+
+      DT::datatable(
+        show_df,
+        escape = FALSE,
+        selection = "none",
+        rownames = FALSE,
+        options = list(pageLength = 10)
       )
     })
-
-    output$pwd_retrieval_table <- DT::renderDT(
-      {
-        tbl <- pwd_retrieval_tbl()
-
-        # Get current URL components
-        protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
-        hostname <- session$clientData$url_hostname
-        port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
-        base_url <- paste0(protocol, hostname, port)
-
-        tbl$link <- paste0(
-          base_url,
-          "?pwd_retrieval_token=",
-          tbl$pwd_retrieval_token
-        )
-
-        # Add email template button
-        tbl$email_btn <- sprintf(
-          '<button class="btn btn-primary btn-sm" onclick="Shiny.setInputValue(\'%s\', \'%s\', {priority: \'event\'});">Email Template</button>',
-          session$ns("email_template_btn"),
-          tbl$userid
-        )
-
-        # Remove the password retrieval token column
-        tbl$pwd_retrieval_token <- NULL
-        colnames(tbl) <- c("User ID", "Institute", "Password Retrieval Link", "Show Email Template")
-        tbl
-      },
-      escape = FALSE,
-      options = list(pageLength = 10)
-    )
 
     # Handle email template button clicks
     observeEvent(input$email_template_btn, {
@@ -113,5 +175,82 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         ))
       }
     })
+
+    observeEvent(input$add_user_btn, {
+      print("Add user button clicked")
+
+      req(login_trigger()$admin == 1)
+      user_id <- trimws(input$add_user_btn$userid)
+      institute <- trimws(input$add_user_btn$institute %||% "")
+
+      if (user_id == "" || institute == "") {
+        showModal(modalDialog(
+          title = "Missing information",
+          "Please provide both user ID and institute.",
+          easyClose = TRUE,
+          footer = modalButton("Close")
+        ))
+        return()
+      }
+
+      existing <- DBI::dbGetQuery(
+        db_pool,
+        "SELECT userid FROM passwords WHERE userid = ?",
+        params = list(user_id)
+      )
+
+      if (nrow(existing) > 0) {
+        showModal(modalDialog(
+          title = "User exists",
+          "A user with this ID already exists.",
+          easyClose = TRUE,
+          footer = modalButton("Close")
+        ))
+        return()
+      }
+
+      password <- generate_password()
+      token <- digest::digest(paste0(user_id, Sys.time(), runif(1)))
+
+      DBI::dbExecute(
+        db_pool,
+        "INSERT INTO passwords (userid, institute, password, admin, pwd_retrieval_token, pwd_retrieved_timestamp) VALUES (?, ?, ?, 0, ?, NULL)",
+        params = list(user_id, institute, password, token)
+      )
+
+      protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
+      hostname <- session$clientData$url_hostname
+      port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
+      base_url <- paste0(protocol, hostname, port)
+      retrieval_link <- paste0(base_url, "?pwd_retrieval_token=", token)
+
+      showModal(modalDialog(
+        title = paste("User", user_id, "added"),
+        tags$pre(
+          style = "white-space: pre-wrap; font-family: monospace;",
+          "User successfully added and password generated."
+        ),
+        easyClose = TRUE,
+        footer = modalButton("Close")
+      ))
+
+      # Clear fields and refresh table
+      shinyjs::runjs(sprintf(
+        "document.getElementById('%s').value=''; document.getElementById('%s').value='';",
+        session$ns("new_userid"), session$ns("new_institute")
+      ))
+
+      # Trigger table refresh
+      table_refresh_trigger(table_refresh_trigger() + 1)
+    })
   })
 }
+
+# TODO
+# Allow the upload of user data via CSV/TSV
+# Columns: UserID/Institute/Password/Admin
+# To enable bulk user creation
+
+# TODO
+# The addition of new users should update the
+# institute2userids2password.yaml file accordingly.
