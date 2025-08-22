@@ -54,6 +54,38 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
     login_data <- login_return$login_data
 
+    # Debug: Check admin status
+    shiny::observe({
+      req(login_data())
+      cat("Login data admin value:", login_data()$admin, "\n")
+      cat("Login data admin class:", class(login_data()$admin), "\n")
+      print("Full login_data:")
+      print(login_data())
+    })
+
+    # In your server code, replace the renderUI approach
+    observe({
+      req(login_data())
+
+      if (!is.null(login_data()$admin) && login_data()$admin == 1) {
+        # Add admin tab if user is admin and tab doesn't exist
+        if (!"Admin" %in% input$main_navbar) {
+          shiny::insertTab(
+            inputId = "main_navbar",
+            tab = shiny::tabPanel("Admin", adminUI("admin", cfg)),
+            target = "FAQ", # Insert after User stats tab
+            position = "after"
+          )
+        }
+      } else {
+        # Remove admin tab if user is not admin
+        shiny::removeTab(
+          inputId = "main_navbar",
+          target = "Admin"
+        )
+      }
+    })
+
     observeEvent(login_data(), {
       req(login_data())
       user_id <- login_data()$user_id
@@ -215,9 +247,21 @@ makeVotingAppServer <- function(db_pool, cfg) {
       }
     })
 
+    # Track when the Admin tab is selected to trigger automatic refresh
+    admin_tab_trigger <- reactive({
+      req(input$main_navbar)
+      if (input$main_navbar == "Admin") {
+        # Return a timestamp to ensure the reactive fires each time the tab is selected
+        Sys.time()
+      } else {
+        NULL
+      }
+    })
+
     votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source)
     leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
     userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)
+    adminServer("admin", cfg, login_data, db_pool, admin_tab_trigger)
     aboutServer("about", cfg)
 
     # TODO
