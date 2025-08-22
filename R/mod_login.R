@@ -105,7 +105,7 @@ loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
 
     # --- Load credentials once at session start -------------------------------
     user_base <- DBI::dbGetQuery(db_conn,
-      "SELECT userid, password, institute
+      "SELECT userid, password, institute, admin
        FROM passwords"
     ) %>%
       tibble::as_tibble()
@@ -131,7 +131,8 @@ loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
       list(
         user_id = credentials()$info$userid,
         institute = credentials()$info$institute,
-        session_id = credentials()$info$sessionid
+        session_id = credentials()$info$sessionid,
+        admin = credentials()$info$admin
       )
     })
 

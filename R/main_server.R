@@ -54,6 +54,12 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
     login_data <- login_return$login_data
 
+    output$is_admin <- reactive({
+      req(login_data())
+      login_data()$admin == 1
+    })
+    outputOptions(output, "is_admin", suspendWhenHidden = FALSE)
+
     observeEvent(login_data(), {
       req(login_data())
       user_id <- login_data()$user_id
@@ -215,9 +221,21 @@ makeVotingAppServer <- function(db_pool, cfg) {
       }
     })
 
+    # Track when the Admin tab is selected to trigger automatic refresh
+    admin_tab_trigger <- reactive({
+      req(input$main_navbar)
+      if (input$main_navbar == "Admin") {
+        # Return a timestamp to ensure the reactive fires each time the tab is selected
+        Sys.time()
+      } else {
+        NULL
+      }
+    })
+
     votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source)
     leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
     userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)
+    adminServer("admin", cfg, login_data, db_pool, admin_tab_trigger)
     aboutServer("about", cfg)
 
     # TODO

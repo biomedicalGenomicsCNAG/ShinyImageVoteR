@@ -31,17 +31,21 @@ votingAppUI <- function(cfg) {
           collapsible = TRUE,
           cfg$application_title,
           id = "main_navbar",
-          shiny::tabPanel("Vote", votingUI("voting", cfg)),
-          shiny::tabPanel("Leaderboard", leaderboardUI("leaderboard", cfg)),
-          shiny::tabPanel("User stats", userStatsUI("userstats", cfg)),
-          shiny::tabPanel("About", aboutUI("about", cfg)),
-          shiny::tabPanel("FAQ", shiny::includeMarkdown(
-            file.path(
-              get_app_dir(),
-              "docs",
-              "faq.md"
-            )
-          )),
+            shiny::tabPanel("Vote", votingUI("voting", cfg)),
+            shiny::tabPanel("Leaderboard", leaderboardUI("leaderboard", cfg)),
+            shiny::tabPanel("User stats", userStatsUI("userstats", cfg)),
+            shiny::conditionalPanel(
+              condition = "output.is_admin",
+              shiny::tabPanel("Admin", adminUI("admin", cfg))
+            ),
+            shiny::tabPanel("About", aboutUI("about", cfg)),
+            shiny::tabPanel("FAQ", shiny::includeMarkdown(
+              file.path(
+                get_app_dir(),
+                "docs",
+                "faq.md"
+              )
+            )),
           header = shiny::div(
             id    = "logout-btn",
             style = "position:absolute; right:1em; top:0.5em; z-index:1000;",
