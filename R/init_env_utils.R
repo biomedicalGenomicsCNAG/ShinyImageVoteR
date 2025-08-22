@@ -142,20 +142,6 @@ generate_password <- function(length = 12, pattern = "!@#$%^&*") {
   paste(sample(chars, length, replace = TRUE), collapse = "")
 }
 
-#' Generate a password retrieval link
-#'
-#' Creates a query string containing the provided token. The resulting string
-#' can be appended to a URL so that the token is available as a query
-#' parameter.
-#'
-#' @param token Character. Password retrieval token.
-#'
-#' @return Character string of the form `?token=<token>`
-generate_password_retrieval_link <- function(userid) {
-  token <- digest::digest(paste0(userid, Sys.time(), runif(1)))
-  paste0("?token=", token)
-}
-
 #' Retrieve a password using a retrieval token
 #'
 #' Looks up the password corresponding to a retrieval link token and marks the
@@ -170,14 +156,14 @@ retrieve_password_from_link <- function(token, conn) {
   print("token")
   print(token)
   res <- DBI::dbGetQuery(conn,
-    "SELECT userid, password FROM passwords WHERE password_retrieval_link = ?",
+    "SELECT userid, password FROM passwords WHERE pwd_retrieval_token = ? AND pwd_retrieved_timestamp IS NULL",
     params = list(token)
   )
   if (nrow(res) == 0) {
-    return(NULL)
+    return("Invalid or already used password retrieval link.")
   }
   DBI::dbExecute(conn,
-    "UPDATE passwords SET link_clicked_timestamp = ?, WHERE password_retrieval_link = ?",
+    "UPDATE passwords SET pwd_retrieved_timestamp = ? WHERE pwd_retrieval_token = ?",
     params = list(as.character(Sys.time()), token)
   )
   res$password[[1]]

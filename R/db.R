@@ -64,8 +64,8 @@ create_database <- function(
       userid TEXT PRIMARY KEY,
       institute TEXT,
       password TEXT,
-      password_retrieval_link TEXT,
-      link_clicked_timestamp TEXT
+      pwd_retrieval_token TEXT,
+      pwd_retrieved_timestamp TEXT
     )
   ")
 
@@ -186,12 +186,11 @@ populate_users_table <- function(
       sapply(user_institute_map$userid, function(x) generate_password()),
       user_institute_map$preset_password
     ),
-    password_retrieval_link = sapply(
+    pwd_retrieval_token = sapply(
       user_institute_map$userid,
-      function(x) generate_password_retrieval_link(x)
+      function(x) digest::digest(paste0(x, Sys.time(), runif(1)))
     ),
-    # password_retrieval_link = NA_character_,
-    link_clicked_timestamp = NA_character_,
+    pwd_retrieved_timestamp = NA_character_,
     stringsAsFactors = FALSE
   )
 

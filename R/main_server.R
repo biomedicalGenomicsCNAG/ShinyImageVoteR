@@ -17,29 +17,21 @@ makeVotingAppServer <- function(db_pool, cfg) {
     total_images <- DBI::dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
     cat(sprintf("Total annotations in DB: %s\n", total_images))
 
-    shiny::observeEvent(TRUE,
-      {
-        path <- session$clientData$url_pathname
-        if (grepl("^/retrieve_password/", path)) {
-          token <- sub("^/retrieve_password/", "", path)
-          pwd <- retrieve_password_from_link(token, db_pool)
-          if (!is.null(pwd)) {
-            shiny::showModal(shiny::modalDialog(
-              title = "Your password",
-              paste("Password:", pwd),
-              easyClose = TRUE
-            ))
-          } else {
-            shiny::showModal(shiny::modalDialog(
-              title = "Invalid link",
-              "The password retrieval link is invalid or has already been used.",
-              easyClose = TRUE
-            ))
-          }
-        }
-      },
-      once = TRUE
-    )
+    shiny::observe({
+      query <- shiny::parseQueryString(session$clientData$url_search)
+      token <- query[["pwd_retrieval_token"]]
+      if (!is.null(token)) {
+        pwd <- retrieve_password_from_link(token, db_pool)
+        print("Retrieved password:")
+        print(pwd)
+        shiny::showModal(shiny::modalDialog(
+          title = "Your password:",
+          pwd,
+          easyClose = TRUE,
+          footer = "Save it this link will expire after you close this dialog"
+        ))
+      }
+    })
 
     # Initialize the login module
     login_return <- loginServer(
