@@ -1,6 +1,7 @@
 #' Admin module UI
 #'
-#' Displays password retrieval tokens for users who have not retrieved their password yet.
+#' Displays password retrieval tokens for users who have not retrieved their password yet and
+#' allows admins to add new users.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration object
@@ -12,13 +13,32 @@ adminUI <- function(id, cfg) {
   shiny::fluidPage(
     theme = cfg$theme,
     DT::dataTableOutput(ns("pwd_retrieval_table")),
-    shiny::actionButton(ns("refresh_tokens"), "Refresh")
+    shiny::br(),
+    shiny::fluidRow(
+      shiny::column(
+        4,
+        shiny::textInput(ns("new_userid"), "User ID")
+      ),
+      shiny::column(
+        4,
+        shiny::textInput(ns("new_institute"), "Institute")
+      ),
+      shiny::column(
+        2,
+        shiny::actionButton(ns("add_user"), "Add user")
+      ),
+      shiny::column(
+        2,
+        shiny::actionButton(ns("refresh_tokens"), "Refresh")
+      )
+    )
   )
 }
 
 #' Admin module server
 #'
-#' Shows password retrieval tokens for users who have not accessed their retrieval link.
+#' Shows password retrieval tokens for users who have not accessed their retrieval link and
+#' allows admins to add new users.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration
@@ -36,16 +56,19 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     })
 
-    pwd_retrieval_tbl <- eventReactive(c(login_trigger(), input$refresh_tokens, tab_change_trigger()), {
-      req(login_trigger()$admin == 1)
-      DBI::dbGetQuery(
-        db_pool,
-        paste(
-          "SELECT userid, pwd_retrieval_token FROM passwords",
-          "WHERE pwd_retrieval_token IS NOT NULL AND pwd_retrieved_timestamp IS NULL"
+    pwd_retrieval_tbl <- eventReactive(
+      c(login_trigger(), input$refresh_tokens, tab_change_trigger(), input$add_user),
+      {
+        req(login_trigger()$admin == 1)
+        DBI::dbGetQuery(
+          db_pool,
+          paste(
+            "SELECT userid, institute, pwd_retrieval_token FROM passwords",
+            "WHERE pwd_retrieval_token IS NOT NULL AND pwd_retrieved_timestamp IS NULL"
+          )
         )
-      )
-    })
+      }
+    )
 
     output$pwd_retrieval_table <- DT::renderDT(
       {
@@ -72,7 +95,12 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
 
         # Remove the password retrieval token column
         tbl$pwd_retrieval_token <- NULL
-        colnames(tbl) <- c("User ID", "Password Retrieval Link", "Email Template")
+        colnames(tbl) <- c(
+          "User ID",
+          "Institute",
+          "Password Retrieval Link",
+          "Email Template"
+        )
         tbl
       },
       escape = FALSE,
@@ -112,6 +140,68 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           footer = modalButton("Close")
         ))
       }
+    })
+
+    observeEvent(input$add_user, {
+      req(login_trigger()$admin == 1)
+      user_id <- trimws(input$new_userid)
+      institute <- trimws(input$new_institute)
+
+      if (user_id == "" || institute == "") {
+        showModal(modalDialog(
+          title = "Missing information",
+          "Please provide both user ID and institute.",
+          easyClose = TRUE,
+          footer = modalButton("Close")
+        ))
+        return()
+      }
+
+      existing <- DBI::dbGetQuery(
+        db_pool,
+        "SELECT userid FROM passwords WHERE userid = ?",
+        params = list(user_id)
+      )
+
+      if (nrow(existing) > 0) {
+        showModal(modalDialog(
+          title = "User exists",
+          "A user with this ID already exists.",
+          easyClose = TRUE,
+          footer = modalButton("Close")
+        ))
+        return()
+      }
+
+      password <- generate_password()
+      token <- digest::digest(paste0(user_id, Sys.time(), runif(1)))
+
+      DBI::dbExecute(
+        db_pool,
+        "INSERT INTO passwords (userid, institute, password, admin, pwd_retrieval_token, pwd_retrieved_timestamp) VALUES (?, ?, ?, 0, ?, NULL)",
+        params = list(user_id, institute, password, token)
+      )
+
+      protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
+      hostname <- session$clientData$url_hostname
+      port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
+      base_url <- paste0(protocol, hostname, port)
+      retrieval_link <- paste0(base_url, "?pwd_retrieval_token=", token)
+
+      showModal(modalDialog(
+        title = paste("User", user_id, "added"),
+        tags$pre(
+          style = "white-space: pre-wrap; font-family: monospace;",
+          retrieval_link
+        ),
+        easyClose = TRUE,
+        footer = modalButton("Close")
+      ))
+
+      updateTextInput(session, "new_userid", value = "")
+      updateTextInput(session, "new_institute", value = "")
+
+      pwd_retrieval_tbl()
     })
   })
 }
