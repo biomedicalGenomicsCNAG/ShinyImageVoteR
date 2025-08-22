@@ -1,15 +1,15 @@
 #' Copy a directory from the app to a target path
 #' This function copies a directory from the app's default environment to a specified target path.
-#' 
+#'
 #' @keywords internal
 #' @param target_dir_path Character. Path to the target directory where the app directory will be copied.
-#' 
+#'
 #' @return Character path to the copied directory
 copy_dir_from_app <- function(target_dir_path) {
   app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
   target_dir_name <- basename(target_dir_path)
-  dir_to_copy <- file.path(app_dir,"default_env",target_dir_name)
+  dir_to_copy <- file.path(app_dir, "default_env", target_dir_name)
 
   R.utils::copyDirectory(
     from = dir_to_copy,
@@ -47,20 +47,20 @@ copy_dir_from_app <- function(target_dir_path) {
 #' # Fails validation (contains spaces)
 #' try(safe_dir_create("my data"))
 safe_dir_create <- function(
-  path,
-  pattern = "^[A-Za-z0-9_]+$",
-  showWarnings = TRUE,
-  recursive = FALSE
-) {
-
+    path,
+    pattern = "^[A-Za-z0-9_]+$",
+    showWarnings = TRUE,
+    recursive = FALSE) {
   name <- basename(path)
-  
+
   # Validate against the pattern
   if (!grepl(pattern, name)) {
-    stop("Invalid directory name: '", name, 
-         "'. Only letters, digits and underscores are allowed.")
+    stop(
+      "Invalid directory name: '", name,
+      "'. Only letters, digits and underscores are allowed."
+    )
   }
-  
+
   # If it already exists, warn or message and return FALSE
   if (dir.exists(path)) {
     if (showWarnings) {
@@ -68,10 +68,11 @@ safe_dir_create <- function(
     }
     return(invisible(FALSE))
   }
-  
+
   # Create the directory
   dir.create(
-    path, showWarnings = showWarnings,
+    path,
+    showWarnings = showWarnings,
     recursive = recursive
   )
 }
@@ -81,23 +82,23 @@ safe_dir_create <- function(
 #' This function checks if a .gitignore file exists in the specified directory.
 #' If it does not exist, it creates one. It then ensures that the specified patterns
 #' are present in the .gitignore file, adding them if they are missing.
-#' 
+#'
 #' @keywords internal
 #' @param dir Character. Directory path where the .gitignore file should be checked/created.
 #' @param patterns Character vector. Patterns to ensure in the .gitignore file.
-#' 
+#'
 #' @return Character path to the .gitignore file
-#' 
+#'
 ensure_gitignore <- function(directory, patterns) {
   dir_full_path <- normalizePath(directory, mustWork = TRUE)
   gi_path <- file.path(dir_full_path, ".gitignore")
-  
+
   existing <- character(0)
   if (file.exists(gi_path)) {
     existing <- readLines(gi_path, warn = FALSE)
     message(glue::glue("Found existing .gitignore at {gi_path}"))
-  } 
-  
+  }
+
   # Determine which patterns are missing
   missing <- setdiff(patterns, existing)
   message(glue::glue(
@@ -124,7 +125,7 @@ ensure_gitignore <- function(directory, patterns) {
   } else {
     message("All specified patterns already present in .gitignore.")
   }
-  
+
   invisible(gi_path)
 }
 
@@ -141,3 +142,29 @@ generate_password <- function(length = 12, pattern = "!@#$%^&*") {
   paste(sample(chars, length, replace = TRUE), collapse = "")
 }
 
+#' Retrieve a password using a retrieval token
+#'
+#' Looks up the password corresponding to a retrieval link token and marks the
+#' link as shown in the database.
+#'
+#' @param token Character. Retrieval token from the URL path.
+#' @param conn Database connection object.
+#' @return Character password if token is valid, otherwise NULL.
+#' @keywords internal
+retrieve_password_from_link <- function(token, conn) {
+  print("In retrieve_password_from_link")
+  print("token")
+  print(token)
+  res <- DBI::dbGetQuery(conn,
+    "SELECT userid, password FROM passwords WHERE pwd_retrieval_token = ? AND pwd_retrieved_timestamp IS NULL",
+    params = list(token)
+  )
+  if (nrow(res) == 0) {
+    return("Invalid or already used password retrieval link.")
+  }
+  DBI::dbExecute(conn,
+    "UPDATE passwords SET pwd_retrieved_timestamp = ? WHERE pwd_retrieval_token = ?",
+    params = list(as.character(Sys.time()), token)
+  )
+  res$password[[1]]
+}

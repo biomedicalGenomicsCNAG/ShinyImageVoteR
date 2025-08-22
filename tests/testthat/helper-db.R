@@ -7,8 +7,8 @@ create_mock_db <- function() {
   db_pool <- pool::dbPool(RSQLite::SQLite(), dbname = db_file)
 
   conn <- pool::poolCheckout(db_pool)
-  on.exit(pool::poolReturn(conn), add = TRUE)  # Ensure return no matter what
-  
+  on.exit(pool::poolReturn(conn), add = TRUE) # Ensure return no matter what
+
   # Create annotations table
   DBI::dbExecute(conn, "
     CREATE TABLE annotations (
@@ -24,14 +24,14 @@ create_mock_db <- function() {
       vote_count_total INTEGER DEFAULT 0
     )
   ")
-  
+
   # Insert test data
   test_mutations <- list(
     list("chr1:1000", "A", "T", "SNV", "/test/path1.png"),
     list("chr2:2000", "G", "C", "SNV", "/test/path2.png"),
     list("chr3:3000", "AT", "A", "DEL", "/test/path3.png")
   )
-  
+
   for (mutation in test_mutations) {
     DBI::dbExecute(conn, "
       INSERT INTO annotations (coordinates, REF, ALT, variant, path)
@@ -54,10 +54,10 @@ create_mock_db <- function() {
       userid TEXT PRIMARY KEY,
       institute TEXT,
       password TEXT,
-      password_retrieval_link TEXT,
-      link_clicked_timestamp TEXT
+      pwd_retrieval_token TEXT,
+      pwd_retrieved_timestamp TEXT
     )
   ")
-  
+
   return(list(pool = db_pool, file = db_file))
 }
