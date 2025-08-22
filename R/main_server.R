@@ -54,11 +54,37 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
     login_data <- login_return$login_data
 
-    output$is_admin <- reactive({
+    # Debug: Check admin status
+    shiny::observe({
       req(login_data())
-      login_data()$admin == 1
+      cat("Login data admin value:", login_data()$admin, "\n")
+      cat("Login data admin class:", class(login_data()$admin), "\n")
+      print("Full login_data:")
+      print(login_data())
     })
-    outputOptions(output, "is_admin", suspendWhenHidden = FALSE)
+
+    # In your server code, replace the renderUI approach
+    observe({
+      req(login_data())
+
+      if (!is.null(login_data()$admin) && login_data()$admin == 1) {
+        # Add admin tab if user is admin and tab doesn't exist
+        if (!"Admin" %in% input$main_navbar) {
+          shiny::insertTab(
+            inputId = "main_navbar",
+            tab = shiny::tabPanel("Admin", adminUI("admin", cfg)),
+            target = "FAQ", # Insert after User stats tab
+            position = "after"
+          )
+        }
+      } else {
+        # Remove admin tab if user is not admin
+        shiny::removeTab(
+          inputId = "main_navbar",
+          target = "Admin"
+        )
+      }
+    })
 
     observeEvent(login_data(), {
       req(login_data())
