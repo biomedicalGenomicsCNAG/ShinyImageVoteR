@@ -13,25 +13,26 @@ adminUI <- function(id, cfg) {
   shiny::fluidPage(
     theme = cfg$theme,
     DT::dataTableOutput(ns("pwd_retrieval_table")),
-    shiny::br(),
-    shiny::fluidRow(
-      shiny::column(
-        4,
-        shiny::textInput(ns("new_userid"), "User ID")
-      ),
-      shiny::column(
-        4,
-        shiny::textInput(ns("new_institute"), "Institute")
-      ),
-      shiny::column(
-        2,
-        shiny::actionButton(ns("add_user"), "Add user")
-      ),
-      shiny::column(
-        2,
-        shiny::actionButton(ns("refresh_tokens"), "Refresh")
-      )
-    )
+    shiny::actionButton(ns("refresh_tokens"), "Refresh")
+    # shiny::br(),
+    # shiny::fluidRow(
+    #   shiny::column(
+    #     4,
+    #     shiny::textInput(ns("new_userid"), "User ID")
+    #   ),
+    #   shiny::column(
+    #     4,
+    #     shiny::textInput(ns("new_institute"), "Institute")
+    #   ),
+    #   shiny::column(
+    #     2,
+    #     shiny::actionButton(ns("add_user"), "Add user")
+    #   ),
+    #   shiny::column(
+    #     2,
+    #     shiny::actionButton(ns("refresh_tokens"), "Refresh")
+    #   )
+    # )
   )
 }
 
@@ -48,6 +49,9 @@ adminUI <- function(id, cfg) {
 #' @export
 adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
+    # Reactive trigger for table refresh
+    table_refresh_trigger <- reactiveVal(0)
+
     tab_change_trigger <- reactive({
       if (!is.null(tab_trigger)) {
         tab_trigger()
@@ -57,7 +61,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
     })
 
     pwd_retrieval_tbl <- eventReactive(
-      c(login_trigger(), input$refresh_tokens, tab_change_trigger(), input$add_user),
+      c(login_trigger(), input$refresh_tokens, tab_change_trigger(), table_refresh_trigger()),
       {
         req(login_trigger()$admin == 1)
         DBI::dbGetQuery(
@@ -70,42 +74,72 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     )
 
-    output$pwd_retrieval_table <- DT::renderDT(
-      {
-        tbl <- pwd_retrieval_tbl()
+    output$pwd_retrieval_table <- DT::renderDT({
+      tbl <- pwd_retrieval_tbl()
 
-        # Get current URL components
-        protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
-        hostname <- session$clientData$url_hostname
-        port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
-        base_url <- paste0(protocol, hostname, port)
+      # --- Build base URL
+      protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
+      hostname <- session$clientData$url_hostname
+      port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
+      base_url <- paste0(protocol, hostname, port)
 
-        tbl$link <- paste0(
-          base_url,
-          "?pwd_retrieval_token=",
-          tbl$pwd_retrieval_token
-        )
+      # --- rows
+      tbl$link <- paste0(
+        base_url,
+        "?pwd_retrieval_token=",
+        tbl$pwd_retrieval_token
+      )
+      tbl$email_btn <- sprintf(
+        '<button class="btn btn-primary btn-sm" onclick="Shiny.setInputValue(\'%s\', \'%s\', {priority: \'event\'});">Email Template</button>',
+        session$ns("email_template_btn"),
+        tbl$userid
+      )
+      # Remove the password retrieval token column
+      tbl$pwd_retrieval_token <- NULL
+      cols <- c("User ID", "Institute", "Password Retrieval Link", "Action")
+      names(tbl) <- cols
 
-        # Add email template button
-        tbl$email_btn <- sprintf(
-          '<button class="btn btn-primary btn-sm" onclick="Shiny.setInputValue(\'%s\', \'%s\', {priority: \'event\'});">Email Template</button>',
-          session$ns("email_template_btn"),
-          tbl$userid
-        )
+      # Ensure character cols & base df
+      tbl[] <- lapply(tbl, as.character)
+      tbl <- as.data.frame(tbl, stringsAsFactors = FALSE, check.names = FALSE)
 
-        # Remove the password retrieval token column
-        tbl$pwd_retrieval_token <- NULL
-        colnames(tbl) <- c(
-          "User ID",
-          "Institute",
-          "Password Retrieval Link",
-          "Email Template"
-        )
-        tbl
-      },
-      escape = FALSE,
-      options = list(pageLength = 10)
-    )
+      # --- Dummy new row (names & order must match `cols`)
+      ns <- session$ns
+
+      add_new_user_btn_html <- sprintf(
+        '<button class="btn btn-success btn-sm"
+                  title="Add user"
+                  onclick="(function(){
+                    var u = document.getElementById(\'%s\').value.trim();
+                    var i = document.getElementById(\'%s\').value.trim();
+                    // nonce ensures the event fires even with same values
+                    Shiny.setInputValue(\'%s\', {userid: u, institute: i, nonce: Math.random()}, {priority:\'event\'});
+                  })()">
+            &#x2795; new user
+          </button>',
+        ns("new_userid"), ns("new_institute"), ns("add_user_btn")
+      )
+
+      new_row <- data.frame(
+        `User ID` = as.character(textInput(ns("new_userid"), NULL, width = "100%")),
+        Institute = as.character(textInput(ns("new_institute"), NULL, width = "100%")),
+        `Password Retrieval Link` = "",
+        Action = add_new_user_btn_html,
+        stringsAsFactors = FALSE, check.names = FALSE
+      )
+      new_row <- new_row[, cols, drop = FALSE] # enforce same order
+
+      # Prefer bind_rows for robustness; could also do: rbind(new_row[cols], tbl)
+      show_df <- dplyr::bind_rows(new_row, tbl)
+
+      DT::datatable(
+        show_df,
+        escape = FALSE,
+        selection = "none",
+        rownames = FALSE,
+        options = list(pageLength = 10)
+      )
+    })
 
     # Handle email template button clicks
     observeEvent(input$email_template_btn, {
@@ -142,10 +176,12 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     })
 
-    observeEvent(input$add_user, {
+    observeEvent(input$add_user_btn, {
+      print("Add user button clicked")
+
       req(login_trigger()$admin == 1)
-      user_id <- trimws(input$new_userid)
-      institute <- trimws(input$new_institute)
+      user_id <- trimws(input$add_user_btn$userid)
+      institute <- trimws(input$add_user_btn$institute %||% "")
 
       if (user_id == "" || institute == "") {
         showModal(modalDialog(
@@ -192,16 +228,29 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         title = paste("User", user_id, "added"),
         tags$pre(
           style = "white-space: pre-wrap; font-family: monospace;",
-          retrieval_link
+          "User successfully added and password generated."
         ),
         easyClose = TRUE,
         footer = modalButton("Close")
       ))
 
-      updateTextInput(session, "new_userid", value = "")
-      updateTextInput(session, "new_institute", value = "")
+      # Clear fields and refresh table
+      shinyjs::runjs(sprintf(
+        "document.getElementById('%s').value=''; document.getElementById('%s').value='';",
+        session$ns("new_userid"), session$ns("new_institute")
+      ))
 
-      pwd_retrieval_tbl()
+      # Trigger table refresh
+      table_refresh_trigger(table_refresh_trigger() + 1)
     })
   })
 }
+
+# TODO
+# Allow the upload of user data via CSV/TSV
+# Columns: UserID/Institute/Password/Admin
+# To enable bulk user creation
+
+# TODO
+# The addition of new users should update the
+# institute2userids2password.yaml file accordingly.
