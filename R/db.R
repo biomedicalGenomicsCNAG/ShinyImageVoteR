@@ -10,9 +10,6 @@ create_database <- function(
     db_path,
     to_be_voted_images_file,
     grouped_credentials) {
-    db_path,
-    to_be_voted_images_file,
-    grouped_credentials) {
   # Look for data file in config/annotation_screenshots_paths first
   config_data_file <- to_be_voted_images_file
   db_full_path <- normalizePath(db_path)
@@ -47,7 +44,6 @@ create_database <- function(
     BEGIN
       UPDATE annotations
       SET vote_count_total =
-      SET vote_count_total =
           vote_count_correct +
           vote_count_no_variant +
           vote_count_different_variant +
@@ -80,12 +76,10 @@ create_database <- function(
 
   populate_annotations_table(
     conn,
-    conn,
     to_be_voted_images_file
   )
 
   populate_users_table(
-    conn,
     conn,
     grouped_credentials
   )
@@ -105,8 +99,6 @@ create_database <- function(
 populate_annotations_table <- function(
     conn,
     to_be_voted_images_file) {
-    conn,
-    to_be_voted_images_file) {
   # Read the to_be_voted_images_file
   if (!file.exists(to_be_voted_images_file)) {
     stop("File not found: ", to_be_voted_images_file)
@@ -120,8 +112,6 @@ populate_annotations_table <- function(
   annotations_df <- read.table(
     to_be_voted_images_file,
     header = FALSE,
-    to_be_voted_images_file,
-    header = FALSE,
     stringsAsFactors = FALSE
   )
 
@@ -133,7 +123,6 @@ populate_annotations_table <- function(
   # This should be not hardcoded but read from the config file
   annotations_df$path <- gsub(
     "/vol/b1mg/", "images/",
-    "/vol/b1mg/", "images/",
     annotations_df$path
   )
 
@@ -143,92 +132,6 @@ populate_annotations_table <- function(
     append = TRUE, row.names = FALSE
   )
   cat("Populated annotations table with", nrow(annotations_df), "rows\n")
-}
-
-#' Populate the users table with data from the grouped credentials file
-#' @keywords internal
-#' @param conn Database connection object
-#' @param grouped_credentials Object. Loaded grouped credentials from the config file
-#' @return NULL
-populate_users_table_old <- function(
-    conn,
-    grouped_credentials) {
-  cat("Found grouped_credentials_file, populating users...\n")
-
-
-  # Extract all userids with their institutes and preset passwords
-  user_institute_map <- data.frame(
-    userid = character(0),
-    institute = character(0),
-    userid = character(0),
-    institute = character(0),
-    preset_password = character(0),
-    stringsAsFactors = FALSE
-  )
-
-  for (institute in names(grouped_credentials)) {
-    users <- grouped_credentials[[institute]]
-
-    # Process each user entry
-    for (user_entry in users) {
-      if (is.list(user_entry) && length(user_entry) == 1) {
-        # Format: - username: password
-        username <- names(user_entry)[1]
-        preset_password <- as.character(user_entry[[1]])
-      } else if (is.character(user_entry)) {
-        # Format: - username (no preset password)
-        username <- trimws(gsub("^-", "", user_entry))
-        preset_password <- NA_character_
-      } else {
-        # Convert to character and treat as simple username
-        username <- trimws(gsub("^-", "", as.character(user_entry)))
-        preset_password <- NA_character_
-      }
-
-
-      # Add to the mapping
-      institute_user <- data.frame(
-        userid = username,
-        institute = institute,
-        preset_password = preset_password,
-        stringsAsFactors = FALSE
-      )
-      user_institute_map <- rbind(user_institute_map, institute_user)
-    }
-  }
-
-
-  userids <- user_institute_map$userid
-  cat("Found users from config:", paste(userids, collapse = ", "), "\n")
-
-
-  # Prepare data for insertion (no existing users in new database)
-  user_data <- data.frame(
-    userid = user_institute_map$userid,
-    institute = user_institute_map$institute,
-    password = ifelse(
-      is.na(user_institute_map$preset_password),
-      sapply(user_institute_map$userid, function(x) generate_password()),
-      user_institute_map$preset_password
-    ),
-    pwd_retrieval_token = sapply(
-      user_institute_map$userid,
-      function(x) digest::digest(paste0(x, Sys.time(), runif(1)))
-    ),
-    pwd_retrieved_timestamp = NA_character_,
-    stringsAsFactors = FALSE
-  )
-
-  # Insert users
-  DBI::dbWriteTable(conn, "passwords", user_data, append = TRUE)
-  cat("Added", nrow(user_data), "users to the database\n")
-
-
-  # Display the added users and their passwords
-  cat("\nAdded users and their passwords:\n")
-  for (i in 1:nrow(user_data)) {
-    cat("User:", user_data$userid[i], "Institute:", user_data$institute[i], "Password:", user_data$password[i], "\n")
-  }
 }
 
 #' Populate the users table with data from grouped credentials (per-institute lists)
@@ -318,8 +221,11 @@ populate_users_table <- function(conn, grouped_credentials) {
       user_institute_map$preset_password
     ),
     admin = as.integer(user_institute_map$admin), # store as 0/1 (portable)
-    password_retrieval_link = NA_character_,
-    link_clicked_timestamp = NA_character_,
+    pwd_retrieval_token = sapply(
+      user_institute_map$userid,
+      function(x) digest::digest(paste0(x, Sys.time(), runif(1)))
+    ),
+    pwd_retrieved_timestamp = NA_character_,
     stringsAsFactors = FALSE
   )
 
@@ -360,4 +266,3 @@ init_db <- function(cfg_sqlite_file) {
 
   return(pool)
 }
-

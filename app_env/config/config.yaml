@@ -4,7 +4,7 @@ user_data_dir: "./app_env/user_data"
 server_data_dir: "./app_env/server_data"
 
 to_be_voted_images_file: "./app_env/images/to_be_voted_images.tsv"
-grouped_credentials_file: "./app_env/config/institute2userids2password_new.yaml"
+grouped_credentials_file: "./app_env/config/institute2userids2password.yaml"
 sqlite_file: "./app_env/db.sqlite"
 shutdown_trigger_file: "./app_env/config/STOP"
 
