@@ -41,7 +41,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       DBI::dbGetQuery(
         db_pool,
         paste(
-          "SELECT userid, pwd_retrieval_token FROM passwords",
+          "SELECT userid, institute, pwd_retrieval_token FROM passwords",
           "WHERE pwd_retrieval_token IS NOT NULL AND pwd_retrieved_timestamp IS NULL"
         )
       )
@@ -72,7 +72,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
 
         # Remove the password retrieval token column
         tbl$pwd_retrieval_token <- NULL
-        colnames(tbl) <- c("User ID", "Password Retrieval Link", "Email Template")
+        colnames(tbl) <- c("User ID", "Institute", "Password Retrieval Link", "Show Email Template")
         tbl
       },
       escape = FALSE,
