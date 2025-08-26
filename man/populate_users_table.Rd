@@ -2,16 +2,25 @@
 % Please edit documentation in R/db.R
 \name{populate_users_table}
 \alias{populate_users_table}
-\title{Populate the users table with data from the grouped credentials file}
+\title{Populate the users table with data from grouped credentials (per-institute lists)}
 \usage{
 populate_users_table(conn, grouped_credentials)
 }
 \arguments{
 \item{conn}{Database connection object}
 
-\item{grouped_credentials}{Object. Loaded grouped credentials from the config file}
+\item{grouped_credentials}{list; parsed YAML}
 }
 \description{
-Populate the users table with data from the grouped credentials file
+Expected YAML shape:
+<institute_name>:
+\itemize{
+\item userid: \if{html}{\out{<user>}}
+password: \if{html}{\out{<string>}}|NULL
+admin: true|false  # optional
+}
+}
+\details{
+Columns written: userid, institute, password, admin, password_retrieval_link, link_clicked_timestamp
 }
 \keyword{internal}

@@ -2,6 +2,8 @@
 
 export(aboutServer)
 export(aboutUI)
+export(adminServer)
+export(adminUI)
 export(cancel_pending_logout)
 export(color_seq)
 export(create_database)
