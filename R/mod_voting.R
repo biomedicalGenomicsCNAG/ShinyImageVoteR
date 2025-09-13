@@ -22,9 +22,6 @@
 #' @return A Shiny UI element (`fluidPage`) representing the voting interface.
 #' @export
 votingUI <- function(id, cfg) {
-  # cfg <- ShinyImgVoteR::load_config(
-  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  # )
   ns <- shiny::NS(id)
 
   shiny::fluidPage(
@@ -175,10 +172,6 @@ votingUI <- function(id, cfg) {
 #' @export
 votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_source) {
   moduleServer(id, function(input, output, session) {
-    # cfg <- ShinyImgVoteR::load_config(
-    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-    # )
-
     # Helper function to create the "done" tibble
     create_done_tibble <- function() {
       tibble::tibble(
@@ -549,8 +542,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       }
       shiny::div(
         shiny::img(
-          src = paste0(mut_df$path),
-          # style = "max-width: 100%;"
+          src = glue::glue("images/{mut_df$path}"),
           style = paste0("width: ", input$image_width, "%;")
         )
       )

@@ -12,10 +12,6 @@ library(magrittr)
 #' @return A Shiny UI element (`fluidPage`) for displaying the leaderboard.
 #' @export
 leaderboardUI <- function(id, cfg) {
-  # cfg <- ShinyImgVoteR::load_config(
-  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  # )
-
   ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,
@@ -25,10 +21,10 @@ leaderboardUI <- function(id, cfg) {
 }
 
 #' Leaderboard Server Module
-#' 
+#'
 #' This module provides leaderboard functionality with automatic refresh
 #' when navigating to the leaderboard tab.
-#' 
+#'
 #' @param id Module namespace ID
 #' @param login_trigger Reactive that triggers when user logs in
 #' @param tab_trigger Optional reactive that triggers when the leaderboard tab is selected
@@ -37,13 +33,6 @@ leaderboardUI <- function(id, cfg) {
 #' @export
 leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
-
-    # cfg <- ShinyImgVoteR::load_config(
-    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-    # )
-
-    # cfg <- ShinyImgVoteR::load_config()
-
     # Create a reactive that triggers when the leaderboard tab is selected
     # This allows automatic refresh when navigating to the leaderboard page
     tab_change_trigger <- reactive({
@@ -53,7 +42,7 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
         NULL
       }
     })
-    
+
     counts <- eventReactive(c(login_trigger(), input$refresh_counts, tab_change_trigger()), {
       req(login_trigger())
       institute_ids <- unlist(strsplit(
@@ -89,7 +78,7 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
         data.frame(institute = institute, users = total_users, total_images_voted = total_images)
       })
       counts_df <- do.call(rbind, counts_list)
-      
+
       counts_df <- counts_df %>%
         dplyr::mutate(institute = factor(institute, levels = institute_ids)) %>%
         dplyr::arrange(desc(total_images_voted))

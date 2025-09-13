@@ -11,9 +11,6 @@ library(shiny)
 #' @return A Shiny UI element (typically a login panel) rendered within a namespace.
 #' @export
 loginUI <- function(id, cfg) {
-  # cfg <- ShinyImgVoteR::load_config(
-  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  # )
   ns <- shiny::NS(id)
   shiny::wellPanel(
     id = ns("loginPanel"),
@@ -45,7 +42,7 @@ loginUI <- function(id, cfg) {
 #' @param id A string identifier for the module namespace.
 #' @param db_conn A database pool connection (e.g. SQLite or PostgreSQL) used to track sessions.
 #' @param log_out A reactive trigger (default: `reactive(NULL)`) to perform logout actions.
-#' 
+#'
 #' @return A list containing:
 #' \describe{
 #'   \item{login_data}{A `reactiveVal` holding login metadata (e.g. user ID, voting institute, session ID)}
@@ -56,10 +53,6 @@ loginUI <- function(id, cfg) {
 #' @export
 loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
-    # cfg <- ShinyImgVoteR::load_config(
-    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-    # )
-
     add_sessionid_to_db <- function(userid, sessionid, conn = db_conn) {
       tibble::tibble(
         userid = userid,
@@ -67,7 +60,7 @@ loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
         login_time = as.character(lubridate::now()),
         logout_time = NA_character_
       ) %>%
-      DBI::dbWriteTable(conn, "sessionids", ., append = TRUE)
+        DBI::dbWriteTable(conn, "sessionids", ., append = TRUE)
     }
 
     update_logout_time_in_db <- function(sessionid, conn = db_conn) {
@@ -89,7 +82,8 @@ loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
     # }
 
     get_sessionids_from_db <- function(conn = db_conn, expiry = cfg$cookie_expiry) {
-      DBI::dbGetQuery(conn,
+      DBI::dbGetQuery(
+        conn,
         "SELECT userid, sessionid, login_time, logout_time
          FROM sessionids"
       ) %>%
@@ -104,7 +98,8 @@ loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
     }
 
     # --- Load credentials once at session start -------------------------------
-    user_base <- DBI::dbGetQuery(db_conn,
+    user_base <- DBI::dbGetQuery(
+      db_conn,
       "SELECT userid, password, institute, admin
        FROM passwords"
     ) %>%
@@ -144,4 +139,3 @@ loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
     ))
   })
 }
-

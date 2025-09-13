@@ -9,10 +9,6 @@
 #' @return A Shiny UI element (`fluidPage`) for rendering user statistics.
 #' @export
 userStatsUI <- function(id, cfg) {
-  # cfg <- ShinyImgVoteR::load_config(
-  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  # )
-
   ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,
@@ -22,10 +18,10 @@ userStatsUI <- function(id, cfg) {
 }
 
 #' User Stats Server Module
-#' 
+#'
 #' This module provides user statistics functionality with automatic refresh
 #' when navigating to the user stats tab.
-#' 
+#'
 #' @param id Module namespace ID
 #' @param login_trigger Reactive that triggers when user logs in
 #' @param db_pool Database connection pool
@@ -44,7 +40,7 @@ userStatsServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL)
         NULL
       }
     })
-    
+
     stats <- eventReactive(c(login_trigger(), input$refresh_user_stats, tab_change_trigger()), {
       req(login_trigger())
       user_annotations_file <- session$userData$userAnnotationsFile
@@ -63,7 +59,7 @@ userStatsServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL)
 
       session_counts_df <- annotations_df %>%
         dplyr::group_by(shinyauthr_session_id) %>%
-        dplyr::summarise(images_voted = dplyr::n(), .groups = 'drop')
+        dplyr::summarise(images_voted = dplyr::n(), .groups = "drop")
 
       # TODO dbReadTable does not seem to work with pool
       session_df <- DBI::dbReadTable(db_pool, "sessionids") %>%

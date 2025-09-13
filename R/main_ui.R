@@ -3,10 +3,6 @@
 #' @return A Shiny UI object (tagList)
 #' @export
 votingAppUI <- function(cfg) {
-  # cfg <- ShinyImgVoteR::load_config(
-  #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-  # )
-
   shiny::fluidPage(
     theme = cfg$theme,
     shiny::conditionalPanel(

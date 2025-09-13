@@ -34,13 +34,13 @@ overwrite_if_env_var <- function(env_var_name, cfg_value) {
 #' @return A named list of configuration values (e.g., `cfg_sqlite_file`, `cfg_radio_options2val_map`, etc.)
 #' @import yaml
 #' @export
-load_config <- function(
-    config_file_path = file.path(
-      get_app_dir(), "default_env", "config", "config.yaml"
-    )) {
-  cfg <- yaml::read_yaml(config_file_path)
+load_config <- function(config_file_path) {
+  print(paste0("Loading configuration from: ", config_file_path))
+  if (!file.exists(config_file_path)) {
+    stop(paste0("Configuration file not found: ", config_file_path))
+  }
 
-  base_dir <- Sys.getenv("IMGVOTER_BASE_DIR")
+  cfg <- yaml::read_yaml(config_file_path)
 
   env_vars_to_cfg <- c(
     "IMGVOTER_USER_DATA_DIR" = "user_data_dir",
@@ -60,8 +60,13 @@ load_config <- function(
     cfg[[cfg_var_name]] <- overwrite_if_env_var(env_var, cfg[[cfg_var_name]])
   }
 
+  print("Configuration after environment variable overrides:")
+  print(cfg)
+
   # loop through cfg values and overwrite with absolute paths if relative
   cfg$user_data_dir <- overwrite_if_relative(cfg$user_data_dir)
+  print("user_data_dir:")
+  print(cfg$user_data_dir)
   cfg$server_data_dir <- overwrite_if_relative(cfg$server_data_dir)
   cfg$images_dir <- overwrite_if_relative(cfg$images_dir)
   cfg$sqlite_file <- overwrite_if_relative(cfg$sqlite_file)

@@ -11,7 +11,6 @@ create_database <- function(
     to_be_voted_images_file,
     grouped_credentials) {
   # Look for data file in config/annotation_screenshots_paths first
-  config_data_file <- to_be_voted_images_file
   db_full_path <- normalizePath(db_path)
 
   print(paste0("Creating database at:", db_path))
@@ -103,26 +102,25 @@ populate_annotations_table <- function(
   if (!file.exists(to_be_voted_images_file)) {
     stop("File not found: ", to_be_voted_images_file)
   }
-
-
   cat("Reading to_be_voted_images_file:", to_be_voted_images_file, "\n")
-
 
   # Read the file and create a data frame
   annotations_df <- read.table(
     to_be_voted_images_file,
-    header = FALSE,
+    header = TRUE,
     stringsAsFactors = FALSE
   )
 
-  # TODO
-  # This should be not hardcoded but read from the config file
-  colnames(annotations_df) <- c("coordinates", "REF", "ALT", "variant", "path")
+  first_path <- annotations_df$path[1]
 
-  # TODO
-  # This should be not hardcoded but read from the config file
+  # Use dirname() to extract parent directories
+  png_dir <- dirname(first_path) # directory containing PNGs
+  parent_dir <- dirname(png_dir) # parent directory (one level up)
+  cat("Detected PNG directory:", png_dir, "\n")
+  cat("Detected parent directory:", parent_dir, "\n")
+
   annotations_df$path <- gsub(
-    "/vol/b1mg/", "images/",
+    glue::glue("{parent_dir}/"), "",
     annotations_df$path
   )
 

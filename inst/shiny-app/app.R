@@ -1,11 +1,10 @@
-
-if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTER_STARTED") != "1") {
-  devtools::load_all("../..")  # Load from package root
+if (any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTER_STARTED") != "1") {
+  devtools::load_all("../..") # Load from package root
 
   print("vscode-shiny detected -> delegating to app wrapper")
 
   Sys.setenv(IMGVOTER_STARTED = "1")
-  
+
   # get the parent directory of the app
   app_dir <- normalizePath(dirname(commandArgs(trailingOnly = TRUE)[1]), mustWork = TRUE)
   # get two directories up
@@ -20,19 +19,19 @@ if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTE
     IMGVOTER_IMAGES_DIR = file.path(app_env_dir, "images"),
     IMGVOTER_SERVER_DATA_DIR = file.path(app_env_dir, "server_data"),
     IMGVOTER_USER_DATA_DIR = file.path(app_env_dir, "user_data"),
-    IMG_VOTER_GROUPED_CREDENTIALS = file.path(app_env_dir,"config","institute2userids2password.yaml")
+    IMG_VOTER_GROUPED_CREDENTIALS = file.path(app_env_dir, "config", "institute2userids2password.yaml")
   )
 
   print("Environment variables set:")
   print(
     Sys.getenv(c(
-      "IMGVOTER_DB_PATH", 
-      "IMGVOTER_IMAGES_DIR", 
-      "IMGVOTER_SERVER_DATA_DIR", 
+      "IMGVOTER_DB_PATH",
+      "IMGVOTER_IMAGES_DIR",
+      "IMGVOTER_SERVER_DATA_DIR",
       "IMGVOTER_USER_DATA_DIR",
       "IMG_VOTER_GROUPED_CREDENTIALS"
-    )
-  ))
+    ))
+  )
 
   # Run the wrapped app
   ShinyImgVoteR::run_voting_app(
@@ -44,7 +43,7 @@ if(any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTE
 }
 
 if (requireNamespace("devtools", quietly = TRUE)) {
-  devtools::load_all()  # Load from package root
+  devtools::load_all() # Load from package root
 } else {
   library(ShinyImgVoteR)
 }
@@ -54,10 +53,18 @@ shiny::addResourcePath(
   directoryPath = Sys.getenv("IMGVOTER_IMAGES_DIR")
 )
 
-# GLOBAL pool object shared by all sessions
+print("IMGVOTER_CONFIG_FILE_PATH:")
+print(Sys.getenv("IMGVOTER_CONFIG_FILE_PATH"))
+
 cfg <- ShinyImgVoteR::load_config(
-  config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
+  config_file_path = Sys.getenv(
+    "IMGVOTER_CONFIG_FILE_PATH",
+    unset = file.path(
+      get_app_dir(), "default_env", "config", "config.yaml"
+    )
+  )
 )
+# GLOBAL pool object shared by all sessions
 db_pool <- init_db(cfg$sqlite_file)
 
 # shiny::onStop(function() {

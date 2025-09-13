@@ -4,10 +4,6 @@
 #' @export
 makeVotingAppServer <- function(db_pool, cfg) {
   function(input, output, session) {
-    # cfg <- ShinyImgVoteR::load_config(
-    #   config_file_path = Sys.getenv("IMGVOTER_CONFIG_FILE_PATH")
-    # )
-
     # Tracks the trigger source of the get_mutation function
     # could be "login", "next", "back", "manual url params change"
     get_mutation_trigger_source <- shiny::reactiveVal(NULL)

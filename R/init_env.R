@@ -32,7 +32,6 @@ init_environment <- function(
     IMGVOTER_BASE_DIR = normalizePath(base_dir, mustWork = TRUE),
     IMGVOTER_CONFIG_FILE_PATH = normalizePath(config_file_path, mustWork = TRUE)
   )
-  # TODO use this for every load_config call
 
   # Set up expected directories
   expected_dirs <- c("images", "user_data", "server_data")
