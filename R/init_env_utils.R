@@ -112,8 +112,7 @@ ensure_gitignore <- function(directory, patterns) {
     tryCatch(
       {
         message(glue::glue(
-          "Added {length(missing)} pattern{?s} to .gitignore:",
-          "{?s,}{paste(missing, collapse=', ')}"
+          "Added {length(missing)} pattern{?s} to .gitignore: {paste(missing, collapse=', ')}"
         ))
       },
       error = function(e) {
