@@ -42,12 +42,6 @@ if (any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOT
   quit(save = "no")
 }
 
-if (requireNamespace("devtools", quietly = TRUE)) {
-  devtools::load_all() # Load from package root
-} else {
-  library(ShinyImgVoteR)
-}
-
 shiny::addResourcePath(
   prefix = "images",
   directoryPath = Sys.getenv("IMGVOTER_IMAGES_DIR")

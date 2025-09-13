@@ -4,9 +4,7 @@
 \alias{load_config}
 \title{Load voting app configuration}
 \usage{
-load_config(
-  config_file_path = file.path(get_app_dir(), "default_env", "config", "config.yaml")
-)
+load_config(config_file_path)
 }
 \arguments{
 \item{config_file_path}{Character. Path to the configuration file. Default is the one in the app directory}

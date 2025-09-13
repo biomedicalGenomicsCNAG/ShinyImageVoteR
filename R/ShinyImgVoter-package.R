@@ -6,7 +6,7 @@
 #'
 #' @section Main Functions:
 #' \describe{
-#'   \item{\code{run_app()}}{Launch the main Shiny application}
+#'   \item{\code{run_voting_app()}}{Launch the main Shiny application}
 #' }
 #'
 #' @docType package

@@ -24,7 +24,7 @@ init_environment <- function(
     }
   }
 
-  cfg <- load_config(config_file_path)
+  cfg <- ShinyImgVoteR::load_config(config_file_path)
   print("Configuration loaded:")
   print(cfg)
 

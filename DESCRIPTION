@@ -2,7 +2,7 @@ Package: ShinyImgVoteR
 Type: Package
 Title: B1MG Variant Voting Shiny App
 Version: 0.1.0
-Authors@R: c(person(given = "Ivo Christopher", family = "Leist", role = c("aut", "cre"), email = "ivo.leist@example.com"))
+Authors@R: c(person(given = "Ivo Christopher", family = "Leist", role = c("aut", "cre"), email = "ivo.leist@cnag.eu"))
 Description: A Shiny application for voting on B1MG variants. Packaged for easier testing and deployment.
 License: GPL-3
 Encoding: UTF-8
