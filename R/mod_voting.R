@@ -134,12 +134,25 @@ votingUI <- function(id, cfg) {
                   shinyjs::disabled(
                     shiny::actionButton(
                       ns("backBtn"),
-                      "Back (press Backspace)",
-                      onclick = "history.back(); return false;"
+                      label = tagList(
+                        "Back (press",
+                        icon("backspace"),
+                        ")"
+                      ),
+                      onclick = "history.back(); return false;",
+                      class = "arrow-left"
                     )
                   )
                 ),
-                shiny::actionButton(ns("nextBtn"), "Next (press Enter)")
+                shiny::actionButton(
+                  ns("nextBtn"),
+                  label = tagList(
+                    "Next (press",
+                    icon("level-down-alt", class = "fa-rotate-90"),
+                    ")"
+                  ),
+                  class = "arrow-right"
+                )
               )
             )
           )
