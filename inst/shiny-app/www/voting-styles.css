@@ -83,7 +83,8 @@
   background:var(--btn-bg) !important;
   border:1px solid var(--btn-border) !important;
   border-radius:4px;
-  padding:8px 18px;
+  padding:8px 20px 0px 14px;
+  margin: 0px 0px 10px 0px;
 }
 .btn.arrow-right{ padding-right:36px; }
 .btn.arrow-left{  padding-left:36px;  }
@@ -146,12 +147,6 @@
   }
 
   /* Grid layout for mobile controls */
-  /* .voting-questions {
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    align-items: start;
-  } */
-
   .voting-questions {
     display: grid;
     grid-template-columns: 350px 1fr;
@@ -175,5 +170,7 @@
 
   .voting-btns {
     grid-area: next;     
+    display: flex;
+    flex-direction: row-reverse; /* reverses both buttons */
   }
 }

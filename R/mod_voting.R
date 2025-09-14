@@ -130,20 +130,6 @@ votingUI <- function(id, cfg) {
               ),
               shiny::div(
                 class = "voting-btns",
-                shinyjs::hidden(
-                  shinyjs::disabled(
-                    shiny::actionButton(
-                      ns("backBtn"),
-                      label = tagList(
-                        "Back (press",
-                        icon("backspace"),
-                        ")"
-                      ),
-                      onclick = "history.back(); return false;",
-                      class = "arrow-left"
-                    )
-                  )
-                ),
                 shiny::actionButton(
                   ns("nextBtn"),
                   label = tagList(
@@ -152,7 +138,21 @@ votingUI <- function(id, cfg) {
                     ")"
                   ),
                   class = "arrow-right"
+                ),
+                # shinyjs::hidden(
+                shinyjs::disabled(
+                  shiny::actionButton(
+                    ns("backBtn"),
+                    label = tagList(
+                      "Back (press",
+                      icon("backspace"),
+                      ")"
+                    ),
+                    onclick = "history.back(); return false;",
+                    class = "arrow-left"
+                  )
                 )
+                # ),
               )
             )
           )
@@ -476,11 +476,11 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
                 if (rowIdx == 1) {
                   # hide & disable backBtn
                   # when navigated back to the first mutation voted on in that session
-                  shinyjs::hideElement(session$ns("backBtn"))
+                  # shinyjs::hideElement(session$ns("backBtn"))
                   shinyjs::disable(session$ns("backBtn"))
                 } else {
                   # show & enable backBtn otherwise
-                  shinyjs::showElement(session$ns("backBtn"))
+                  # shinyjs::showElement(session$ns("backBtn"))
                   shinyjs::enable(session$ns("backBtn"))
                 }
               })
