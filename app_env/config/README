@@ -1,2 +1,18 @@
 This folder is copied to the root level from which the package is run
 by the function init_external_environment
+
+institute_ids:
+- CNAG
+- DKFZ
+- DNGC
+- FPGMX
+- Hartwig
+- ISCIII
+- KU Leuven
+- Latvian BRSC
+- MOMA
+- SciLifeLab
+- Universidade de Aveiro
+- University of Helsinki
+- University of Oslo
+- University of Verona
