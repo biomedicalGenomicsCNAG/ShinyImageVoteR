@@ -22,6 +22,15 @@ makeVotingAppServer <- function(db_pool, cfg) {
         if (input$main_navbar == tab_name) {
           # Return a timestamp to ensure the reactive fires each time the tab is selected
           Sys.time()
+
+          # update tabname by removing spaces and converting to lowercase
+          tab_name_clean <- gsub(" ", "_", tolower(tab_name))
+
+          # Update the URL to include the tab name as a query parameter
+          shiny::updateQueryString(
+            paste0("?tab=", URLencode(tab_name_clean, reserved = TRUE)),
+            mode = "replace", session = session
+          )
         } else {
           NULL
         }
@@ -229,16 +238,19 @@ makeVotingAppServer <- function(db_pool, cfg) {
       }
     })
 
+    voting_tab_trigger <- make_tab_trigger("Vote")
     user_stats_tab_trigger <- make_tab_trigger("User stats")
     leaderboard_tab_trigger <- make_tab_trigger("Leaderboard")
     admin_tab_trigger <- make_tab_trigger("Admin")
+    faq_tab_trigger <- make_tab_trigger("FAQ")
+    about_tab_trigger <- make_tab_trigger("About")
 
     # initialize modules
     votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source)
     leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
     userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)
     adminServer("admin", cfg, login_data, db_pool, admin_tab_trigger)
-    aboutServer("about", cfg)
+    aboutServer("about", cfg, about_tab_trigger)
 
     # TODO
     # below is not working

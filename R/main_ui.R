@@ -29,7 +29,7 @@ votingAppUI <- function(cfg) {
           id = "main_navbar",
           shiny::tabPanel("Vote", votingUI("voting", cfg)),
           shiny::tabPanel("Leaderboard", leaderboardUI("leaderboard", cfg)),
-          shiny::tabPanel("User stats", userStatsUI("userstats", cfg)),
+          shiny::tabPanel("User stats", userstatsUI("userstats", cfg)),
           shiny::tabPanel("About", aboutUI("about", cfg)),
           shiny::tabPanel("FAQ", shiny::includeMarkdown(
             file.path(

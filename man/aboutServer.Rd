@@ -4,10 +4,14 @@
 \alias{aboutServer}
 \title{About module server logic}
 \usage{
-aboutServer(id, cfg)
+aboutServer(id, cfg, tab_trigger = NULL)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}
+
+\item{cfg}{App configuration}
+
+\item{tab_trigger}{Optional reactive that triggers when the about tab is selected}
 }
 \value{
 None. Side effect only: registers a module server.

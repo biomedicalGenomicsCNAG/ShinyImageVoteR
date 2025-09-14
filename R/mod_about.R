@@ -25,11 +25,27 @@ aboutUI <- function(id, cfg) {
 #' but the function must exist to satisfy Shiny module conventions.
 #'
 #' @param id A string identifier for the module namespace.
+#' @param cfg App configuration
+#' @param tab_trigger Optional reactive that triggers when the about tab is selected
 #'
 #' @return None. Side effect only: registers a module server.
 #' @export
-aboutServer <- function(id, cfg) {
+aboutServer <- function(id, cfg, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
-    # No server-side logic needed for the about page
+    # Create a reactive that triggers when the user stats tab is selected
+    # This allows automatic refresh when navigating to the stats page
+    tab_change_trigger <- reactive({
+      if (!is.null(tab_trigger)) {
+        tab_trigger()
+      } else {
+        NULL
+      }
+    })
+
+    # Dummy listener so the URL query string gets
+    # updated when navigating to the tab
+    observe({
+      tab_change_trigger()
+    })
   })
 }
