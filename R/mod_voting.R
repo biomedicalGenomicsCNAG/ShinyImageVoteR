@@ -217,6 +217,9 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
     # Track when the current voting image was rendered
     vote_start_time <- shiny::reactiveVal(Sys.time())
 
+    # Trigger to load the next mutation only after annotations are saved
+    next_trigger <- shiny::reactiveVal(0)
+
     # Create a reactive that triggers when the voting tab is selected
     tab_change_trigger <- reactive({
       if (!is.null(tab_trigger)) {
@@ -243,6 +246,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
       mut_df <- current_mutation()
       if (is.null(mut_df)) {
+        next_trigger(next_trigger() + 1)
         return()
       }
       user_annotations_file <- session$userData$userAnnotationsFile
@@ -391,6 +395,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         print("Vote counts updated in the database based on all user annotations.")
       }
       print("Annotations saved successfully.")
+      next_trigger(next_trigger() + 1)
     })
 
     observeEvent(url_params(), {
@@ -400,7 +405,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
     # Triggered when the user logs in, clicks the next button,
     # or goes back (with the actionButton "Back" or browser back button)
-    get_mutation <- eventReactive(c(login_trigger(), input$nextBtn, url_params()), {
+    get_mutation <- eventReactive(c(login_trigger(), next_trigger(), url_params()), {
       req(login_trigger())
       user_annotations_file <- session$userData$userAnnotationsFile
 
