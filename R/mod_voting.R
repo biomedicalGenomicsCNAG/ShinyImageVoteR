@@ -237,7 +237,6 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
       session$onFlushed(
         function() {
-          shinyjs::showElement(session$ns("backBtn"))
           shinyjs::enable(session$ns("backBtn"))
         }
       )
@@ -457,7 +456,8 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         if (nrow(df) > 0) {
           current_mutation(df[1, ])
           vote_start_time(Sys.time())
-          # check if the back button needs to be shown or hidden
+
+          # check if the back button needs to be disabled or enabled
           print("annotations_df before filtering:")
           print(annotations_df)
 
@@ -474,13 +474,10 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
             if (length(rowIdx) > 0) {
               session$onFlushed(function() {
                 if (rowIdx == 1) {
-                  # hide & disable backBtn
+                  # disable backBtn
                   # when navigated back to the first mutation voted on in that session
-                  # shinyjs::hideElement(session$ns("backBtn"))
                   shinyjs::disable(session$ns("backBtn"))
                 } else {
-                  # show & enable backBtn otherwise
-                  # shinyjs::showElement(session$ns("backBtn"))
                   shinyjs::enable(session$ns("backBtn"))
                 }
               })
@@ -571,41 +568,6 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
           style = paste0("width: ", input$image_width, "%;")
         )
       )
-      # shinyjqui::jqui_resizable(
-      #   shiny::div(
-      #     shiny::img(
-      #       src = paste0(mut_df$path),
-      #       style = "max-width: 100%;"
-      #     )
-      #   )
-      # )
-      # 1) initial size
-      # shinyjqui::jqui_resizable(
-      #   shiny::div(
-      #     id = "voting-img-container",
-      #     style = "
-      #       width: 400px;     /* start width */
-      #       height: 300px;    /* start height */
-      #       border: 1px solid #ccc;
-      #       overflow: hidden; /* clip anything outside */
-      #       display: inline-block;
-      #     ",
-      #     # 2) img fills 100% of its wrapper
-      #     shiny::tags$img(
-      #       src   = mut_df$path,
-      #       style = "
-      #         display: block;
-      #         width: 100%;
-      #         height: 100%;
-      #         object-fit: contain; /* or 'cover' if you want to fill & crop */
-      #       "
-      #     )
-      #   ),
-      #   # 3) allow independent width+height dragging
-      #   options = list(
-      #     aspectRatio = FALSE
-      #   )
-      # )
     })
 
     output$somatic_mutation <- shiny::renderText({
@@ -619,14 +581,6 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         " > ",
         color_seq(mut_df$ALT, cfg$nt2color_map)
       )
-    })
-
-    # for debugging purposes
-    output$selected_agreement <- shiny::renderText({
-      if (is.null(input$agreement)) {
-        return("No agreement selected.")
-      }
-      paste("Selected agreement:", input$agreement)
     })
   })
 }
