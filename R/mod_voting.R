@@ -283,7 +283,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
       print(paste0("already_voted:", already_voted))
 
-      if (!already_voted && session$userData$votingInstitute != cfg$test_institute) {
+      if (!already_voted) {
         # depending on the agreement, update the vote counts in the database
         vote_col <- cfg$vote2dbcolumn_map[[input$agreement]]
 
@@ -313,8 +313,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
       if (
         already_voted &&
-          previous_agreement != input$agreement &&
-          session$userData$votingInstitute != cfg_test_institute
+          previous_agreement != input$agreement
       ) {
         files <- list.files(
           path = "user_data",
@@ -324,9 +323,6 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         )
         print("already_voted -> Files to read for annotations:")
         print(files)
-
-        # Exclude files from the cfg_test_institute folder
-        files <- files[!grepl(paste0(cfg_test_institute, "/"), files)]
 
         # get all rows with the same coordinates from all user annotation files
         same_coords_df <- rbindlist(lapply(files, function(f) {
