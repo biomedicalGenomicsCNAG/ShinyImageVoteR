@@ -398,10 +398,20 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       next_trigger(next_trigger() + 1)
     })
 
-    observeEvent(url_params(), {
-      req(login_trigger())
-      get_mutation_trigger_source("url-params-change")
-    })
+    # observeEvent(url_params(), {
+    #   req(login_trigger())
+    #   get_mutation_trigger_source("url-params-change")
+    # })
+
+    observeEvent(
+      url_params(),
+      {
+        req(login_trigger())
+        get_mutation_trigger_source("url-params-change")
+      },
+      # higher priority so get_mutation gets triggered by url_params()
+      priority = 1
+    )
 
     # Triggered when the user logs in, clicks the next button,
     # or goes back (with the actionButton "Back" or browser back button)

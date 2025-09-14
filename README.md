@@ -40,7 +40,3 @@ Written by Ivo Christopher Leist, PhD student at CNAG [https://www.cnag.eu](http
 Copyright (C) 2025, Ivo Christopher Leist - CNAG.
 
 GPLv3 - GNU General Public License v3.0
-
-### Current BUGS & TODOs
-
-- [ ] The first time the next button is clicked the same mutation is shown again.

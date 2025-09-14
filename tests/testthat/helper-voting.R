@@ -19,7 +19,8 @@ setup_voting_env <- function(coordinates) {
   )
 
   write.table(
-    test_annotations, test_annotations_file, sep = "\t",
+    test_annotations, test_annotations_file,
+    sep = "\t",
     row.names = FALSE, col.names = TRUE, quote = FALSE
   )
 
@@ -33,7 +34,7 @@ setup_voting_env <- function(coordinates) {
 make_args <- function(annotations_file) {
   # Create mock database but don't set it globally yet
   mock_db <- create_mock_db()
-  
+
   # Create the argument list that votingServer expects
   args <- list(
     id = "voting",
@@ -43,10 +44,10 @@ make_args <- function(annotations_file) {
     ),
     get_mutation_trigger_source = shiny::reactiveVal(NULL)
   )
-  
+
   # Attach mock_db as an attribute for cleanup purposes
   attr(args, "mock_db") <- mock_db
-  
+
   return(args)
 }
 
@@ -54,10 +55,10 @@ make_args <- function(annotations_file) {
 setup_test_db <- function(args) {
   # Extract mock_db from the attributes
   mock_db <- attr(args, "mock_db")
-  
+
   # Set the global db_pool that the module expects
   db_pool <<- mock_db$pool
-  
+
   # Return cleanup function
   function() {
     pool::poolClose(mock_db$pool)
