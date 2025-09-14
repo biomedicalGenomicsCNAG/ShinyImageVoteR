@@ -167,10 +167,12 @@ votingUI <- function(id, cfg) {
 #' @param login_trigger A reactive expression that indicates when a user has logged in.
 #' @param db_pool A database pool object (e.g. SQLite or PostgreSQL) for writing annotations.
 #' @param get_mutation_trigger_source A reactive expression that signals a new mutation should be loaded.
+#' @param cfg App configuration
+#' @param tab_trigger Optional reactive that triggers when the voting tab is selected.
 #'
 #' @return None. Side effect only: registers reactive observers and UI updates.
 #' @export
-votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_source) {
+votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_source, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
     # Helper function to create the "done" tibble
     create_done_tibble <- function() {
@@ -201,6 +203,20 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
     # Track when the current voting image was rendered
     vote_start_time <- shiny::reactiveVal(Sys.time())
+
+    # Create a reactive that triggers when the voting tab is selected
+    tab_change_trigger <- reactive({
+      if (!is.null(tab_trigger)) {
+        tab_trigger()
+      } else {
+        NULL
+      }
+    })
+    # Dummy listener so the URL query string
+    # gets updated when navigating to the tab
+    observe({
+      tab_change_trigger()
+    })
 
     observeEvent(input$nextBtn, {
       req(login_trigger())

@@ -1,4 +1,4 @@
-#' About module UI
+#' FAQ module UI
 #'
 #' Provides a static informational page describing the purpose and functionality
 #' of the B1MG Variant Voting application.
@@ -7,19 +7,12 @@
 #'
 #' @return A Shiny UI element (`fluidPage`) for rendering the about page.
 #' @export
-aboutUI <- function(id, cfg) {
+faqUI <- function(id, cfg) {
   ns <- shiny::NS(id)
-  shiny::fluidPage(
-    theme = cfg$theme,
-    shiny::h3("About this app"),
-    shiny::p("This app allows users to vote on somatic mutations in images."),
-    shiny::p("Users can log in, view images, and provide their votes and comments."),
-    shiny::p("The app tracks user sessions and stores annotations in a SQLite database."),
-    shiny::p("Developed by Ivo Christopher Leist")
-  )
+  shiny::includeMarkdown(file.path(get_app_dir(), "docs", "faq.md"))
 }
 
-#' About module server logic
+#' FAQ module server logic
 #'
 #' @param id A string identifier for the module namespace.
 #' @param cfg App configuration
@@ -27,7 +20,7 @@ aboutUI <- function(id, cfg) {
 #'
 #' @return None. Side effect only: registers a module server.
 #' @export
-aboutServer <- function(id, cfg, tab_trigger = NULL) {
+faqServer <- function(id, cfg, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
     # Create a reactive that triggers when the user stats tab is selected
     # This allows automatic refresh when navigating to the stats page

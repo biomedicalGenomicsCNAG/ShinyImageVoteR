@@ -246,10 +246,11 @@ makeVotingAppServer <- function(db_pool, cfg) {
     about_tab_trigger <- make_tab_trigger("About")
 
     # initialize modules
-    votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source)
+    votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source, voting_tab_trigger)
     leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
     userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)
     adminServer("admin", cfg, login_data, db_pool, admin_tab_trigger)
+    faqServer("faq", cfg, faq_tab_trigger)
     aboutServer("about", cfg, about_tab_trigger)
 
     # TODO
