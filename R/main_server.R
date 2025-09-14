@@ -50,35 +50,28 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
     login_data <- login_return$login_data
 
-    # Debug: Check admin status
-    shiny::observe({
-      req(login_data())
-      cat("Login data admin value:", login_data()$admin, "\n")
-      cat("Login data admin class:", class(login_data()$admin), "\n")
-      print("Full login_data:")
-      print(login_data())
-    })
 
-    # In your server code, replace the renderUI approach
-    observe({
-      req(login_data())
+    # Dynamically show/hide admin tab based on user admin status
+    admin_tab_added <- shiny::reactiveVal(FALSE)
 
-      if (!is.null(login_data()$admin) && login_data()$admin == 1) {
-        # Add admin tab if user is admin and tab doesn't exist
-        if (!"Admin" %in% input$main_navbar) {
-          shiny::insertTab(
-            inputId = "main_navbar",
-            tab = shiny::tabPanel("Admin", adminUI("admin", cfg)),
-            target = "FAQ", # Insert after User stats tab
-            position = "after"
-          )
-        }
-      } else {
-        # Remove admin tab if user is not admin
+    shiny::observeEvent(login_data()$admin, {
+      is_admin <- isTRUE(login_data()$admin == 1)
+
+      if (is_admin && !admin_tab_added()) {
+        shiny::insertTab(
+          inputId = "main_navbar",
+          tab = shiny::tabPanel("Admin", adminUI("admin", cfg)),
+          target = "FAQ",
+          position = "after",
+          select = FALSE
+        )
+        admin_tab_added(TRUE)
+      } else if (!is_admin && admin_tab_added()) {
         shiny::removeTab(
           inputId = "main_navbar",
-          target = "Admin"
+          target  = "Admin"
         )
+        admin_tab_added(FALSE)
       }
     })
 

@@ -77,6 +77,14 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
     output$pwd_retrieval_table <- DT::renderDT({
       tbl <- pwd_retrieval_tbl()
 
+      # TODO
+      # it is no working on the production server
+      # https://simplevm-proxy-prod.denbi.dkfz.de/automaticlobster_100/b1mg-variant-voter-beta/?
+      # there the following gets rendered:
+      # http://simplevm-proxy-prod.denbi.dkfz.de:?pwd_retrieval_token=<token>
+
+      # TODO
+      # Put below in a function to reduce code duplication
       # --- Build base URL
       protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
       hostname <- session$clientData$url_hostname
