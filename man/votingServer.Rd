@@ -4,16 +4,27 @@
 \alias{votingServer}
 \title{Voting module server logic}
 \usage{
-votingServer(id, cfg, login_trigger, db_pool, get_mutation_trigger_source)
+votingServer(
+  id,
+  cfg,
+  login_trigger,
+  db_pool,
+  get_mutation_trigger_source,
+  tab_trigger = NULL
+)
 }
 \arguments{
 \item{id}{A string identifier for the module namespace.}
+
+\item{cfg}{App configuration}
 
 \item{login_trigger}{A reactive expression that indicates when a user has logged in.}
 
 \item{db_pool}{A database pool object (e.g. SQLite or PostgreSQL) for writing annotations.}
 
 \item{get_mutation_trigger_source}{A reactive expression that signals a new mutation should be loaded.}
+
+\item{tab_trigger}{Optional reactive that triggers when the voting tab is selected.}
 }
 \value{
 None. Side effect only: registers reactive observers and UI updates.

@@ -27,8 +27,23 @@ makeVotingAppServer <- function(db_pool, cfg) {
           tab_name_clean <- gsub(" ", "_", tolower(tab_name))
 
           # Update the URL to include the tab name as a query parameter
+
+          # Below breaks the go back functionality
+
+          # get the current query string if tabname is Vote
+          new_query_string <- paste0("?tab=", tab_name_clean)
+          current_query <- shiny::parseQueryString(session$clientData$url_search)
+
+          if (tab_name_clean == "vote" && length(current_query) > 0) {
+            new_query_string <- paste0(
+              new_query_string,
+              "&coords=",
+              current_query[["coords"]]
+            )
+          }
+
           shiny::updateQueryString(
-            paste0("?tab=", URLencode(tab_name_clean, reserved = TRUE)),
+            new_query_string,
             mode = "replace", session = session
           )
         } else {
