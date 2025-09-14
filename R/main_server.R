@@ -13,6 +13,21 @@ makeVotingAppServer <- function(db_pool, cfg) {
     total_images <- DBI::dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
     cat(sprintf("Total annotations in DB: %s\n", total_images))
 
+    # Helper function to create a tab trigger reactive
+    # Track when a specific tab is selected
+    # to trigger automatic refresh of the content in that tab
+    make_tab_trigger <- function(tab_name) {
+      shiny::reactive({
+        shiny::req(input$main_navbar)
+        if (input$main_navbar == tab_name) {
+          # Return a timestamp to ensure the reactive fires each time the tab is selected
+          Sys.time()
+        } else {
+          NULL
+        }
+      })
+    }
+
     shiny::observe({
       query <- shiny::parseQueryString(session$clientData$url_search)
       token <- query[["pwd_retrieval_token"]]
@@ -214,39 +229,11 @@ makeVotingAppServer <- function(db_pool, cfg) {
       }
     })
 
-    # Track when the User stats tab is selected to trigger automatic refresh
-    user_stats_tab_trigger <- reactive({
-      req(input$main_navbar)
-      if (input$main_navbar == "User stats") {
-        # Return a timestamp to ensure the reactive fires each time the tab is selected
-        Sys.time()
-      } else {
-        NULL
-      }
-    })
+    user_stats_tab_trigger <- make_tab_trigger("User stats")
+    leaderboard_tab_trigger <- make_tab_trigger("Leaderboard")
+    admin_tab_trigger <- make_tab_trigger("Admin")
 
-    # Track when the Leaderboard tab is selected to trigger automatic refresh
-    leaderboard_tab_trigger <- reactive({
-      req(input$main_navbar)
-      if (input$main_navbar == "Leaderboard") {
-        # Return a timestamp to ensure the reactive fires each time the tab is selected
-        Sys.time()
-      } else {
-        NULL
-      }
-    })
-
-    # Track when the Admin tab is selected to trigger automatic refresh
-    admin_tab_trigger <- reactive({
-      req(input$main_navbar)
-      if (input$main_navbar == "Admin") {
-        # Return a timestamp to ensure the reactive fires each time the tab is selected
-        Sys.time()
-      } else {
-        NULL
-      }
-    })
-
+    # initialize modules
     votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source)
     leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
     userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)

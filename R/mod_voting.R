@@ -180,7 +180,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         REF = "-",
         ALT = "-",
         variant = NA,
-        path = "images/done.png"
+        path = "done.png"
       )
     }
 
