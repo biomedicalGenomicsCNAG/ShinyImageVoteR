@@ -2,9 +2,9 @@
 #'
 #' This function takes a nucleotide sequence and a named vector mapping nucleotides to colors,
 #' and returns an HTML string where each nucleotide is wrapped in a span tag with the corresponding color.
-#' 
+#'
 #' @keywords internal
-#' 
+#'
 #' @param seq A character string representing the nucleotide sequence.
 #' @param nt2color_map A named character vector mapping nucleotides (e.g., "A", "T", "C", "G") to color values (e.g., "#FF0000").
 #'
@@ -16,6 +16,14 @@
 #'
 #' @export
 color_seq <- function(seq, nt2color_map) {
+  # first check if sequence contains only valid nucleotides
+  if (any(!unlist(strsplit(seq, split = "")) %in% names(nt2color_map))) {
+    print("Invalid nucleotides found in sequence:")
+    print("sequence:")
+    print(seq)
+    stop("Sequence contains invalid nucleotides not present in nt2color_map.")
+  }
+
   seq %>%
     strsplit(split = "") %>%
     unlist() %>%

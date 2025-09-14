@@ -108,8 +108,12 @@ populate_annotations_table <- function(
   annotations_df <- read.table(
     to_be_voted_images_file,
     header = TRUE,
-    stringsAsFactors = FALSE
+    stringsAsFactors = FALSE,
+    colClasses = "character" # Otherwise the nucleotide T ends up as TRUE
   )
+
+  print("First few rows of annotations_df:")
+  print(head(annotations_df))
 
   first_path <- annotations_df$path[1]
 
