@@ -187,6 +187,9 @@ votingUI <- function(id, cfg) {
 #' @export
 votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_source, tab_trigger = NULL) {
   moduleServer(id, function(input, output, session) {
+    # validate cfg cols using "validate_cols" function from db.R
+    validate_cols(db_pool, "annotations", cfg$db_cols)
+
     # Helper function to create the "done" tibble
     create_done_tibble <- function() {
       tibble::tibble(
@@ -194,7 +197,6 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         coordinates = "done",
         REF = "-",
         ALT = "-",
-        variant = NA,
         path = "done.png"
       )
     }
@@ -262,17 +264,17 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       print(annotations_df)
 
       # Update the annotations_df with the new agreement
-      coords <- mut_df$coordinates
+      coord <- mut_df$coordinates
 
-      print(paste("Updating annotations for coordinates:", coords))
+      print(paste("Updating annotations for coordinates:", coord))
       print(paste("Agreement:", input$agreement))
       print(paste("Alternative vartype:", input$alternative_vartype))
       print(paste("Observation:", input$observation))
       print(paste("Comment:", input$comment))
 
       # use the row index to update the annotations_df
-      rowIdx <- which(annotations_df$coordinates == coords)
-      print(paste("Row index for coordinates:", coords, "is", rowIdx))
+      rowIdx <- which(annotations_df$coordinates == coord)
+      print(paste("Row index for coordinates:", coord, "is", rowIdx))
 
       if (length(rowIdx) == 0) {
         warning("No annotation row for coordinates; skipping update")
@@ -326,7 +328,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
             vote_col,
             " = ", vote_col, " + 1 WHERE coordinates = ?"
           ),
-          params = list(coords)
+          params = list(coord)
         )
       }
 
@@ -356,10 +358,10 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         print("already_voted -> Files to read for annotations:")
         print(files)
 
-        # get all rows with the same coordinates from all user annotation files
+        # get all rows with the same coordinate from all user annotation files
         same_coords_df <- rbindlist(lapply(files, function(f) {
           dt <- fread(f)
-          dt_sub <- dt[grepl(coords, coordinates)]
+          dt_sub <- dt[grepl(coord, coordinates)]
           if (nrow(dt_sub)) dt_sub[, file := basename(f)]
           dt_sub
         }), use.names = TRUE, fill = TRUE)
@@ -388,7 +390,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
                 " = ", vote_col, " + ", count,
                 " WHERE coordinates = ?"
               ),
-              params = list(coords)
+              params = list(coord)
             )
           }
         }
@@ -425,14 +427,19 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       print("Checking if the user pressed the Back button or went back in the browser...")
       if (get_mutation_trigger_source() == "url-params-change") {
         print("URL change detected, showing the image from the URL.")
-        # Get the coordinates from the URL
-        coords <- parseQueryString(session$clientData$url_search)$coords
-        if (is.null(coords)) {
+        # Get the coordinate from the URL
+
+        # TODO
+        # replace coords with coordinate throughout the code
+        # to reflect that this query param only expects a single coordinate
+
+        coord <- parseQueryString(session$clientData$url_search)$coords
+        if (is.null(coord)) {
           print("No coordinates found in the URL or all variants have been voted on.")
           return(NULL)
         }
 
-        if (coords == "done") {
+        if (coord == "done") {
           print("All variants have been voted on.")
           res <- create_done_tibble()
           # TODO
@@ -461,9 +468,21 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         }
 
         # Query the database for the variant with these coordinates
-        query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coords, "'")
-        df <- DBI::dbGetQuery(db_pool, query)
-        if (nrow(df) > 0) {
+
+        # TODO
+        # this query is used twice create a helper
+        # to avoid code duplication
+
+        df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
+
+        # query <- paste0(
+        #   "SELECT rowid, ",
+        #   paste(cfg$db_cols, collapse = ", "),
+        #   " FROM annotations WHERE coordinates = '", coord, "'"
+        # )
+        # query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coords, "'")
+        # df <- DBI::dbGetQuery(db_pool, query)
+        if (nrow(df) == 1) {
           current_mutation(df[1, ])
           vote_start_time(Sys.time())
 
@@ -479,8 +498,8 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
           print(session_annotations_df)
 
           if (nrow(session_annotations_df) > 0) {
-            rowIdx <- which(session_annotations_df$coordinates == coords)
-            print(paste("Row index for coordinates:", coords, "is", rowIdx))
+            rowIdx <- which(session_annotations_df$coordinates == coord)
+            print(paste("Row index for coordinate:", coord, "is", rowIdx))
             if (length(rowIdx) > 0) {
               session$onFlushed(function() {
                 if (rowIdx == 1) {
@@ -496,13 +515,13 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
           print("HERE")
           return(df[1, ])
         } else {
-          print("No mutation found for the given coordinates.")
-          print(paste("Coordinates:", coords))
+          print("No mutation found for the given coordinate")
+          print(paste("Coordinate:", coord))
           # return the whole coordinates column from the database
-          query <- "SELECT coordinates FROM annotations"
-          coords_df <- DBI::dbGetQuery(db_pool, query)
-          print("Available coordinates in the database:")
-          print(coords_df)
+          # query <- "SELECT coordinates FROM annotations"
+          # coords_df <- DBI::dbGetQuery(db_pool, query)
+          # print("Available coordinates in the database:")
+          # print(coords_df)
           return(NULL)
         }
       }
@@ -527,23 +546,28 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
 
       # loop through the annotations_df to find the next variant that has not been voted on
       print("Looking for the next variant that has not been voted on...")
-      for (i in 1:nrow(annotations_df)) {
+      for (i in seq_len(nrow(annotations_df))) {
         if (is.na(annotations_df$agreement[i])) {
           # Get the coordinates of the variant
-          coordinates <- annotations_df$coordinates[i]
+          coord <- annotations_df$coordinates[i]
           # Query the database for the variant with these coordinates
 
-          query <- paste0(
-            "SELECT ",
-            paste(cfg$db_cols, collapse = ", "),
-            " FROM annotations WHERE coordinates = '", coordinates, "'"
-          )
-          # Execute the query to get the variant that has not been voted on
-          df <- DBI::dbGetQuery(db_pool, query)
-          print("Query result:")
-          print(df)
+          print("cfg$db_cols:")
+          print(cfg$db_cols)
 
-          if (nrow(df) > 0) {
+          df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
+
+          # query <- paste0(
+          #   "SELECT ",
+          #   paste(cfg$db_cols, collapse = ", "),
+          #   " FROM annotations WHERE coordinates = '", coordinate, "'"
+          # )
+          # # Execute the query to get the variant that has not been voted on
+          # df <- DBI::dbGetQuery(db_pool, query)
+          # print("Query result:")
+          # print(df)
+
+          if (nrow(df) == 1) {
             # TODO
             # Filter logic for the actual voting
             # Reasoning why this is commented out in the README

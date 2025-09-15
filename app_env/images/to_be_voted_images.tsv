@@ -1,4 +1,4 @@
-coordinates	REF	ALT	variant	path
-chr8:117226952	A	T	SNV	app_env/images/screenshot_URO_003_mutations_varSorted_redoBAQ/0a0b53acbf9fac0f45dfcf77a8c6baae.png
-chr21:9699723	C	T	SNV	app_env/images/screenshot_URO_003_mutations_varSorted_redoBAQ/0a1ccf233c0aaf2fd0a27a28091cfde5.png
-chr8:18074436	TA	T	indel	app_env/images/screenshot_URO_003_mutations_varSorted_redoBAQ/0a1e38c956edd03b8af61fb6db250346.png
+coordinates	REF	ALT	path
+chr8:117226952	A	T	app_env/images/screenshot_URO_003_mutations_varSorted_redoBAQ/0a0b53acbf9fac0f45dfcf77a8c6baae.png
+chr21:9699723	C	T	app_env/images/screenshot_URO_003_mutations_varSorted_redoBAQ/0a1ccf233c0aaf2fd0a27a28091cfde5.png
+chr8:18074436	TA	T	app_env/images/screenshot_URO_003_mutations_varSorted_redoBAQ/0a1e38c956edd03b8af61fb6db250346.png
