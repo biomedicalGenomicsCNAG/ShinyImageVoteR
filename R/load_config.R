@@ -111,7 +111,6 @@ load_config <- function(config_file_path) {
 
   # TODO
   # missing annotations_cols
-
   cfg$theme <- bslib::bs_theme(version = 5)
 
   return(cfg)

@@ -40,7 +40,6 @@ db_general_cols:
 - coordinates
 - REF
 - ALT
-- variant
 - path
 vote2dbcolumn_map:
   'yes': vote_count_correct

@@ -1,3 +1,18 @@
+:root {
+  --btn-bg: #2563eb;
+  /* primary blue */
+  --btn-bg-hover: #1d4ed8;
+  /* darker on hover */
+  --btn-text: #ffffff;
+  --btn-shadow: 0 6px 16px rgba(0, 0, 0, .12);
+  --btn-radius: 9999px;
+  /* pill */
+  --arrow-size: 11px;
+  /* arrowhead size */
+  --pad-x: 20px;
+  --pad-y: 12px;
+}
+
 /* Put label content on one line */
 .shiny-options-group .radio > label {
   display: block; /* label itself can stay block */
@@ -48,6 +63,77 @@
   color: #fff;
 }
 
+/* GPT-5 */
+:root{
+  --btn-bg:#2563eb;          /* button fill */
+  --btn-border:#2563eb;      /* border color */
+  --btn-text:#fff;
+  --page-bg:#ffffff;         /* background of the area behind the button */
+  --corner:4px;
+  --sq:22px;
+  --offset:-11px;            /* = -0.5 * --sq */
+  --top:5px;                 /* tweak for rounded corners */
+}
+
+/* base */
+.btn.arrow-right,
+.btn.arrow-left{
+  position:relative;
+  color:var(--btn-text) !important;
+  background:var(--btn-bg) !important;
+  border:1px solid var(--btn-border) !important;
+  border-radius:4px;
+  padding:8px 20px 0px 14px;
+  margin: 0px 0px 10px 0px;
+}
+.btn.arrow-right{ padding-right:36px; }
+.btn.arrow-left{  padding-left:36px;  }
+
+/* general pseudo */
+.btn.arrow-right::before,
+.btn.arrow-right::after,
+.btn.arrow-left::before,
+.btn.arrow-left::after{
+  content:"";
+  position:absolute;
+  top:var(--top);
+  width:var(--sq);
+  height:var(--sq);
+  border-radius:0 var(--corner) 0 0;
+  border-left-color:transparent;
+  border-bottom-color:transparent;
+}
+
+/* RIGHT: ::after = head, ::before = tail mask */
+.btn.arrow-right::after{
+  right:var(--offset);
+  background:var(--btn-bg);
+  border:1px solid var(--btn-border);
+  transform:rotate(45deg);
+  z-index:1;                /* on top */
+}
+.btn.arrow-right::before{
+  left:var(--offset);
+  background:var(--page-bg);/* matches container */
+  border:none;              /* no seam */
+  transform:rotate(45deg);
+}
+
+/* LEFT: ::before = head, ::after = tail mask */
+.btn.arrow-left::before{
+  left:var(--offset);
+  background:var(--btn-bg);
+  border:1px solid var(--btn-border);
+  transform:rotate(225deg);
+  z-index:1;
+}
+.btn.arrow-left::after{
+  right:var(--offset);
+  background:var(--page-bg);
+  border:none;
+  transform:rotate(225deg);
+}
+
 @media (max-width: 990px) {
   
   .voting-row .img-col,
@@ -61,12 +147,6 @@
   }
 
   /* Grid layout for mobile controls */
-  /* .voting-questions {
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    align-items: start;
-  } */
-
   .voting-questions {
     display: grid;
     grid-template-columns: 350px 1fr;
@@ -90,5 +170,7 @@
 
   .voting-btns {
     grid-area: next;     
+    display: flex;
+    flex-direction: row-reverse; /* reverses both buttons */
   }
 }

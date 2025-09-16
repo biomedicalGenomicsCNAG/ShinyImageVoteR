@@ -8,7 +8,7 @@
 #'
 #' @return A Shiny UI element (`fluidPage`) for rendering user statistics.
 #' @export
-userStatsUI <- function(id, cfg) {
+userstatsUI <- function(id, cfg) {
   ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,

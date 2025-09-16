@@ -25,7 +25,6 @@ create_database <- function(
       coordinates TEXT,
       REF TEXT,
       ALT TEXT,
-      variant TEXT,
       path TEXT,
       vote_count_correct INTEGER DEFAULT 0,
       vote_count_no_variant INTEGER DEFAULT 0,
@@ -267,4 +266,126 @@ init_db <- function(cfg_sqlite_file) {
   })
 
   return(pool)
+}
+
+#' Validate column names passed by config
+#' Ensures that the columns specified in the configuration are safe
+#' and exist in the database schema.
+#' @param conn Database connection object
+#' @param table Name of the table to validate against
+#' @param cfg_db_cols Character vector of column names from config
+#' @return A character vector of validated column names
+#' @export
+validate_cols <- function(conn, table, cfg_db_cols) {
+  # Read from config
+  cols <- cfg_db_cols
+  if (is.null(cols) || !length(cols)) {
+    stop("Config 'db_general_cols' is missing or empty.")
+  }
+
+  # 1) Basic identifier hygiene: only ASCII letters, digits,
+  #    underscore; must start with letter/underscore
+  is_safe_ident <- function(x) grepl("^[A-Za-z_][A-Za-z0-9_]*$", x, perl = TRUE)
+
+  # 2) SQLite keyword blocklist (generated with GPT-5)
+  SQLITE_KEYWORDS <- c(
+    "ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE",
+    "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN",
+    "BETWEEN", "BY", "CASCADE", "CASE", "CAST", "CHECK", "COLLATE",
+    "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS",
+    "CURRENT", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP",
+    "DATABASE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DESC",
+    "DETACH", "DISTINCT", "DO", "DROP", "EACH", "ELSE", "END", "ESCAPE",
+    "EXCEPT", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FOR", "FOREIGN",
+    "FROM", "FULL", "GLOB", "GROUP", "HAVING", "IF", "IGNORE", "IMMEDIATE",
+    "IN", "INDEX", "INDEXED", "INITIALLY", "INNER", "INSERT", "INSTEAD",
+    "INTERSECT", "INTO", "IS", "ISNULL", "JOIN", "KEY", "LEFT", "LIKE",
+    "LIMIT", "MATCH", "NATURAL", "NO", "NOT", "NOTNULL", "NULL", "OF", "OFFSET",
+    "ON", "OR", "ORDER", "OUTER", "PLAN", "PRAGMA", "PRIMARY", "QUERY", "RAISE",
+    "RECURSIVE", "REFERENCES", "REGEXP", "REINDEX", "RELEASE", "RENAME",
+    "REPLACE", "RESTRICT", "RIGHT", "ROLLBACK", "ROW", "SAVEPOINT", "SELECT",
+    "SET", "TABLE", "TEMP", "TEMPORARY", "THEN", "TO", "TRANSACTION", "TRIGGER",
+    "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL",
+    "WHEN", "WHERE", "WITH", "WITHOUT"
+  )
+  is_keyword <- function(x) toupper(x) %in% SQLITE_KEYWORDS
+
+  # 3) Ensure columns exist in the DB schema for the target table
+  db_cols <- tryCatch(
+    DBI::dbListFields(conn, table),
+    error = function(e) character()
+  )
+  if (!length(db_cols)) {
+    stop(glue::glue("Could not introspect columns for table '{table}'."))
+  }
+
+  # validation
+  bad_ident <- cols[!is_safe_ident(cols)]
+  bad_kw <- cols[is_keyword(cols)]
+  missing <- setdiff(cols, db_cols)
+
+  if (length(bad_ident) || length(bad_kw) || length(missing)) {
+    problems <- c(
+      if (length(bad_ident)) {
+        glue::glue("Invalid identifiers: {paste(bad_ident, collapse = ', ')}")
+      },
+      if (length(bad_kw)) {
+        glue::glue("Disallowed keywords: {paste(bad_kw, collapse = ', ')}")
+      },
+      if (length(missing)) {
+        glue::glue(
+          "Not present in table '{table}': {paste(missing, collapse = ', ')}"
+        )
+      }
+    )
+    stop(
+      glue::glue(
+        "Column validation failed: {paste(problems, collapse = ' | ')}"
+      )
+    )
+  }
+  TRUE
+}
+
+#' Query annotations table by coordinates
+#' This function queries the annotations table for a given set of coordinates,
+#' returning only the specified columns.
+#' @param conn Database connection object
+#' @param coord Character. The coordinates to query (exact match)
+#' @param cols Character vector. The columns to retrieve
+#' @return A data frame with the query results
+query_annotations_db_by_coord <- function(conn, coord, cols) {
+  table <- tolower("annotations") # only one table for now
+
+  # 1) enforce exactly one coordinate (scalar, not vector/list, not NA)
+  if (length(coord) != 1 || is.list(coord) || is.null(coord) || anyNA(coord)) {
+    stop(glue::glue(
+      "Exactly one coordinate expected. Got length={length(coord)}."
+    ))
+  }
+
+  # Optional: tighten type if you expect a specific one
+  # if (!is.character(coord)) stop("Coordinate must be character (TEXT).")
+
+  # 2) quote identifiers
+  q_cols <- DBI::dbQuoteIdentifier(conn, unique(cols))
+  q_table <- DBI::dbQuoteIdentifier(conn, table)
+  q_coord_col <- DBI::dbQuoteIdentifier(conn, "coordinates")
+
+  # 3) build + execute with a single placeholder
+  sql <- paste0(
+    "SELECT rowid, ", paste(q_cols, collapse = ", "),
+    " FROM ", q_table,
+    " WHERE ", q_coord_col, " = ?"
+  )
+
+  result <- DBI::dbGetQuery(conn, sql, params = list(coord))
+
+  # 4) enforce at most one result row
+  if (nrow(result) > 1) {
+    stop(glue::glue(
+      "Expected at most 1 row for coordinate '{coord}', got {nrow(result)} rows."
+    ))
+  }
+  result
 }
