@@ -24,7 +24,7 @@
 votingUI <- function(id, cfg) {
   ns <- shiny::NS(id)
 
-  fluidPage(
+  shiny::fluidPage(
     theme = cfg$theme,
     shinyjs::useShinyjs(),
     shiny::singleton(
