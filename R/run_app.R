@@ -64,6 +64,18 @@ run_voting_app <- function(
   message("App directory: ", app_dir)
   message("User data directory: ", user_data_dir)
   message("Database path: ", database_path)
+
+  # ----- for deploying on shiny server -----------------
+  if (nzchar(Sys.getenv("SHINY_PORT", ""))) {
+    print("Running on Shiny Server")
+    print("Environment variables:")
+    print(paste0("SHINY_HOST: ", Sys.getenv("SHINY_HOST")))
+    print(paste0("SHINY_PORT: ", Sys.getenv("SHINY_PORT")))
+    host          <- Sys.getenv("SHINY_HOST", "0.0.0.0")
+    port          <- as.integer(Sys.getenv("SHINY_PORT"))
+    launch.browser <- FALSE
+  }
+  # ------------------------------------------------------
   
   shiny::runApp(
     appDir = app_dir,
