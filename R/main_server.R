@@ -75,19 +75,19 @@ makeVotingAppServer <- function(db_pool, cfg) {
       "login",
       cfg,
       db_conn = db_pool,
-      log_out = reactive(logout_init())
+      log_out = shiny::reactive(logout_init())
     )
 
     # Initialize the logout module
     logout_init <- shinyauthr::logoutServer(
       id = "logout",
-      active = reactive(login_return$credentials()$user_auth)
+      active = shiny::reactive(login_return$credentials()$user_auth)
     )
 
-    output$logged_in <- reactive({
+    output$logged_in <- shiny::reactive({
       login_return$credentials()$user_auth
     })
-    outputOptions(output, "logged_in", suspendWhenHidden = FALSE)
+    shiny::outputOptions(output, "logged_in", suspendWhenHidden = FALSE)
 
     login_data <- login_return$login_data
 
@@ -115,8 +115,8 @@ makeVotingAppServer <- function(db_pool, cfg) {
       }
     })
 
-    observeEvent(login_data(), {
-      req(login_data())
+    shiny::observeEvent(login_data(), {
+      shiny::req(login_data())
       user_id <- login_data()$user_id
       voting_institute <- login_data()$institute
 
@@ -237,7 +237,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
       get_mutation_trigger_source("login")
     })
 
-    observeEvent(logout_init(), {
+    shiny::observeEvent(logout_init(), {
       if (!is.null(session$userData$shinyauthr_session_id)) {
         print("Logging out user:")
         print("Updating logout time in database")
@@ -302,16 +302,16 @@ makeVotingAppServer <- function(db_pool, cfg) {
     # below is not working
 
     # every 2 seconds, check for external shutdown file
-    observe({
-      invalidateLater(2000, session)
+    shiny::observe({
+      shiny::invalidateLater(2000, session)
       if (file.exists(cfg$shutdown_trigger_file)) {
         print("External shutdown request received.")
         file.remove(cfg$shutdown_trigger_file)
-        showNotification(
+        shiny::showNotification(
           "External shutdown request received…",
           type = "warning"
         )
-        stopApp()
+        shiny::stopApp()
       }
     })
   }

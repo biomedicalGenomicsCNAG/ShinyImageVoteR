@@ -8,7 +8,6 @@
 #' @return A Shiny UI element (`fluidPage`) for rendering the about page.
 #' @export
 aboutUI <- function(id, cfg) {
-  ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,
     shiny::h3("About this app"),
@@ -33,10 +32,10 @@ aboutUI <- function(id, cfg) {
 #' @return None. Side effect only: registers a module server.
 #' @export
 aboutServer <- function(id, cfg, tab_trigger = NULL) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     # Create a reactive that triggers when the user stats tab is selected
     # This allows automatic refresh when navigating to the stats page
-    tab_change_trigger <- reactive({
+    tab_change_trigger <- shiny::reactive({
       if (!is.null(tab_trigger)) {
         tab_trigger()
       } else {
@@ -46,7 +45,7 @@ aboutServer <- function(id, cfg, tab_trigger = NULL) {
 
     # Dummy listener so the URL query string gets
     # updated when navigating to the tab
-    observe({
+    shiny::observe({
       tab_change_trigger()
     })
   })

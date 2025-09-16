@@ -32,10 +32,10 @@ leaderboardUI <- function(id, cfg) {
 #' @return Reactive containing leaderboard data frame
 #' @export
 leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     # Create a reactive that triggers when the leaderboard tab is selected
     # This allows automatic refresh when navigating to the leaderboard page
-    tab_change_trigger <- reactive({
+    tab_change_trigger <- shiny::reactive({
       if (!is.null(tab_trigger)) {
         tab_trigger()
       } else {
@@ -43,16 +43,15 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
       }
     })
 
-    counts <- eventReactive(
+    counts <- shiny::eventReactive(
       c(login_trigger(), input$refresh_counts, tab_change_trigger()),
       {
-        req(login_trigger())
+        shiny::req(login_trigger())
         institute_ids <- unlist(strsplit(
           Sys.getenv("IMGVOTER_USER_GROUPS_COMMA_SEPARATED"),
           ","
         ))
 
-        # browser()
         counts_list <- lapply(institute_ids, function(institute) {
           institutes_dir <- file.path(
             Sys.getenv("IMGVOTER_USER_DATA_DIR"),
@@ -103,12 +102,12 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
           dplyr::mutate(
             institute = factor(institute, levels = institute_ids)
           ) %>%
-          dplyr::arrange(desc(total_images_voted))
+          dplyr::arrange(dplyr::desc(total_images_voted))
         counts_df
       }
     )
 
-    output$institutes_voting_counts <- renderTable({
+    output$institutes_voting_counts <- shiny::renderTable({
       counts()
     })
 

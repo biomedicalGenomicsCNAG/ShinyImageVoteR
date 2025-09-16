@@ -1,9 +1,9 @@
-#' Initialize external database
+#' Initialize SQLite database
 #'
-#' Sets up the SQLite database file outside the package using the same logic as init_db.R.
-#'
-#' @param base_dir Character. Base directory for database (default: current working directory)
-#' @param db_name Character. Name of the database file (default: "db.sqlite")
+#' @param db_path Character. Path to the SQLite database file to create
+#' @param to_be_voted_images_file Character. Path to
+#'                                the file containing image annotations
+#' @param grouped_credentials List. Parsed YAML list of grouped credentials
 #' @return Character path to the database file
 #' @export
 create_database <- function(

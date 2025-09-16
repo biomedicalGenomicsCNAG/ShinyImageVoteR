@@ -37,10 +37,10 @@ userStatsServer <- function(
   db_pool,
   tab_trigger = NULL
 ) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     # Create a reactive that triggers when the user stats tab is selected
     # This allows automatic refresh when navigating to the stats page
-    tab_change_trigger <- reactive({
+    tab_change_trigger <- shiny::reactive({
       if (!is.null(tab_trigger)) {
         tab_trigger()
       } else {
@@ -48,10 +48,10 @@ userStatsServer <- function(
       }
     })
 
-    stats <- eventReactive(
+    stats <- shiny::eventReactive(
       c(login_trigger(), input$refresh_user_stats, tab_change_trigger()),
       {
-        req(login_trigger())
+        shiny::req(login_trigger())
         user_annotations_file <- session$userData$userAnnotationsFile
 
         if (!file.exists(user_annotations_file)) {
@@ -128,7 +128,7 @@ userStatsServer <- function(
       }
     )
 
-    output$user_stats_table <- renderTable({
+    output$user_stats_table <- shiny::renderTable({
       stats()
     })
 

@@ -14,7 +14,7 @@ votingAppUI <- function(cfg) {
       shiny::tagList(
         # 1. inject your CSS
         shiny::tags$head(
-          tags$style(HTML(
+          shiny::tags$style(shiny::HTML(
             "
               @media (max-width: 990px) {
                 #logout-btn {

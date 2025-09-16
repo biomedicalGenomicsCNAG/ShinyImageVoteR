@@ -48,11 +48,11 @@ adminUI <- function(id, cfg) {
 #' @param tab_trigger Optional reactive triggered when admin tab is selected
 #' @export
 adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     # Reactive trigger for table refresh
-    table_refresh_trigger <- reactiveVal(0)
+    table_refresh_trigger <- shiny::reactiveVal(0)
 
-    tab_change_trigger <- reactive({
+    tab_change_trigger <- shiny::reactive({
       if (!is.null(tab_trigger)) {
         tab_trigger()
       } else {
@@ -60,7 +60,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     })
 
-    pwd_retrieval_tbl <- eventReactive(
+    pwd_retrieval_tbl <- shiny::eventReactive(
       c(
         login_trigger(),
         input$refresh_tokens,
@@ -68,7 +68,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         table_refresh_trigger()
       ),
       {
-        req(login_trigger()$admin == 1)
+        shiny::req(login_trigger()$admin == 1)
         DBI::dbGetQuery(
           db_pool,
           paste(
@@ -144,12 +144,12 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       )
 
       new_row <- data.frame(
-        `User ID` = as.character(textInput(
+        `User ID` = as.character(shiny::textInput(
           ns("new_userid"),
           NULL,
           width = "100%"
         )),
-        Institute = as.character(textInput(
+        Institute = as.character(shiny::textInput(
           ns("new_institute"),
           NULL,
           width = "100%"
@@ -174,7 +174,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
     })
 
     # Handle email template button clicks
-    observeEvent(input$email_template_btn, {
+    shiny::observeEvent(input$email_template_btn, {
       user_id <- input$email_template_btn
       tbl <- pwd_retrieval_tbl()
       user_row <- tbl[tbl$userid == user_id, ]
@@ -214,31 +214,31 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           "The B1MG Variant Voting Admin Team at CNAG"
         )
 
-        showModal(modalDialog(
+        shiny::showModal(shiny::modalDialog(
           title = paste("Email Template for", user_id),
-          tags$pre(
+          shiny::tags$pre(
             style = "white-space: pre-wrap; font-family: monospace;",
             email_template
           ),
           easyClose = TRUE,
-          footer = modalButton("Close")
+          footer = shiny::modalButton("Close")
         ))
       }
     })
 
-    observeEvent(input$add_user_btn, {
+    shiny::observeEvent(input$add_user_btn, {
       print("Add user button clicked")
 
-      req(login_trigger()$admin == 1)
+      shiny::req(login_trigger()$admin == 1)
       user_id <- trimws(input$add_user_btn$userid)
       institute <- trimws(input$add_user_btn$institute %||% "")
 
       if (user_id == "" || institute == "") {
-        showModal(modalDialog(
+        shiny::showModal(shiny::modalDialog(
           title = "Missing information",
           "Please provide both user ID and institute.",
           easyClose = TRUE,
-          footer = modalButton("Close")
+          footer = shiny::modalButton("Close")
         ))
         return()
       }
@@ -250,11 +250,11 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       )
 
       if (nrow(existing) > 0) {
-        showModal(modalDialog(
+        shiny::showModal(shiny::modalDialog(
           title = "User exists",
           "A user with this ID already exists.",
           easyClose = TRUE,
-          footer = modalButton("Close")
+          footer = shiny::modalButton("Close")
         ))
         return()
       }
@@ -282,14 +282,14 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       base_url <- paste0(protocol, hostname, port)
       retrieval_link <- paste0(base_url, "?pwd_retrieval_token=", token)
 
-      showModal(modalDialog(
+      shiny::showModal(shiny::modalDialog(
         title = paste("User", user_id, "added"),
-        tags$pre(
+        shiny::tags$pre(
           style = "white-space: pre-wrap; font-family: monospace;",
           "User successfully added and password generated."
         ),
         easyClose = TRUE,
-        footer = modalButton("Close")
+        footer = shiny::modalButton("Close")
       ))
 
       # Clear fields and refresh table

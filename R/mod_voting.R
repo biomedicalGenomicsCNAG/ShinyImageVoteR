@@ -24,7 +24,7 @@
 votingUI <- function(id, cfg) {
   ns <- shiny::NS(id)
 
-  shiny::fluidPage(
+  fluidPage(
     theme = cfg$theme,
     shinyjs::useShinyjs(),
     shiny::singleton(
@@ -135,9 +135,9 @@ votingUI <- function(id, cfg) {
                 class = "voting-btns",
                 shiny::actionButton(
                   ns("nextBtn"),
-                  label = tagList(
+                  label = shiny::tagList(
                     "Next (press",
-                    icon("level-down-alt", class = "fa-rotate-90"),
+                    shiny::icon("level-down-alt", class = "fa-rotate-90"),
                     ")"
                   ),
                   class = "arrow-right"
@@ -196,7 +196,7 @@ votingServer <- function(
   get_mutation_trigger_source,
   tab_trigger = NULL
 ) {
-  moduleServer(id, function(input, output, session) {
+  shiny::moduleServer(id, function(input, output, session) {
     # validate cfg cols using "validate_cols" function from db.R
     validate_cols(db_pool, "annotations", cfg$db_cols)
 
@@ -214,9 +214,9 @@ votingServer <- function(
     # Tracks the url parameters be they manually set in the URL or
     # set by the app when the user clicks on the "Back" button
     # or presses "Go back one page" in the browser
-    url_params <- reactive({
+    url_params <- shiny::reactive({
       # example "?coordinate=chrY:10935390"
-      parseQueryString(session$clientData$url_search)
+      shiny::parseQueryString(session$clientData$url_search)
     })
 
     # Tracks the trigger source of the get_mutation function
@@ -233,7 +233,7 @@ votingServer <- function(
     next_trigger <- shiny::reactiveVal(0)
 
     # Create a reactive that triggers when the voting tab is selected
-    tab_change_trigger <- reactive({
+    tab_change_trigger <- shiny::reactive({
       if (!is.null(tab_trigger)) {
         tab_trigger()
       } else {
@@ -242,12 +242,12 @@ votingServer <- function(
     })
     # Dummy listener so the URL query string
     # gets updated when navigating to the tab
-    observe({
+    shiny::observe({
       tab_change_trigger()
     })
 
-    observeEvent(input$nextBtn, {
-      req(login_trigger())
+    shiny::observeEvent(input$nextBtn, {
+      shiny::req(login_trigger())
       get_mutation_trigger_source("next")
 
       session$onFlushed(
@@ -386,9 +386,9 @@ votingServer <- function(
         print(files)
 
         # get all rows with the same coordinate from all user annotation files
-        same_coord_df <- rbindlist(
+        same_coord_df <- data.table::rbindlist(
           lapply(files, function(f) {
-            dt <- fread(f)
+            dt <- data.table::fread(f)
             dt_sub <- dt[grepl(coord, coordinates)]
             if (nrow(dt_sub)) {
               dt_sub[, file := basename(f)]
@@ -403,14 +403,12 @@ votingServer <- function(
         agreement_counts_df <- same_coord_df %>%
           dplyr::group_by(agreement) %>%
           dplyr::summarise(count = n(), .groups = "drop")
-        print("Counts of agreements:")
-        print(counts)
 
         # loop over the agreement_counts_df and update the vote counts in the database
-        for (i in 1:nrow(agreement_counts_df)) {
+        for (i in seq_len(nrow(agreement_counts_df))) {
           agreement <- agreement_counts_df$agreement[i]
           count <- agreement_counts_df$count[i]
-          vote_col <- vote2dbcolumn_map[[agreement]]
+          vote_col <- cfg$vote2dbcolumn_map[[agreement]]
           if (!is.null(vote_col)) {
             DBI::dbExecute(
               db_pool,
@@ -435,10 +433,10 @@ votingServer <- function(
       next_trigger(next_trigger() + 1)
     })
 
-    observeEvent(
+    shiny::observeEvent(
       url_params(),
       {
-        req(login_trigger())
+        shiny::req(login_trigger())
         get_mutation_trigger_source("url-params-change")
       },
       # higher priority to ensure get_mutation gets triggered by url_params()
@@ -447,10 +445,10 @@ votingServer <- function(
 
     # Triggered when the user logs in, clicks the next button,
     # or goes back (with the actionButton "Back" or browser back button)
-    get_mutation <- eventReactive(
+    get_mutation <- shiny::eventReactive(
       c(login_trigger(), next_trigger(), url_params()),
       {
-        req(login_trigger())
+        shiny::req(login_trigger())
         user_annotations_file <- session$userData$userAnnotationsFile
 
         annotations_df <- read.table(
