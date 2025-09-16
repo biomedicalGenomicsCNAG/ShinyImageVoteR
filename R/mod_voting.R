@@ -205,7 +205,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
     # set by the app when the user clicks on the "Back" button
     # or presses "Go back one page" in the browser
     url_params <- reactive({
-      # example "?coords=chrY:10935390"
+      # example "?coordinate=chrY:10935390"
       parseQueryString(session$clientData$url_search)
     })
 
@@ -359,18 +359,15 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         print(files)
 
         # get all rows with the same coordinate from all user annotation files
-        same_coords_df <- rbindlist(lapply(files, function(f) {
+        same_coord_df <- rbindlist(lapply(files, function(f) {
           dt <- fread(f)
           dt_sub <- dt[grepl(coord, coordinates)]
           if (nrow(dt_sub)) dt_sub[, file := basename(f)]
           dt_sub
         }), use.names = TRUE, fill = TRUE)
 
-        print("Resulting DataFrame after reading all user annotations:")
-        print(same_coords_df)
-
         # Count the different agreements (yes, no, diff_var, not_confident)
-        agreement_counts_df <- same_coords_df %>%
+        agreement_counts_df <- same_coord_df %>%
           dplyr::group_by(agreement) %>%
           dplyr::summarise(count = n(), .groups = "drop")
         print("Counts of agreements:")
@@ -429,11 +426,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         print("URL change detected, showing the image from the URL.")
         # Get the coordinate from the URL
 
-        # TODO
-        # replace coords with coordinate throughout the code
-        # to reflect that this query param only expects a single coordinate
-
-        coord <- parseQueryString(session$clientData$url_search)$coords
+        coord <- parseQueryString(session$clientData$url_search)$coordinate
         if (is.null(coord)) {
           print("No coordinates found in the URL or all variants have been voted on.")
           return(NULL)
@@ -468,20 +461,8 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         }
 
         # Query the database for the variant with these coordinates
-
-        # TODO
-        # this query is used twice create a helper
-        # to avoid code duplication
-
         df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
 
-        # query <- paste0(
-        #   "SELECT rowid, ",
-        #   paste(cfg$db_cols, collapse = ", "),
-        #   " FROM annotations WHERE coordinates = '", coord, "'"
-        # )
-        # query <- paste0("SELECT rowid, coordinates, REF, ALT, variant, path FROM annotations WHERE coordinates = '", coords, "'")
-        # df <- DBI::dbGetQuery(db_pool, query)
         if (nrow(df) == 1) {
           current_mutation(df[1, ])
           vote_start_time(Sys.time())
@@ -517,11 +498,6 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
         } else {
           print("No mutation found for the given coordinate")
           print(paste("Coordinate:", coord))
-          # return the whole coordinates column from the database
-          # query <- "SELECT coordinates FROM annotations"
-          # coords_df <- DBI::dbGetQuery(db_pool, query)
-          # print("Available coordinates in the database:")
-          # print(coords_df)
           return(NULL)
         }
       }
@@ -529,7 +505,7 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
       if (all(!is.na(annotations_df$agreement))) {
         res <- create_done_tibble()
         shiny::updateQueryString(
-          "?coords=done",
+          "?coordinate=done",
           mode = "push",
           session = session
         )
@@ -577,12 +553,12 @@ votingServer <- function(id, cfg, login_trigger, db_pool, get_mutation_trigger_s
             # filter(!(no >= 3 & no / total_votes > 0.7))
 
             # If a variant is found, return it
-            coords <- df[1, ]$coordinates
+            coord <- df[1, ]$coordinates
 
             current_mutation(df[1, ])
             vote_start_time(Sys.time())
             shiny::updateQueryString(
-              paste0("?coords=", coords),
+              paste0("?coordinate=", coord),
               mode = "push",
               session = session
             )

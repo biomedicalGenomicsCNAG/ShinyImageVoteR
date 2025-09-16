@@ -33,8 +33,8 @@ makeVotingAppServer <- function(db_pool, cfg) {
           if (tab_name_clean == "vote" && length(current_query) > 0) {
             new_query_string <- paste0(
               new_query_string,
-              "&coords=",
-              current_query[["coords"]]
+              "&coordinate=",
+              current_query[["coordinate"]]
             )
           }
 
