@@ -592,7 +592,7 @@ votingServer <- function(
               # Filter logic for the actual voting
               # Reasoning why this is commented out in the README
 
-              # inspritation for the filtering logic from legacy code:
+              # inspiration for the filtering logic from legacy code:
               # filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
               # filter(!(no >= 3 & no / total_votes > 0.7))
 
