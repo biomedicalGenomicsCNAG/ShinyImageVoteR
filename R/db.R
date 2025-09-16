@@ -7,20 +7,21 @@
 #' @return Character path to the database file
 #' @export
 create_database <- function(
-    db_path,
-    to_be_voted_images_file,
-    grouped_credentials) {
+  db_path,
+  to_be_voted_images_file,
+  grouped_credentials
+) {
   # Look for data file in config/annotation_screenshots_paths first
   db_full_path <- normalizePath(db_path)
 
   print(paste0("Creating database at:", db_path))
 
-
   # Create database structure
   conn <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_full_path)
 
-
-  DBI::dbExecute(conn, "
+  DBI::dbExecute(
+    conn,
+    "
     CREATE TABLE annotations (
       coordinates TEXT,
       REF TEXT,
@@ -32,10 +33,13 @@ create_database <- function(
       vote_count_not_sure INTEGER DEFAULT 0,
       vote_count_total INTEGER DEFAULT 0
     )
-  ")
+  "
+  )
 
   # Create trigger for vote total updates
-  DBI::dbExecute(conn, "
+  DBI::dbExecute(
+    conn,
+    "
     CREATE TRIGGER update_vote_total_update
     AFTER UPDATE ON annotations
     FOR EACH ROW
@@ -48,19 +52,24 @@ create_database <- function(
           vote_count_not_sure
       WHERE rowid = NEW.rowid;
     END;
-  ")
+  "
+  )
 
-
-  DBI::dbExecute(conn, "
+  DBI::dbExecute(
+    conn,
+    "
     CREATE TABLE sessionids (
       userid TEXT,
       sessionid TEXT,
       login_time TEXT,
       logout_time TEXT
     )
-  ")
+  "
+  )
 
-  DBI::dbExecute(conn, "
+  DBI::dbExecute(
+    conn,
+    "
     CREATE TABLE passwords (
       userid TEXT PRIMARY KEY,
       admin BOOLEAN DEFAULT 0,
@@ -69,8 +78,8 @@ create_database <- function(
       pwd_retrieval_token TEXT,
       pwd_retrieved_timestamp TEXT
     )
-  ")
-
+  "
+  )
 
   populate_annotations_table(
     conn,
@@ -95,8 +104,9 @@ create_database <- function(
 #' @param to_be_voted_images_file Character. Path to the file containing image annotations
 #' @return NULL
 populate_annotations_table <- function(
-    conn,
-    to_be_voted_images_file) {
+  conn,
+  to_be_voted_images_file
+) {
   # Read the to_be_voted_images_file
   if (!file.exists(to_be_voted_images_file)) {
     stop("File not found: ", to_be_voted_images_file)
@@ -123,14 +133,18 @@ populate_annotations_table <- function(
   cat("Detected parent directory:", parent_dir, "\n")
 
   annotations_df$path <- gsub(
-    glue::glue("{parent_dir}/"), "",
+    glue::glue("{parent_dir}/"),
+    "",
     annotations_df$path
   )
 
   # Insert data into the annotations table
   DBI::dbWriteTable(
-    conn, "annotations", annotations_df,
-    append = TRUE, row.names = FALSE
+    conn,
+    "annotations",
+    annotations_df,
+    append = TRUE,
+    row.names = FALSE
   )
   cat("Populated annotations table with", nrow(annotations_df), "rows\n")
 }
@@ -161,7 +175,10 @@ populate_users_table <- function(conn, grouped_credentials) {
   }
   is_missing_pw <- function(x) {
     # Treat NULL, NA, "", or literal "NULL" as missing
-    is.null(x) || length(x) == 0 || is.na(x) || identical(x, "") ||
+    is.null(x) ||
+      length(x) == 0 ||
+      is.na(x) ||
+      identical(x, "") ||
       (is.character(x) && toupper(x) == "NULL")
   }
   nz_lgl <- function(x, default = FALSE) {
@@ -183,13 +200,21 @@ populate_users_table <- function(conn, grouped_credentials) {
   institutes <- names(grouped_credentials)
   for (institute in institutes) {
     users <- grouped_credentials[[institute]]
-    if (is.null(users)) next
+    if (is.null(users)) {
+      next
+    }
 
     for (u in users) {
       uid <- nz_chr(u$userid)
-      if (is.na(uid) || uid == "") next
+      if (is.na(uid) || uid == "") {
+        next
+      }
 
-      pw <- if (is_missing_pw(u$password)) NA_character_ else as.character(u$password)
+      pw <- if (is_missing_pw(u$password)) {
+        NA_character_
+      } else {
+        as.character(u$password)
+      }
       adm <- nz_lgl(u$admin, default = FALSE)
 
       user_institute_map <- rbind(
@@ -210,7 +235,11 @@ populate_users_table <- function(conn, grouped_credentials) {
     return(invisible(NULL))
   }
 
-  cat("Found users from config:", paste(unique(user_institute_map$userid), collapse = ", "), "\n")
+  cat(
+    "Found users from config:",
+    paste(unique(user_institute_map$userid), collapse = ", "),
+    "\n"
+  )
 
   # ---- Prepare data for insertion ----
   user_data <- data.frame(
@@ -218,7 +247,11 @@ populate_users_table <- function(conn, grouped_credentials) {
     institute = user_institute_map$institute,
     password = ifelse(
       is.na(user_institute_map$preset_password),
-      vapply(user_institute_map$userid, function(x) generate_password(), character(1)),
+      vapply(
+        user_institute_map$userid,
+        function(x) generate_password(),
+        character(1)
+      ),
       user_institute_map$preset_password
     ),
     admin = as.integer(user_institute_map$admin), # store as 0/1 (portable)
@@ -238,10 +271,14 @@ populate_users_table <- function(conn, grouped_credentials) {
   cat("\nAdded users and their passwords:\n")
   for (i in seq_len(nrow(user_data))) {
     cat(
-      "User:", user_data$userid[i],
-      "Institute:", user_data$institute[i],
-      "Password:", user_data$password[i],
-      "Admin:", as.logical(user_data$admin[i]),
+      "User:",
+      user_data$userid[i],
+      "Institute:",
+      user_data$institute[i],
+      "Password:",
+      user_data$password[i],
+      "Admin:",
+      as.logical(user_data$admin[i]),
       "\n"
     )
   }
@@ -289,24 +326,132 @@ validate_cols <- function(conn, table, cfg_db_cols) {
 
   # 2) SQLite keyword blocklist (generated with GPT-5)
   SQLITE_KEYWORDS <- c(
-    "ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE",
-    "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN",
-    "BETWEEN", "BY", "CASCADE", "CASE", "CAST", "CHECK", "COLLATE",
-    "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS",
-    "CURRENT", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP",
-    "DATABASE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DESC",
-    "DETACH", "DISTINCT", "DO", "DROP", "EACH", "ELSE", "END", "ESCAPE",
-    "EXCEPT", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FOR", "FOREIGN",
-    "FROM", "FULL", "GLOB", "GROUP", "HAVING", "IF", "IGNORE", "IMMEDIATE",
-    "IN", "INDEX", "INDEXED", "INITIALLY", "INNER", "INSERT", "INSTEAD",
-    "INTERSECT", "INTO", "IS", "ISNULL", "JOIN", "KEY", "LEFT", "LIKE",
-    "LIMIT", "MATCH", "NATURAL", "NO", "NOT", "NOTNULL", "NULL", "OF", "OFFSET",
-    "ON", "OR", "ORDER", "OUTER", "PLAN", "PRAGMA", "PRIMARY", "QUERY", "RAISE",
-    "RECURSIVE", "REFERENCES", "REGEXP", "REINDEX", "RELEASE", "RENAME",
-    "REPLACE", "RESTRICT", "RIGHT", "ROLLBACK", "ROW", "SAVEPOINT", "SELECT",
-    "SET", "TABLE", "TEMP", "TEMPORARY", "THEN", "TO", "TRANSACTION", "TRIGGER",
-    "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL",
-    "WHEN", "WHERE", "WITH", "WITHOUT"
+    "ABORT",
+    "ACTION",
+    "ADD",
+    "AFTER",
+    "ALL",
+    "ALTER",
+    "ANALYZE",
+    "AND",
+    "AS",
+    "ASC",
+    "ATTACH",
+    "AUTOINCREMENT",
+    "BEFORE",
+    "BEGIN",
+    "BETWEEN",
+    "BY",
+    "CASCADE",
+    "CASE",
+    "CAST",
+    "CHECK",
+    "COLLATE",
+    "COLUMN",
+    "COMMIT",
+    "CONFLICT",
+    "CONSTRAINT",
+    "CREATE",
+    "CROSS",
+    "CURRENT",
+    "CURRENT_DATE",
+    "CURRENT_TIME",
+    "CURRENT_TIMESTAMP",
+    "DATABASE",
+    "DEFAULT",
+    "DEFERRABLE",
+    "DEFERRED",
+    "DELETE",
+    "DESC",
+    "DETACH",
+    "DISTINCT",
+    "DO",
+    "DROP",
+    "EACH",
+    "ELSE",
+    "END",
+    "ESCAPE",
+    "EXCEPT",
+    "EXCLUSIVE",
+    "EXISTS",
+    "EXPLAIN",
+    "FAIL",
+    "FOR",
+    "FOREIGN",
+    "FROM",
+    "FULL",
+    "GLOB",
+    "GROUP",
+    "HAVING",
+    "IF",
+    "IGNORE",
+    "IMMEDIATE",
+    "IN",
+    "INDEX",
+    "INDEXED",
+    "INITIALLY",
+    "INNER",
+    "INSERT",
+    "INSTEAD",
+    "INTERSECT",
+    "INTO",
+    "IS",
+    "ISNULL",
+    "JOIN",
+    "KEY",
+    "LEFT",
+    "LIKE",
+    "LIMIT",
+    "MATCH",
+    "NATURAL",
+    "NO",
+    "NOT",
+    "NOTNULL",
+    "NULL",
+    "OF",
+    "OFFSET",
+    "ON",
+    "OR",
+    "ORDER",
+    "OUTER",
+    "PLAN",
+    "PRAGMA",
+    "PRIMARY",
+    "QUERY",
+    "RAISE",
+    "RECURSIVE",
+    "REFERENCES",
+    "REGEXP",
+    "REINDEX",
+    "RELEASE",
+    "RENAME",
+    "REPLACE",
+    "RESTRICT",
+    "RIGHT",
+    "ROLLBACK",
+    "ROW",
+    "SAVEPOINT",
+    "SELECT",
+    "SET",
+    "TABLE",
+    "TEMP",
+    "TEMPORARY",
+    "THEN",
+    "TO",
+    "TRANSACTION",
+    "TRIGGER",
+    "UNION",
+    "UNIQUE",
+    "UPDATE",
+    "USING",
+    "VACUUM",
+    "VALUES",
+    "VIEW",
+    "VIRTUAL",
+    "WHEN",
+    "WHERE",
+    "WITH",
+    "WITHOUT"
   )
   is_keyword <- function(x) toupper(x) %in% SQLITE_KEYWORDS
 
@@ -374,9 +519,13 @@ query_annotations_db_by_coord <- function(conn, coord, cols) {
 
   # 3) build + execute with a single placeholder
   sql <- paste0(
-    "SELECT rowid, ", paste(q_cols, collapse = ", "),
-    " FROM ", q_table,
-    " WHERE ", q_coord_col, " = ?"
+    "SELECT rowid, ",
+    paste(q_cols, collapse = ", "),
+    " FROM ",
+    q_table,
+    " WHERE ",
+    q_coord_col,
+    " = ?"
   )
 
   result <- DBI::dbGetQuery(conn, sql, params = list(coord))

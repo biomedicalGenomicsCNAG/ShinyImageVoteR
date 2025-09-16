@@ -61,7 +61,12 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
     })
 
     pwd_retrieval_tbl <- eventReactive(
-      c(login_trigger(), input$refresh_tokens, tab_change_trigger(), table_refresh_trigger()),
+      c(
+        login_trigger(),
+        input$refresh_tokens,
+        tab_change_trigger(),
+        table_refresh_trigger()
+      ),
       {
         req(login_trigger()$admin == 1)
         DBI::dbGetQuery(
@@ -86,9 +91,17 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       # TODO
       # Put below in a function to reduce code duplication
       # --- Build base URL
-      protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
+      protocol <- if (session$clientData$url_port == 443) {
+        "https://"
+      } else {
+        "http://"
+      }
       hostname <- session$clientData$url_hostname
-      port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
+      port <- if (session$clientData$url_port %in% c(80, 443)) {
+        ""
+      } else {
+        paste0(":", session$clientData$url_port)
+      }
       base_url <- paste0(protocol, hostname, port)
 
       # --- rows
@@ -125,15 +138,26 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
                   })()">
             &#x2795; new user
           </button>',
-        ns("new_userid"), ns("new_institute"), ns("add_user_btn")
+        ns("new_userid"),
+        ns("new_institute"),
+        ns("add_user_btn")
       )
 
       new_row <- data.frame(
-        `User ID` = as.character(textInput(ns("new_userid"), NULL, width = "100%")),
-        Institute = as.character(textInput(ns("new_institute"), NULL, width = "100%")),
+        `User ID` = as.character(textInput(
+          ns("new_userid"),
+          NULL,
+          width = "100%"
+        )),
+        Institute = as.character(textInput(
+          ns("new_institute"),
+          NULL,
+          width = "100%"
+        )),
         `Password Retrieval Link` = "",
         Action = add_new_user_btn_html,
-        stringsAsFactors = FALSE, check.names = FALSE
+        stringsAsFactors = FALSE,
+        check.names = FALSE
       )
       new_row <- new_row[, cols, drop = FALSE] # enforce same order
 
@@ -157,18 +181,33 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
 
       if (nrow(user_row) > 0) {
         # Get current URL components
-        protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
+        protocol <- if (session$clientData$url_port == 443) {
+          "https://"
+        } else {
+          "http://"
+        }
         hostname <- session$clientData$url_hostname
-        port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
+        port <- if (session$clientData$url_port %in% c(80, 443)) {
+          ""
+        } else {
+          paste0(":", session$clientData$url_port)
+        }
         base_url <- paste0(protocol, hostname, port)
 
-        retrieval_link <- paste0(base_url, "?pwd_retrieval_token=", user_row$pwd_retrieval_token)
+        retrieval_link <- paste0(
+          base_url,
+          "?pwd_retrieval_token=",
+          user_row$pwd_retrieval_token
+        )
 
         email_template <- paste0(
           "Subject: Password for the B1MG Variant Voting beta\n\n",
-          "Dear ", user_id, ",\n\n",
+          "Dear ",
+          user_id,
+          ",\n\n",
           "Your account has been created in order to retrieve the password please click on the following link:\n\n",
-          retrieval_link, "\n\n",
+          retrieval_link,
+          "\n\n",
           "Note, this link will work only once. So store the displayed password immediately!\n\n",
           "If you have any questions, please contact help.b1mg@cnag.eu\n\n",
           "Kind regards,\n",
@@ -177,7 +216,10 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
 
         showModal(modalDialog(
           title = paste("Email Template for", user_id),
-          tags$pre(style = "white-space: pre-wrap; font-family: monospace;", email_template),
+          tags$pre(
+            style = "white-space: pre-wrap; font-family: monospace;",
+            email_template
+          ),
           easyClose = TRUE,
           footer = modalButton("Close")
         ))
@@ -226,9 +268,17 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         params = list(user_id, institute, password, token)
       )
 
-      protocol <- if (session$clientData$url_port == 443) "https://" else "http://"
+      protocol <- if (session$clientData$url_port == 443) {
+        "https://"
+      } else {
+        "http://"
+      }
       hostname <- session$clientData$url_hostname
-      port <- if (session$clientData$url_port %in% c(80, 443)) "" else paste0(":", session$clientData$url_port)
+      port <- if (session$clientData$url_port %in% c(80, 443)) {
+        ""
+      } else {
+        paste0(":", session$clientData$url_port)
+      }
       base_url <- paste0(protocol, hostname, port)
       retrieval_link <- paste0(base_url, "?pwd_retrieval_token=", token)
 
@@ -245,7 +295,8 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       # Clear fields and refresh table
       shinyjs::runjs(sprintf(
         "document.getElementById('%s').value=''; document.getElementById('%s').value='';",
-        session$ns("new_userid"), session$ns("new_institute")
+        session$ns("new_userid"),
+        session$ns("new_institute")
       ))
 
       # Trigger table refresh

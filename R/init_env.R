@@ -7,12 +7,16 @@
 #' @return List with paths to user_data directory, database file, and config file
 #' @export
 init_environment <- function(
-    config_file_path) {
+  config_file_path
+) {
   # check if "IMGVOTER_BASE_DIR" is set, then set it as base directory
   base_dir <- Sys.getenv("IMGVOTER_BASE_DIR", unset = getwd())
 
   default_file_path <- file.path(
-    get_app_dir(), "default_env", "config", "config.yaml"
+    get_app_dir(),
+    "default_env",
+    "config",
+    "config.yaml"
   )
 
   if (config_file_path == default_file_path) {

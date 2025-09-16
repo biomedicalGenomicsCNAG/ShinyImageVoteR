@@ -27,6 +27,8 @@ color_seq <- function(seq, nt2color_map) {
   seq %>%
     strsplit(split = "") %>%
     unlist() %>%
-    sapply(function(x) sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)) %>%
+    sapply(function(x) {
+      sprintf('<span style="color:%s">%s</span>', nt2color_map[x], x)
+    }) %>%
     paste(collapse = "")
 }

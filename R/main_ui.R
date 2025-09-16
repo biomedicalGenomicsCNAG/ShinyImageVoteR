@@ -14,13 +14,15 @@ votingAppUI <- function(cfg) {
       shiny::tagList(
         # 1. inject your CSS
         shiny::tags$head(
-          tags$style(HTML("
+          tags$style(HTML(
+            "
               @media (max-width: 990px) {
                 #logout-btn {
                   right: 8em !important;
                 }
               }
-            "))
+            "
+          ))
         ),
         shiny::navbarPage(
           theme = cfg$theme,
@@ -32,15 +34,8 @@ votingAppUI <- function(cfg) {
           shiny::tabPanel("User stats", userstatsUI("userstats", cfg)),
           shiny::tabPanel("About", aboutUI("about", cfg)),
           shiny::tabPanel("FAQ", faqUI("faq")),
-          # shiny::tabPanel("FAQ", shiny::includeMarkdown(
-          #   file.path(
-          #     get_app_dir(),
-          #     "docs",
-          #     "faq.md"
-          #   )
-          # )),
           header = shiny::div(
-            id    = "logout-btn",
+            id = "logout-btn",
             style = "position:absolute; right:1em; top:0.5em; z-index:1000;",
             shinyauthr::logoutUI("logout")
           )

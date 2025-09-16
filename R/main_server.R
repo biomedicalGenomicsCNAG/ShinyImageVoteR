@@ -10,7 +10,10 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
     # browser()
 
-    total_images <- DBI::dbGetQuery(db_pool, "SELECT COUNT(*) as n FROM annotations")$n
+    total_images <- DBI::dbGetQuery(
+      db_pool,
+      "SELECT COUNT(*) as n FROM annotations"
+    )$n
     cat(sprintf("Total annotations in DB: %s\n", total_images))
 
     # Helper function to create a tab trigger reactive
@@ -28,7 +31,9 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
           # Update the URL to include the tab name as a query parameter
           new_query_string <- paste0("?tab=", tab_name_clean)
-          current_query <- shiny::parseQueryString(session$clientData$url_search)
+          current_query <- shiny::parseQueryString(
+            session$clientData$url_search
+          )
 
           if (tab_name_clean == "vote" && length(current_query) > 0) {
             new_query_string <- paste0(
@@ -40,7 +45,8 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
           shiny::updateQueryString(
             new_query_string,
-            mode = "replace", session = session
+            mode = "replace",
+            session = session
           )
         } else {
           NULL
@@ -85,7 +91,6 @@ makeVotingAppServer <- function(db_pool, cfg) {
 
     login_data <- login_return$login_data
 
-
     # Dynamically show/hide admin tab based on user admin status
     admin_tab_added <- shiny::reactiveVal(FALSE)
 
@@ -104,7 +109,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
       } else if (!is_admin && admin_tab_added()) {
         shiny::removeTab(
           inputId = "main_navbar",
-          target  = "Admin"
+          target = "Admin"
         )
         admin_tab_added(FALSE)
       }
@@ -130,10 +135,19 @@ makeVotingAppServer <- function(db_pool, cfg) {
       print(paste("User directory:", user_dir))
       print(paste("User ID:", user_id))
 
-      session$userData$userInfoFile <- file.path(user_dir, paste0(user_id, "_info.json"))
-      session$userData$userAnnotationsFile <- file.path(user_dir, paste0(user_id, "_annotations.tsv"))
+      session$userData$userInfoFile <- file.path(
+        user_dir,
+        paste0(user_id, "_info.json")
+      )
+      session$userData$userAnnotationsFile <- file.path(
+        user_dir,
+        paste0(user_id, "_annotations.tsv")
+      )
 
-      print(paste("User Annotations File:", session$userData$userAnnotationsFile))
+      print(paste(
+        "User Annotations File:",
+        session$userData$userAnnotationsFile
+      ))
 
       safe_dir_create(user_dir)
 
@@ -151,7 +165,10 @@ makeVotingAppServer <- function(db_pool, cfg) {
       combined <- paste0(user_id, as.numeric(Sys.time()))
 
       # Create a numeric seed (e.g., using crc32 hash and convert to integer)
-      seed <- strtoi(substr(digest::digest(combined, algo = "crc32"), 1, 7), base = 16)
+      seed <- strtoi(
+        substr(digest::digest(combined, algo = "crc32"), 1, 7),
+        base = 16
+      )
       print("Seed for randomization:")
       print(seed)
       "********"
@@ -187,7 +204,11 @@ makeVotingAppServer <- function(db_pool, cfg) {
       coords <- DBI::dbGetQuery(db_pool, query)
 
       coords_vec <- as.character(coords[[1]])
-      randomised_coords <- sample(coords_vec, length(coords_vec), replace = FALSE)
+      randomised_coords <- sample(
+        coords_vec,
+        length(coords_vec),
+        replace = FALSE
+      )
 
       # Initialize with empty strings except for coordinates
       annotations_df <- setNames(
@@ -257,9 +278,22 @@ makeVotingAppServer <- function(db_pool, cfg) {
     about_tab_trigger <- make_tab_trigger("About")
 
     # initialize modules
-    votingServer("voting", cfg, login_data, db_pool, get_mutation_trigger_source, voting_tab_trigger)
+    votingServer(
+      "voting",
+      cfg,
+      login_data,
+      db_pool,
+      get_mutation_trigger_source,
+      voting_tab_trigger
+    )
     leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
-    userStatsServer("userstats", cfg, login_data, db_pool, user_stats_tab_trigger)
+    userStatsServer(
+      "userstats",
+      cfg,
+      login_data,
+      db_pool,
+      user_stats_tab_trigger
+    )
     adminServer("admin", cfg, login_data, db_pool, admin_tab_trigger)
     faqServer("faq", cfg, faq_tab_trigger)
     aboutServer("about", cfg, about_tab_trigger)
@@ -273,7 +307,10 @@ makeVotingAppServer <- function(db_pool, cfg) {
       if (file.exists(cfg$shutdown_trigger_file)) {
         print("External shutdown request received.")
         file.remove(cfg$shutdown_trigger_file)
-        showNotification("External shutdown request received…", type = "warning")
+        showNotification(
+          "External shutdown request received…",
+          type = "warning"
+        )
         stopApp()
       }
     })

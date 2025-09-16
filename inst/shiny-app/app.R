@@ -1,4 +1,7 @@
-if (any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOTER_STARTED") != "1") {
+if (
+  any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) &&
+    Sys.getenv("IMGVOTER_STARTED") != "1"
+) {
   devtools::load_all("../..") # Load from package root
 
   print("vscode-shiny detected -> delegating to app wrapper")
@@ -6,9 +9,15 @@ if (any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOT
   Sys.setenv(IMGVOTER_STARTED = "1")
 
   # get the parent directory of the app
-  app_dir <- normalizePath(dirname(commandArgs(trailingOnly = TRUE)[1]), mustWork = TRUE)
+  app_dir <- normalizePath(
+    dirname(commandArgs(trailingOnly = TRUE)[1]),
+    mustWork = TRUE
+  )
   # get two directories up
-  app_env_dir <- normalizePath(file.path(app_dir, "../..", "app_env"), mustWork = TRUE)
+  app_env_dir <- normalizePath(
+    file.path(app_dir, "../..", "app_env"),
+    mustWork = TRUE
+  )
   # set the base directory
   Sys.setenv(IMGVOTER_BASE_DIR = file.path(app_env_dir, ".."))
   print(glue::glue("App directory: {app_dir}"))
@@ -19,7 +28,11 @@ if (any(grepl("posit.shiny", commandArgs(), fixed = TRUE)) && Sys.getenv("IMGVOT
     IMGVOTER_IMAGES_DIR = file.path(app_env_dir, "images"),
     IMGVOTER_SERVER_DATA_DIR = file.path(app_env_dir, "server_data"),
     IMGVOTER_USER_DATA_DIR = file.path(app_env_dir, "user_data"),
-    IMG_VOTER_GROUPED_CREDENTIALS = file.path(app_env_dir, "config", "institute2userids2password.yaml")
+    IMG_VOTER_GROUPED_CREDENTIALS = file.path(
+      app_env_dir,
+      "config",
+      "institute2userids2password.yaml"
+    )
   )
 
   print("Environment variables set:")
@@ -54,7 +67,10 @@ cfg <- ShinyImgVoteR::load_config(
   config_file_path = Sys.getenv(
     "IMGVOTER_CONFIG_FILE_PATH",
     unset = file.path(
-      get_app_dir(), "default_env", "config", "config.yaml"
+      get_app_dir(),
+      "default_env",
+      "config",
+      "config.yaml"
     )
   )
 )

@@ -47,16 +47,18 @@ copy_dir_from_app <- function(target_dir_path) {
 #' # Fails validation (contains spaces)
 #' try(safe_dir_create("my data"))
 safe_dir_create <- function(
-    path,
-    pattern = "^[A-Za-z0-9_]+$",
-    showWarnings = TRUE,
-    recursive = FALSE) {
+  path,
+  pattern = "^[A-Za-z0-9_]+$",
+  showWarnings = TRUE,
+  recursive = FALSE
+) {
   name <- basename(path)
 
   # Validate against the pattern
   if (!grepl(pattern, name)) {
     stop(
-      "Invalid directory name: '", name,
+      "Invalid directory name: '",
+      name,
       "'. Only letters, digits and underscores are allowed."
     )
   }
@@ -154,14 +156,16 @@ retrieve_password_from_link <- function(token, conn) {
   print("In retrieve_password_from_link")
   print("token")
   print(token)
-  res <- DBI::dbGetQuery(conn,
+  res <- DBI::dbGetQuery(
+    conn,
     "SELECT userid, password FROM passwords WHERE pwd_retrieval_token = ? AND pwd_retrieved_timestamp IS NULL",
     params = list(token)
   )
   if (nrow(res) == 0) {
     return("Invalid or already used password retrieval link.")
   }
-  DBI::dbExecute(conn,
+  DBI::dbExecute(
+    conn,
     "UPDATE passwords SET pwd_retrieved_timestamp = ? WHERE pwd_retrieval_token = ?",
     params = list(as.character(Sys.time()), token)
   )

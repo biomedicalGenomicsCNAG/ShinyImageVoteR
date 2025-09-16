@@ -43,47 +43,70 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
       }
     })
 
-    counts <- eventReactive(c(login_trigger(), input$refresh_counts, tab_change_trigger()), {
-      req(login_trigger())
-      institute_ids <- unlist(strsplit(
-        Sys.getenv("IMGVOTER_USER_GROUPS_COMMA_SEPARATED"), ","
-      ))
+    counts <- eventReactive(
+      c(login_trigger(), input$refresh_counts, tab_change_trigger()),
+      {
+        req(login_trigger())
+        institute_ids <- unlist(strsplit(
+          Sys.getenv("IMGVOTER_USER_GROUPS_COMMA_SEPARATED"),
+          ","
+        ))
 
-      # browser()
-      counts_list <- lapply(institute_ids, function(institute) {
-        institutes_dir <- file.path(
-          Sys.getenv("IMGVOTER_USER_DATA_DIR"),
-          institute
-        )
-        user_dirs <- list.dirs(institutes_dir, full.names = TRUE, recursive = FALSE)
-        if (length(user_dirs) == 0) {
-          return(data.frame(institute = institute, users = 0, total_images_voted = 0))
-        }
-        total_users <- length(user_dirs)
-        total_images <- 0
-        for (user_dir in user_dirs) {
-          user_annotations_file <- file.path(user_dir, paste0(basename(user_dir), "_annotations.tsv"))
-          if (!file.exists(user_annotations_file)) {
-            next
-          }
-          user_annotations_df <- read.table(
-            user_annotations_file,
-            header = TRUE,
-            sep = "\t",
-            stringsAsFactors = FALSE
+        # browser()
+        counts_list <- lapply(institute_ids, function(institute) {
+          institutes_dir <- file.path(
+            Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+            institute
           )
-          user_voted_images <- sum(!is.na(user_annotations_df$shinyauthr_session_id))
-          total_images <- total_images + user_voted_images
-        }
-        data.frame(institute = institute, users = total_users, total_images_voted = total_images)
-      })
-      counts_df <- do.call(rbind, counts_list)
+          user_dirs <- list.dirs(
+            institutes_dir,
+            full.names = TRUE,
+            recursive = FALSE
+          )
+          if (length(user_dirs) == 0) {
+            return(data.frame(
+              institute = institute,
+              users = 0,
+              total_images_voted = 0
+            ))
+          }
+          total_users <- length(user_dirs)
+          total_images <- 0
+          for (user_dir in user_dirs) {
+            user_annotations_file <- file.path(
+              user_dir,
+              paste0(basename(user_dir), "_annotations.tsv")
+            )
+            if (!file.exists(user_annotations_file)) {
+              next
+            }
+            user_annotations_df <- read.table(
+              user_annotations_file,
+              header = TRUE,
+              sep = "\t",
+              stringsAsFactors = FALSE
+            )
+            user_voted_images <- sum(
+              !is.na(user_annotations_df$shinyauthr_session_id)
+            )
+            total_images <- total_images + user_voted_images
+          }
+          data.frame(
+            institute = institute,
+            users = total_users,
+            total_images_voted = total_images
+          )
+        })
+        counts_df <- do.call(rbind, counts_list)
 
-      counts_df <- counts_df %>%
-        dplyr::mutate(institute = factor(institute, levels = institute_ids)) %>%
-        dplyr::arrange(desc(total_images_voted))
-      counts_df
-    })
+        counts_df <- counts_df %>%
+          dplyr::mutate(
+            institute = factor(institute, levels = institute_ids)
+          ) %>%
+          dplyr::arrange(desc(total_images_voted))
+        counts_df
+      }
+    )
 
     output$institutes_voting_counts <- renderTable({
       counts()

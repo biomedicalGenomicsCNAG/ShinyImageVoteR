@@ -81,7 +81,10 @@ loginServer <- function(id, cfg, db_conn = NULL, log_out = reactive(NULL)) {
     #     )
     # }
 
-    get_sessionids_from_db <- function(conn = db_conn, expiry = cfg$cookie_expiry) {
+    get_sessionids_from_db <- function(
+      conn = db_conn,
+      expiry = cfg$cookie_expiry
+    ) {
       DBI::dbGetQuery(
         conn,
         "SELECT userid, sessionid, login_time, logout_time

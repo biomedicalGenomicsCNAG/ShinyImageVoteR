@@ -13,11 +13,16 @@ aboutUI <- function(id, cfg) {
     theme = cfg$theme,
     shiny::h3("About this app"),
     shiny::p("This app allows users to vote on somatic mutations in images."),
-    shiny::p("Users can log in, view images, and provide their votes and comments."),
-    shiny::p("The app tracks user sessions and stores annotations in a SQLite database."),
+    shiny::p(
+      "Users can log in, view images, and provide their votes and comments."
+    ),
+    shiny::p(
+      "The app tracks user sessions and stores annotations in a SQLite database."
+    ),
     shiny::p("Developed by Ivo Christopher Leist")
   )
 }
+
 
 #' About module server logic
 #'
