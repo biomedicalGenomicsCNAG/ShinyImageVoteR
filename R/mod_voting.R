@@ -376,9 +376,13 @@ votingServer <- function(
         already_voted &&
           previous_agreement != input$agreement
       ) {
+        print("User changed their vote, updating the database vote counts...")
+        print(glue::glue("cfg$user_data_dir: {cfg$user_data_dir}"))
+        # TODO
+        # Here the path probably needs to be set from the cfg variable
         files <- list.files(
-          path = "user_data",
-          pattern = "\\.txt$",
+          path = cfg$user_data_dir,
+          pattern = "\\.tsv$",
           full.names = TRUE,
           recursive = TRUE
         )
@@ -389,7 +393,7 @@ votingServer <- function(
         same_coord_df <- data.table::rbindlist(
           lapply(files, function(f) {
             dt <- data.table::fread(f)
-            dt_sub <- dt[grepl(coord, coordinates)]
+            dt_sub <- dt[grepl(coord, dt[["coordinates"]])]
             if (nrow(dt_sub)) {
               dt_sub[, file := basename(f)]
             }
@@ -402,7 +406,7 @@ votingServer <- function(
         # Count the different agreements (yes, no, diff_var, not_confident)
         agreement_counts_df <- same_coord_df %>%
           dplyr::group_by(agreement) %>%
-          dplyr::summarise(count = n(), .groups = "drop")
+          dplyr::summarise(count = dplyr::n(), .groups = "drop")
 
         # loop over the agreement_counts_df and update the vote counts in the database
         for (i in seq_len(nrow(agreement_counts_df))) {
