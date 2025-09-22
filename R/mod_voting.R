@@ -376,62 +376,38 @@ votingServer <- function(
         already_voted &&
           previous_agreement != input$agreement
       ) {
-        print("User changed their vote, updating the database vote counts...")
-        print(glue::glue("cfg$user_data_dir: {cfg$user_data_dir}"))
-        # TODO
-        # Here the path probably needs to be set from the cfg variable
-        files <- list.files(
-          path = cfg$user_data_dir,
-          pattern = "\\.tsv$",
-          full.names = TRUE,
-          recursive = TRUE
-        )
-        print("already_voted -> Files to read for annotations:")
-        print(files)
+        print("User changed their vote, adjusting the database vote counts...")
 
-        # get all rows with the same coordinate from all user annotation files
-        same_coord_df <- data.table::rbindlist(
-          lapply(files, function(f) {
-            dt <- data.table::fread(f)
-            dt_sub <- dt[grepl(coord, dt[["coordinates"]])]
-            if (nrow(dt_sub)) {
-              dt_sub[, file := basename(f)]
-            }
-            dt_sub
-          }),
-          use.names = TRUE,
-          fill = TRUE
-        )
+        prev_vote_col <- cfg$vote2dbcolumn_map[[previous_agreement]]
+        new_vote_col <- cfg$vote2dbcolumn_map[[input$agreement]]
 
-        # Count the different agreements (yes, no, diff_var, not_confident)
-        agreement_counts_df <- same_coord_df %>%
-          dplyr::group_by(agreement) %>%
-          dplyr::summarise(count = dplyr::n(), .groups = "drop")
-
-        # loop over the agreement_counts_df and update the vote counts in the database
-        for (i in seq_len(nrow(agreement_counts_df))) {
-          agreement <- agreement_counts_df$agreement[i]
-          count <- agreement_counts_df$count[i]
-          vote_col <- cfg$vote2dbcolumn_map[[agreement]]
-          if (!is.null(vote_col)) {
+        if (!is.null(prev_vote_col) && !is.null(new_vote_col)) {
+          if (prev_vote_col == new_vote_col) {
+            warning(
+              "Previous and new agreements map to the same database column; skipping update."
+            )
+          } else {
             DBI::dbExecute(
               db_pool,
               paste0(
                 "UPDATE annotations SET ",
-                vote_col,
+                prev_vote_col,
                 " = ",
-                vote_col,
-                " + ",
-                count,
-                " WHERE coordinates = ?"
+                prev_vote_col,
+                " - 1, ",
+                new_vote_col,
+                " = ",
+                new_vote_col,
+                " + 1 WHERE coordinates = ?"
               ),
               params = list(coord)
             )
           }
+        } else {
+          warning(
+            "Could not find vote columns for previous or new agreement; skipping database adjustment."
+          )
         }
-        print(
-          "Vote counts updated in the database based on all user annotations."
-        )
       }
       print("Annotations saved successfully.")
       next_trigger(next_trigger() + 1)
