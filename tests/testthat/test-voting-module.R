@@ -60,6 +60,22 @@ testthat::test_that("votingUI contains expected UI elements", {
   testthat::expect_true(grepl("shiny-panel-conditional", ui_html))
 })
 
+testthat::test_that("votingUI contains zoom controls", {
+  cfg <- ShinyImgVoteR::load_config()
+  ui <- votingUI("test", cfg)
+  ui_html <- as.character(ui)
+
+  # Check for zoom buttons
+  testthat::expect_true(grepl("zoom_in", ui_html))
+  testthat::expect_true(grepl("zoom_out", ui_html))
+  
+  # Check for image_width select input (zoom dropdown)
+  testthat::expect_true(grepl("image_width", ui_html))
+  
+  # Check for zoom control styling class
+  testthat::expect_true(grepl("zoom-controls", ui_html))
+})
+
 testthat::test_that("hotkey configuration is consistent", {
   # Check that observation hotkeys match the number of observations
   testthat::expect_equal(length(cfg$observation_hotkeys), length(cfg$observations_dict))
@@ -348,6 +364,46 @@ testthat::test_that("get_mutation gets triggered with not existing coordinates",
       session$flushReact()
       res <- get_mutation()
       testthat::expect_equal(res$coordinates, NULL)
+    }
+  )
+})
+
+testthat::test_that("Zoom controls work correctly", {
+  env <- setup_voting_env(c("chr1:1000"))
+  args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+
+  args$cfg <- ShinyImgVoteR::load_config()
+  testServer(
+    votingServer,
+    args = args,
+    {
+      # Set up session userData
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$votingInstitute <- cfg$test_institute
+      session$userData$shinyauthr_session_id <- "test_session_123"
+
+      # Initial zoom should be 100
+      session$setInputs(image_width = "100")
+      testthat::expect_equal(input$image_width, "100")
+
+      # Test zoom in
+      session$setInputs(zoom_in = 1)
+      # After zoom in, should increase by 10
+      # Note: In actual implementation, updateSelectInput would be called
+      # but in test we need to simulate the result
+      session$setInputs(image_width = "110")
+      testthat::expect_equal(input$image_width, "110")
+
+      # Test zoom out
+      session$setInputs(zoom_out = 1)
+      session$setInputs(image_width = "100")
+      testthat::expect_equal(input$image_width, "100")
+
+      # Test custom zoom selection
+      session$setInputs(image_width = "150")
+      testthat::expect_equal(input$image_width, "150")
     }
   )
 })

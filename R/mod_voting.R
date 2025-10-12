@@ -43,23 +43,30 @@ votingUI <- function(id, cfg) {
       shiny::column(
         width = 10,
         class = "img-col",
-        # TODO
-        # look into making the tool tip editable
-        # https://github.com/dreamRs/shinyWidgets/issues/719
+        # Zoom control bar with buttons and dropdown
         shiny::tags$details(
-          shiny::tags$summary("⚙️ Show image width slider"),
-          shinyWidgets::noUiSliderInput(
-            ns("image_width"),
-            label = "Image width (%)",
-            min = 10,
-            max = 100,
-            value = 100,
-            step = 1,
-            tooltips = TRUE, # show the value
-            behaviour = c("tap", "drag"),
-            width = "98%",
-            height = "20px"
-          ),
+          shiny::tags$summary("⚙️ Show zoom controls"),
+          shiny::div(
+            class = "zoom-controls",
+            shiny::actionButton(
+              ns("zoom_out"),
+              label = "−",
+              class = "zoom-btn"
+            ),
+            shiny::selectInput(
+              ns("image_width"),
+              label = NULL,
+              choices = c("Fit" = "100", "50%" = "50", "100%" = "100", 
+                          "150%" = "150", "200%" = "200", "300%" = "300"),
+              selected = "100",
+              width = "120px"
+            ),
+            shiny::actionButton(
+              ns("zoom_in"),
+              label = "+",
+              class = "zoom-btn"
+            )
+          )
         ),
         shiny::uiOutput(ns("voting_image_div"))
       ),
@@ -244,6 +251,28 @@ votingServer <- function(
     # gets updated when navigating to the tab
     shiny::observe({
       tab_change_trigger()
+    })
+
+    # Zoom in button handler
+    shiny::observeEvent(input$zoom_in, {
+      current_zoom <- as.numeric(input$image_width)
+      new_zoom <- min(current_zoom + 10, 300)  # Max zoom 300%
+      shiny::updateSelectInput(
+        session,
+        "image_width",
+        selected = as.character(new_zoom)
+      )
+    })
+
+    # Zoom out button handler
+    shiny::observeEvent(input$zoom_out, {
+      current_zoom <- as.numeric(input$image_width)
+      new_zoom <- max(current_zoom - 10, 10)  # Min zoom 10%
+      shiny::updateSelectInput(
+        session,
+        "image_width",
+        selected = as.character(new_zoom)
+      )
     })
 
     shiny::observeEvent(input$nextBtn, {

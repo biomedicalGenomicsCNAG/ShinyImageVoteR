@@ -161,3 +161,47 @@
     flex-direction: row-reverse; /* reverses both buttons */
   }
 }
+
+/* Zoom controls styling */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 5px;
+}
+
+.zoom-btn {
+  min-width: 40px;
+  height: 40px;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.zoom-btn:active {
+  background-color: #dee2e6;
+  transform: scale(0.95);
+}
+
+.zoom-controls .form-group {
+  margin-bottom: 0;
+}
+
+.zoom-controls select {
+  height: 40px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 14px;
+}
