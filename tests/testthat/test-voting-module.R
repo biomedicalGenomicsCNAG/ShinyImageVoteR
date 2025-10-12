@@ -54,6 +54,7 @@ testthat::test_that("votingUI contains expected UI elements", {
 
   # Check for action buttons
   testthat::expect_true(grepl("nextBtn", ui_html))
+  testthat::expect_true(grepl('id="test-nextBtn"[^>]*disabled', ui_html))
   testthat::expect_true(grepl("backBtn", ui_html))
 
   # Check for conditional panels
