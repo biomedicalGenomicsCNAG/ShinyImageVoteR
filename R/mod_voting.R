@@ -85,6 +85,7 @@ votingUI <- function(id, cfg) {
                     }
                   ),
                   choiceValues = c("yes", "no", "diff_var", "not_confident"),
+                  selected = character(0),
                 )
               ),
               shiny::div(
@@ -118,16 +119,17 @@ votingUI <- function(id, cfg) {
               ),
               shiny::div(
                 class = "voting-btns",
-                shiny::actionButton(
-                  ns("nextBtn"),
-                  label = shiny::tagList(
-                    "Next (press",
-                    shiny::icon("level-down-alt", class = "fa-rotate-90"),
-                    ")"
-                  ),
-                  class = "arrow-right"
+                shinyjs::disabled(
+                  shiny::actionButton(
+                    ns("nextBtn"),
+                    label = shiny::tagList(
+                      "Next (press",
+                      shiny::icon("level-down-alt", class = "fa-rotate-90"),
+                      ")"
+                    ),
+                    class = "arrow-right"
+                  )
                 ),
-                # shinyjs::hidden(
                 shinyjs::disabled(
                   shiny::actionButton(
                     ns("backBtn"),
@@ -140,7 +142,6 @@ votingUI <- function(id, cfg) {
                     class = "arrow-left"
                   )
                 )
-                # ),
               )
             )
           )
@@ -215,6 +216,32 @@ votingServer <- function(
 
     # Trigger to load the next mutation only after annotations are saved
     next_trigger <- shiny::reactiveVal(0)
+
+    shiny::observe({
+      mut_df <- current_mutation()
+      agreement <- input$agreement
+
+      if (is.null(mut_df)) {
+        shinyjs::disable(session$ns("nextBtn"))
+        return()
+      }
+
+      if (!is.null(mut_df$coordinates) && identical(as.character(mut_df$coordinates), "done")) {
+        shinyjs::disable(session$ns("nextBtn"))
+        return()
+      }
+
+      if (!is.null(agreement) && length(agreement) > 0 && !identical(agreement, "")) {
+        print("Enabling nextBtn")
+        print(paste("agreement:", agreement))
+
+        session$onFlushed(function() {
+          shinyjs::enable(session$ns("nextBtn"))
+        })
+      } else {
+        shinyjs::disable(session$ns("nextBtn"))
+      }
+    })
 
     # Create a reactive that triggers when the voting tab is selected
     tab_change_trigger <- shiny::reactive({
@@ -465,7 +492,6 @@ votingServer <- function(
             session$onFlushed(function() {
               shinyjs::showElement(session$ns("voting_questions_div"))
               shinyjs::showElement(session$ns("nextBtn"))
-              shinyjs::enable(session$ns("nextBtn"))
             })
           }
 
