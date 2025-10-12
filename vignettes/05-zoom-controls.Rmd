@@ -1,0 +1,82 @@
+---
+title: "Zoom Controls"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Zoom Controls}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Zoom Controls Documentation
+
+## Overview
+
+The zoom controls provide an intuitive interface for adjusting the image size when reviewing variant images in the B1MG Variant Voting application.
+
+## Features
+
+### Zoom Buttons
+- **Zoom In (+)**: Increases zoom by 10% with each click
+- **Zoom Out (−)**: Decreases zoom by 10% with each click
+
+### Zoom Dropdown
+- Pre-configured zoom levels: Fit (100%), 50%, 100%, 150%, 200%, 300%
+- Custom zoom input: Type any percentage value between 10% and 300%
+- Auto-validation: Values outside the 10-300% range are automatically constrained
+
+### Zoom Range
+- Minimum: 10%
+- Maximum: 300%
+- Default: 100% (Fit)
+
+## User Interface
+
+The zoom controls are located above the variant image and are collapsed by default within a collapsible section labeled "⚙️ Show zoom controls".
+
+```
+[−] [Dropdown: 100%] [+]
+```
+
+## Usage
+
+### Using Preset Zoom Levels
+1. Click "⚙️ Show zoom controls" to expand the controls
+2. Click the dropdown menu
+3. Select one of the preset zoom levels (50%, 100%, 150%, 200%, 300%)
+
+### Using Custom Zoom Values
+1. Click "⚙️ Show zoom controls" to expand the controls
+2. Click the dropdown menu
+3. Type a custom percentage value (e.g., "125", "125%")
+4. Press Enter or click outside the dropdown
+
+### Using Zoom Buttons
+1. Click "⚙️ Show zoom controls" to expand the controls
+2. Click the **+** button to zoom in by 10%
+3. Click the **−** button to zoom out by 10%
+
+## Persistence
+
+The zoom level is maintained when navigating between variant images within the same session. This allows users to set their preferred zoom level once and have it apply to all subsequent images.
+
+## Technical Details
+
+### Implementation
+- **UI Component**: `shinyWidgets::selectizeInput` with `create = TRUE` option
+- **Validation**: Server-side validation constrains zoom values to 10-300% range
+- **Server Logic**: `observeEvent` handlers for zoom buttons with `updateSelectizeInput`
+
+### Files Modified
+- `R/mod_voting.R`: Added zoom control UI and server logic
+- `inst/shiny-app/www/voting-styles.css`: Added CSS styling for zoom controls
+- `tests/testthat/test-voting-module.R`: Added tests for zoom functionality
+
+## Improvements Over Previous Implementation
+
+The new zoom controls replace the previous `noUiSliderInput` with the following improvements:
+
+1. ✅ **Extended Range**: Can now zoom beyond 100% up to 300%
+2. ✅ **Precise Control**: Stepwise adjustments with +/− buttons
+3. ✅ **Custom Input**: Ability to type exact zoom percentages
+4. ✅ **Familiar UX**: Interface similar to Google Slides and other document viewers
+5. ✅ **Better for Frequent Use**: Easier to make quick zoom adjustments during annotation
