@@ -629,12 +629,11 @@ votingServer <- function(
     })
 
     output$voting_image <- leaflet::renderLeaflet({
-      mut_df <- get_mutation()
-      if (is.null(mut_df)) {
-        return(NULL)
+      mut_df <- shiny::isolate(get_mutation())
+      image_url <- NULL
+      if (!is.null(mut_df) && mut_df$coordinates != "done") {
+        image_url <- glue::glue("images/{mut_df$path}")
       }
-
-      image_url <- glue::glue("images/{mut_df$path}")
 
       leaflet::leaflet(
         options = leaflet::leafletOptions(
@@ -662,6 +661,25 @@ votingServer <- function(
           data = list(imageUrl = image_url)
         )
     })
+
+    shiny::observeEvent(
+      get_mutation(),
+      {
+        mut_df <- get_mutation()
+        if (is.null(mut_df) || mut_df$coordinates == "done") {
+          return()
+        }
+
+        session$sendCustomMessage(
+          type = "voteImage:setOverlay",
+          message = list(
+            outputId = session$ns("voting_image"),
+            imageUrl = glue::glue("images/{mut_df$path}")
+          )
+        )
+      },
+      ignoreNULL = TRUE
+    )
 
     output$somatic_mutation <- shiny::renderText({
       mut_df <- get_mutation()
