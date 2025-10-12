@@ -85,6 +85,7 @@ votingUI <- function(id, cfg) {
                     }
                   ),
                   choiceValues = c("yes", "no", "diff_var", "not_confident"),
+                  selected = character(0),
                 )
               ),
               shiny::div(
@@ -129,7 +130,6 @@ votingUI <- function(id, cfg) {
                     class = "arrow-right"
                   )
                 ),
-                # shinyjs::hidden(
                 shinyjs::disabled(
                   shiny::actionButton(
                     ns("backBtn"),
@@ -142,7 +142,6 @@ votingUI <- function(id, cfg) {
                     class = "arrow-left"
                   )
                 )
-                # ),
               )
             )
           )
@@ -233,7 +232,12 @@ votingServer <- function(
       }
 
       if (!is.null(agreement) && length(agreement) > 0 && !identical(agreement, "")) {
-        shinyjs::enable(session$ns("nextBtn"))
+        print("Enabling nextBtn")
+        print(paste("agreement:", agreement))
+
+        session$onFlushed(function() {
+          shinyjs::enable(session$ns("nextBtn"))
+        })
       } else {
         shinyjs::disable(session$ns("nextBtn"))
       }
@@ -488,7 +492,6 @@ votingServer <- function(
             session$onFlushed(function() {
               shinyjs::showElement(session$ns("voting_questions_div"))
               shinyjs::showElement(session$ns("nextBtn"))
-              shinyjs::enable(session$ns("nextBtn"))
             })
           }
 
