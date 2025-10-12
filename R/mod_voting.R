@@ -53,13 +53,22 @@ votingUI <- function(id, cfg) {
               label = "−",
               class = "zoom-btn"
             ),
-            shiny::selectInput(
+            shinyWidgets::selectizeInput(
               ns("image_width"),
               label = NULL,
               choices = c("Fit" = "100", "50%" = "50", "100%" = "100", 
                           "150%" = "150", "200%" = "200", "300%" = "300"),
               selected = "100",
-              width = "120px"
+              width = "120px",
+              options = list(
+                create = TRUE,
+                placeholder = "100%",
+                render = I("{
+                  option: function(item, escape) {
+                    return '<div>' + escape(item.label) + '</div>';
+                  }
+                }")
+              )
             ),
             shiny::actionButton(
               ns("zoom_in"),
@@ -257,7 +266,7 @@ votingServer <- function(
     shiny::observeEvent(input$zoom_in, {
       current_zoom <- as.numeric(input$image_width)
       new_zoom <- min(current_zoom + 10, 300)  # Max zoom 300%
-      shiny::updateSelectInput(
+      shinyWidgets::updateSelectizeInput(
         session,
         "image_width",
         selected = as.character(new_zoom)
@@ -268,12 +277,31 @@ votingServer <- function(
     shiny::observeEvent(input$zoom_out, {
       current_zoom <- as.numeric(input$image_width)
       new_zoom <- max(current_zoom - 10, 10)  # Min zoom 10%
-      shiny::updateSelectInput(
+      shinyWidgets::updateSelectizeInput(
         session,
         "image_width",
         selected = as.character(new_zoom)
       )
     })
+
+    # Validate and normalize custom zoom input
+    shiny::observeEvent(input$image_width, {
+      zoom_value <- input$image_width
+      # Extract numeric value from input (handles "100%", "100", etc.)
+      numeric_zoom <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", zoom_value)))
+      
+      # If valid numeric value, constrain to range and update
+      if (!is.na(numeric_zoom)) {
+        constrained_zoom <- max(10, min(numeric_zoom, 300))
+        if (constrained_zoom != numeric_zoom) {
+          shinyWidgets::updateSelectizeInput(
+            session,
+            "image_width",
+            selected = as.character(constrained_zoom)
+          )
+        }
+      }
+    }, ignoreInit = TRUE)
 
     shiny::observeEvent(input$nextBtn, {
       shiny::req(login_trigger())
