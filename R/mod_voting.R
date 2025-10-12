@@ -53,11 +53,13 @@ votingUI <- function(id, cfg) {
               label = "−",
               class = "zoom-btn"
             ),
-            shinyWidgets::selectizeInput(
+            shiny::selectizeInput(
               ns("image_width"),
               label = NULL,
-              choices = c("Fit" = "100", "50%" = "50", "100%" = "100", 
-                          "150%" = "150", "200%" = "200", "300%" = "300"),
+              choices = c(
+                "Fit" = "100", "50%" = "50", "100%" = "100",
+                "150%" = "150", "200%" = "200", "300%" = "300"
+              ),
               selected = "100",
               width = "120px",
               options = list(
@@ -205,13 +207,12 @@ votingUI <- function(id, cfg) {
 #' @return None. Side effect only: registers reactive observers and UI updates.
 #' @export
 votingServer <- function(
-  id,
-  cfg,
-  login_trigger,
-  db_pool,
-  get_mutation_trigger_source,
-  tab_trigger = NULL
-) {
+    id,
+    cfg,
+    login_trigger,
+    db_pool,
+    get_mutation_trigger_source,
+    tab_trigger = NULL) {
   shiny::moduleServer(id, function(input, output, session) {
     # validate cfg cols using "validate_cols" function from db.R
     validate_cols(db_pool, "annotations", cfg$db_cols)
@@ -265,8 +266,8 @@ votingServer <- function(
     # Zoom in button handler
     shiny::observeEvent(input$zoom_in, {
       current_zoom <- as.numeric(input$image_width)
-      new_zoom <- min(current_zoom + 10, 300)  # Max zoom 300%
-      shinyWidgets::updateSelectizeInput(
+      new_zoom <- min(current_zoom + 10, 300) # Max zoom 300%
+      shiny::updateSelectizeInput(
         session,
         "image_width",
         selected = as.character(new_zoom)
@@ -276,8 +277,8 @@ votingServer <- function(
     # Zoom out button handler
     shiny::observeEvent(input$zoom_out, {
       current_zoom <- as.numeric(input$image_width)
-      new_zoom <- max(current_zoom - 10, 10)  # Min zoom 10%
-      shinyWidgets::updateSelectizeInput(
+      new_zoom <- max(current_zoom - 10, 10) # Min zoom 10%
+      shiny::updateSelectizeInput(
         session,
         "image_width",
         selected = as.character(new_zoom)
@@ -285,23 +286,26 @@ votingServer <- function(
     })
 
     # Validate and normalize custom zoom input
-    shiny::observeEvent(input$image_width, {
-      zoom_value <- input$image_width
-      # Extract numeric value from input (handles "100%", "100", etc.)
-      numeric_zoom <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", zoom_value)))
-      
-      # If valid numeric value, constrain to range and update
-      if (!is.na(numeric_zoom)) {
-        constrained_zoom <- max(10, min(numeric_zoom, 300))
-        if (constrained_zoom != numeric_zoom) {
-          shinyWidgets::updateSelectizeInput(
-            session,
-            "image_width",
-            selected = as.character(constrained_zoom)
-          )
+    shiny::observeEvent(input$image_width,
+      {
+        zoom_value <- input$image_width
+        # Extract numeric value from input (handles "100%", "100", etc.)
+        numeric_zoom <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", zoom_value)))
+
+        # If valid numeric value, constrain to range and update
+        if (!is.na(numeric_zoom)) {
+          constrained_zoom <- max(10, min(numeric_zoom, 300))
+          if (constrained_zoom != numeric_zoom) {
+            shiny::updateSelectizeInput(
+              session,
+              "image_width",
+              selected = as.character(constrained_zoom)
+            )
+          }
         }
-      }
-    }, ignoreInit = TRUE)
+      },
+      ignoreInit = TRUE
+    )
 
     shiny::observeEvent(input$nextBtn, {
       shiny::req(login_trigger())
