@@ -2,18 +2,21 @@
 % Please edit documentation in R/db.R
 \name{create_database}
 \alias{create_database}
-\title{Initialize external database}
+\title{Initialize SQLite database}
 \usage{
 create_database(db_path, to_be_voted_images_file, grouped_credentials)
 }
 \arguments{
-\item{base_dir}{Character. Base directory for database (default: current working directory)}
+\item{db_path}{Character. Path to the SQLite database file to create}
 
-\item{db_name}{Character. Name of the database file (default: "db.sqlite")}
+\item{to_be_voted_images_file}{Character. Path to
+the file containing image annotations}
+
+\item{grouped_credentials}{List. Parsed YAML list of grouped credentials}
 }
 \value{
 Character path to the database file
 }
 \description{
-Sets up the SQLite database file outside the package using the same logic as init_db.R.
+Initialize SQLite database
 }

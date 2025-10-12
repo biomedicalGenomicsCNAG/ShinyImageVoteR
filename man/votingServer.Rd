@@ -30,7 +30,7 @@ votingServer(
 None. Side effect only: registers reactive observers and UI updates.
 }
 \description{
-Handles the server-side logic for the variant voting workflow.
+Handles the server-side logic for the mutation voting workflow.
 This includes:
 \itemize{
 \item Reactively loading mutation images and metadata

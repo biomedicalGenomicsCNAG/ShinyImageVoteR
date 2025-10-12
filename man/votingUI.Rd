@@ -17,7 +17,7 @@ Provides the user interface for displaying a voting task, including:
 \itemize{
 \item An image of a candidate somatic mutation
 \item A radio button to express agreement with the annotation
-\item Conditional inputs for alternate variant type and comments
+\item Conditional inputs for alternate mutation type and comments
 \item Navigation controls (Back / Next)
 }
 }

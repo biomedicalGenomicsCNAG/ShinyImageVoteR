@@ -7,10 +7,9 @@
 #' @return Character path to the database file
 #' @export
 create_database <- function(
-  db_path,
-  to_be_voted_images_file,
-  grouped_credentials
-) {
+    db_path,
+    to_be_voted_images_file,
+    grouped_credentials) {
   # Look for data file in config/annotation_screenshots_paths first
   db_full_path <- normalizePath(db_path)
 
@@ -19,6 +18,14 @@ create_database <- function(
   # Create database structure
   conn <- DBI::dbConnect(RSQLite::SQLite(), dbname = db_full_path)
 
+  # Create annotations table
+
+  # TODO
+  # variant should be replaced by "mutation"
+
+  # TODO
+  # make the whole database generation more generic/configurable
+  # so the ShinyImgVoteR can be applied to other use cases
   DBI::dbExecute(
     conn,
     "
@@ -104,9 +111,8 @@ create_database <- function(
 #' @param to_be_voted_images_file Character. Path to the file containing image annotations
 #' @return NULL
 populate_annotations_table <- function(
-  conn,
-  to_be_voted_images_file
-) {
+    conn,
+    to_be_voted_images_file) {
   # Read the to_be_voted_images_file
   if (!file.exists(to_be_voted_images_file)) {
     stop("File not found: ", to_be_voted_images_file)

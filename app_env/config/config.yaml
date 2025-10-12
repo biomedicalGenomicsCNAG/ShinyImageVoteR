@@ -13,8 +13,8 @@ radioBtns_label: Is the somatic mutation above correct? [num keys 1-4]
 checkboxes_label: Please select the reason(s) for your uncertainty [keyboard keys a-h]
 radio_options2val_map:
   Yes, it is: 'yes'
-  There is no variant: 'no'
-  There is a different variant: diff_var
+  There is no mutation: 'no'
+  There is a different mutation: diff_var
   I'm not sure: not_confident
 observations_dict:
   Issues with coverage: coverage

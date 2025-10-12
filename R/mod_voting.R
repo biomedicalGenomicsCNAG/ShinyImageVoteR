@@ -3,7 +3,7 @@
 #' Provides the user interface for displaying a voting task, including:
 #' - An image of a candidate somatic mutation
 #' - A radio button to express agreement with the annotation
-#' - Conditional inputs for alternate variant type and comments
+#' - Conditional inputs for alternate mutation type and comments
 #' - Navigation controls (Back / Next)
 #'
 #' This module uses `shinyjs` for interactivity and includes a custom `hotkeys.js`
@@ -167,7 +167,7 @@ votingUI <- function(id, cfg) {
 
 #' Voting module server logic
 #'
-#' Handles the server-side logic for the variant voting workflow.
+#' Handles the server-side logic for the mutation voting workflow.
 #' This includes:
 #' - Reactively loading mutation images and metadata
 #' - Capturing user input (agreement, observation, comment)
@@ -189,13 +189,12 @@ votingUI <- function(id, cfg) {
 #' @return None. Side effect only: registers reactive observers and UI updates.
 #' @export
 votingServer <- function(
-  id,
-  cfg,
-  login_trigger,
-  db_pool,
-  get_mutation_trigger_source,
-  tab_trigger = NULL
-) {
+    id,
+    cfg,
+    login_trigger,
+    db_pool,
+    get_mutation_trigger_source,
+    tab_trigger = NULL) {
   shiny::moduleServer(id, function(input, output, session) {
     # validate cfg cols using "validate_cols" function from db.R
     validate_cols(db_pool, "annotations", cfg$db_cols)
@@ -276,6 +275,9 @@ votingServer <- function(
       # Update the annotations_df with the new agreement
       coord <- mut_df$coordinates
 
+      # TOOD
+      # check if alternative_vartype is still in use
+
       print(paste("Updating annotations for coordinates:", coord))
       print(paste("Agreement:", input$agreement))
       print(paste("Alternative vartype:", input$alternative_vartype))
@@ -332,7 +334,7 @@ votingServer <- function(
 
       print("Before updating the time_till_vote_casted_in_seconds:")
 
-      # calculate time spent on the current variant
+      # calculate time spent on the current mutation
       time_spent <- as.numeric(difftime(
         Sys.time(),
         vote_start_time(),
@@ -449,13 +451,13 @@ votingServer <- function(
           coord <- parseQueryString(session$clientData$url_search)$coordinate
           if (is.null(coord)) {
             print(
-              "No coordinates found in the URL or all variants have been voted on."
+              "No coordinates found in the URL or all mutations have been voted on."
             )
             return(NULL)
           }
 
           if (coord == "done") {
-            print("All variants have been voted on.")
+            print("All mutations have been voted on.")
             res <- create_done_tibble()
             # TODO
             # Freepic attribution for done.png
@@ -482,7 +484,7 @@ votingServer <- function(
             })
           }
 
-          # Query the database for the variant with these coordinates
+          # Query the database for the mutation with these coordinates
           df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
 
           if (nrow(df) == 1) {
@@ -544,13 +546,13 @@ votingServer <- function(
           return(res)
         }
 
-        # loop through the annotations_df to find the next variant that has not been voted on
-        print("Looking for the next variant that has not been voted on...")
+        # loop through the annotations_df to find the next mutation that has not been voted on
+        print("Looking for the next mutation that has not been voted on...")
         for (i in seq_len(nrow(annotations_df))) {
           if (is.na(annotations_df$agreement[i])) {
-            # Get the coordinates of the variant
+            # Get the coordinates of the mutation
             coord <- annotations_df$coordinates[i]
-            # Query the database for the variant with these coordinates
+            # Query the database for the mutation with these coordinates
 
             print("cfg$db_cols:")
             print(cfg$db_cols)
@@ -562,7 +564,7 @@ votingServer <- function(
             #   paste(cfg$db_cols, collapse = ", "),
             #   " FROM annotations WHERE coordinates = '", coordinate, "'"
             # )
-            # # Execute the query to get the variant that has not been voted on
+            # # Execute the query to get the mutation that has not been voted on
             # df <- DBI::dbGetQuery(db_pool, query)
             # print("Query result:")
             # print(df)
@@ -576,7 +578,7 @@ votingServer <- function(
               # filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
               # filter(!(no >= 3 & no / total_votes > 0.7))
 
-              # If a variant is found, return it
+              # If a mutation is found, return it
               coord <- df[1, ]$coordinates
 
               current_mutation(df[1, ])
