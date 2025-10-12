@@ -1,78 +1,91 @@
 document.addEventListener("keydown", (e) => {
-	// only fire if the questions div is on-screen
-	const questionsDiv = document.getElementById("voting-voting_questions_div");
-	if (!questionsDiv || questionsDiv.offsetParent === null) {
-		return;
-	}
+  // only fire if the questions div is on-screen
+  const questionsDiv = document.getElementById("voting-voting_questions_div");
+  if (!questionsDiv || questionsDiv.offsetParent === null) {
+    return;
+  }
 
-	console.log("Key pressed:", e.key);
-	// ——— special buttons ———
-	if (e.key === "Enter") {
-		document.getElementById("voting-nextBtn")?.click();
-		return;
-	}
+  console.log("Key pressed:", e.key);
+  // ——— special buttons ———
+  if (e.key === "Enter") {
+    // make sure that the button is enabled
+    const nextBtn = document.getElementById("voting-nextBtn");
+    if (nextBtn?.disabled) {
+      console.log("Next button is disabled, not proceeding");
+      return;
+    }
+    nextBtn.click();
+    return;
+  }
 
-	// ——— back button ———
-	if (e.key === "Backspace") {
-		console.log("Backspace pressed");
-		// if the comment box is focused, let Backspace delete text instead
-		if (
-			document.activeElement.id === "voting-comment" ||
-			document.activeElement.id === "login-passwd"
-		) {
-			return;
-		}
-		document.getElementById("voting-backBtn")?.click();
-		return;
-	}
+  // ——— back button ———
+  if (e.key === "Backspace") {
+    console.log("Backspace pressed");
+    // if the comment box is focused, let Backspace delete text instead
+    if (
+      document.activeElement.id === "voting-comment" ||
+      document.activeElement.id === "login-passwd"
+    ) {
+      return;
+    }
 
-	// ——— don’t fire when typing ———
-	const id = document.activeElement.id;
-	if (id === "voting-comment") return;
+    // make sure that the button is enabled
+    const backBtn = document.getElementById("voting-backBtn");
+    if (backBtn?.disabled) {
+      console.log("Back button is disabled, not proceeding");
+      return;
+    }
+    backBtn.click();
+    return;
+  }
 
-	const groups = {
-		// ——— radio buttons ———
-		agreement: {
-			keys: { 1: "yes", 2: "no", 3: "diff_var", 4: "not_confident" },
-			toggle: false,
-		},
-		// ——— checkboxes ———
-		observation: {
-			keys: {
-				a: "coverage",
-				s: "low_vaf",
-				d: "alignment",
-				f: "complex",
-				g: "img_qual_issue",
-				h: "platform_issue",
-			},
-			toggle: true,
-		},
-	};
+  // ——— don’t fire when typing ———
+  const id = document.activeElement.id;
+  if (id === "voting-comment") return;
 
-	// ——— look up which group & value this key belongs to ———
-	for (const [groupId, { keys: map, toggle }] of Object.entries(groups)) {
-		const value = map[e.key];
-		if (!value) continue;
+  const groups = {
+    // ——— radio buttons ———
+    agreement: {
+      keys: { 1: "yes", 2: "no", 3: "diff_var", 4: "not_confident" },
+      toggle: false,
+    },
+    // ——— checkboxes ———
+    observation: {
+      keys: {
+        a: "coverage",
+        s: "low_vaf",
+        d: "alignment",
+        f: "complex",
+        g: "img_qual_issue",
+        h: "platform_issue",
+      },
+      toggle: true,
+    },
+  };
 
-		// document.querySelector('input[name="observation"][value="issues_with_coverage"]')
+  // ——— look up which group & value this key belongs to ———
+  for (const [groupId, { keys: map, toggle }] of Object.entries(groups)) {
+    const value = map[e.key];
+    if (!value) continue;
 
-		// build a single selector for both radios & checkboxes:
-		const sel = `input[name=voting-${groupId}][value="${value}"]`;
-		console.log(
-			"Hotkey pressed:",
-			e.key,
-			"for group:",
-			groupId,
-			"value:",
-			value
-		);
-		console.log("Selector:", sel);
-		const input = document.querySelector(sel);
-		if (!input) return;
+    // document.querySelector('input[name="observation"][value="issues_with_coverage"]')
 
-		input.checked = toggle ? !input.checked : true;
-		input.dispatchEvent(new Event("change", { bubbles: true }));
-		return;
-	}
+    // build a single selector for both radios & checkboxes:
+    const sel = `input[name=voting-${groupId}][value="${value}"]`;
+    console.log(
+      "Hotkey pressed:",
+      e.key,
+      "for group:",
+      groupId,
+      "value:",
+      value
+    );
+    console.log("Selector:", sel);
+    const input = document.querySelector(sel);
+    if (!input) return;
+
+    input.checked = toggle ? !input.checked : true;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return;
+  }
 });
