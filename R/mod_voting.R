@@ -46,21 +46,6 @@ votingUI <- function(id, cfg) {
         # TODO
         # look into making the tool tip editable
         # https://github.com/dreamRs/shinyWidgets/issues/719
-        shiny::tags$details(
-          shiny::tags$summary("⚙️ Show image width slider"),
-          shinyWidgets::noUiSliderInput(
-            ns("image_width"),
-            label = "Image width (%)",
-            min = 10,
-            max = 100,
-            value = 100,
-            step = 1,
-            tooltips = TRUE, # show the value
-            behaviour = c("tap", "drag"),
-            width = "98%",
-            height = "20px"
-          ),
-        ),
         shiny::uiOutput(ns("voting_image_div"))
       ),
 
@@ -600,7 +585,7 @@ votingServer <- function(
         return(NULL)
       }
       shiny::div(
-        style = paste0("width: ", input$image_width, "%;"),
+        style = "width: 100%;",
         leaflet::leafletOutput(
           ns("voting_image"),
           width = "100%",
