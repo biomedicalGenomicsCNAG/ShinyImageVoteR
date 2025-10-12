@@ -2,8 +2,8 @@
 
 Sophisticated voting system designed for collaborative annotation of genetic mutations, with features for tracking user behavior, handling vote changes, and maintaining data integrity across multiple users.
 
-Voting application that allows users to vote on different B1MG variants.
-Users get presented a randomly picked image of a B1MG variant and can vote for it.
+Voting application that allows users to vote on different B1MG mutations.
+Users get presented a randomly picked image of a B1MG mutation and can vote for it.
 
 FLOW:
 

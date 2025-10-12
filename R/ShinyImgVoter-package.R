@@ -1,6 +1,6 @@
 #' ShinyImgVoteR Package
 #'
-#' This package provides a Shiny application for voting on B1MG variants.
+#' This package provides a Shiny application for voting on B1MG mutations.
 #' It includes utilities for server management, database operations, and
 #' user interface components.
 #'
