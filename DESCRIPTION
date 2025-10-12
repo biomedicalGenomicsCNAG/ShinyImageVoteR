@@ -25,7 +25,8 @@ Imports:
     shinyWidgets,
     tibble,
     data.table,
-    markdown
+    markdown,
+    leaflet
 Suggests:
     testthat (>= 3.0.0),
     covr,

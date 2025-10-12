@@ -600,11 +600,48 @@ votingServer <- function(
         return(NULL)
       }
       shiny::div(
-        shiny::img(
-          src = glue::glue("images/{mut_df$path}"),
-          style = paste0("width: ", input$image_width, "%;")
+        style = paste0("width: ", input$image_width, "%;"),
+        leaflet::leafletOutput(
+          ns("voting_image"),
+          width = "100%",
+          height = "600px"
         )
       )
+    })
+
+    output$voting_image <- leaflet::renderLeaflet({
+      mut_df <- get_mutation()
+      if (is.null(mut_df)) {
+        return(NULL)
+      }
+      image_url <- glue::glue("images/{mut_df$path}")
+      leaflet::leaflet(
+        options = leaflet::leafletOptions(
+          crs = leaflet::leafletCRS(crsClass = "L.CRS.Simple"),
+          minZoom = -4,
+          maxZoom = 8,
+          zoomSnap = 0.1,
+          zoomDelta = 0.5
+        )
+      ) %>%
+        htmlwidgets::onRender(
+          "function(el, x, data) {
+            var map = this;
+            var imageUrl = data.imageUrl;
+            var img = new Image();
+            img.onload = function() {
+              var bounds = L.latLngBounds([[0, 0], [this.naturalHeight, this.naturalWidth]]);
+              if (map.imageOverlayLayer) {
+                map.removeLayer(map.imageOverlayLayer);
+              }
+              map.imageOverlayLayer = L.imageOverlay(imageUrl, bounds, {interactive: true}).addTo(map);
+              map.fitBounds(bounds);
+              map.setMaxBounds(bounds);
+            };
+            img.src = imageUrl;
+          }",
+          data = list(imageUrl = image_url)
+        )
     })
 
     output$somatic_mutation <- shiny::renderText({
