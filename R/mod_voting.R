@@ -36,6 +36,15 @@ votingUI <- function(id, cfg) {
         )
       )
     ),
+    shiny::singleton(
+      shiny::includeScript(
+        file.path(
+          get_app_dir(),
+          "www",
+          "leaflet.js"
+        )
+      )
+    ),
 
     # Responsive layout: image on left, controls on right for larger screens
     shiny::fluidRow(
@@ -649,66 +658,7 @@ votingServer <- function(
           position = "topleft"
         ) %>%
         htmlwidgets::onRender(
-          # language=JavaScript
-          "function(el, x, data) {
-            var map = this;
-            var imageUrl = data.imageUrl;
-
-            // remove previous overlay if present
-            if (map.imageOverlayLayer) {
-              map.removeLayer(map.imageOverlayLayer);
-              map.imageOverlayLayer = null;
-            }
-
-            var img = new Image();
-            img.onload = function() {
-              var w = this.naturalWidth, h = this.naturalHeight;
-
-              // Leaflet CRS.Simple uses [y,x] ordering for bounds
-              var bounds = L.latLngBounds([[0, 0], [h, w]]);
-              map.imageOverlayLayer = L.imageOverlay(imageUrl, bounds, {interactive:true}).addTo(map);
-
-              // Fit and set padded max bounds
-              map.fitBounds(bounds, {animate:false});
-              var padX = w * 0.10, padY = h * 0.10;
-              map.setMaxBounds(L.latLngBounds([[-padY, -padX], [h + padY, w + padX]]));
-
-              // --- Zoom helpers ---
-              function fitView() {
-                map.fitBounds(bounds);
-              }
-
-              // Wire buttons once (idempotent)
-              function once(id, handler) {
-                var btn = el.querySelector('#' + id);
-                if (!btn) return;
-                if (!btn._bound) {
-                  btn.addEventListener('click', handler);
-                  btn._bound = true;
-                }
-              }
-
-              once('zoomIn',  function(){ map.zoomIn(map.options.zoomDelta || 1); });
-              once('zoomOut', function(){ map.zoomOut(map.options.zoomDelta || 1); });
-              once('fitBtn',  function(){ fitView(); });
-
-              // When the container is resized (e.g., input$image_width changes),
-              // recompute 'fit' and keep center stable
-              var ro = new ResizeObserver(function(){
-                // maintain center; re-fit bounds to container size
-                var c = map.getCenter();
-                var z = map.getZoom();
-                map.invalidateSize();
-                // Option: keep current zoom; or re-fit. Here we keep zoom & center.
-                map.setView(c, z, {animate:false});
-              });
-              ro.observe(el); // observe the widget container
-
-              // Optional: expose helpers for external calls (e.g., Shiny handlers)
-              map._imgTools = { fitView: fitView, bounds: bounds, w:w, h:h };
-            };
-            img.src = imageUrl;
-          }",
+          "window.renderLeafletImageOverlay",
           data = list(imageUrl = image_url)
         )
     })
