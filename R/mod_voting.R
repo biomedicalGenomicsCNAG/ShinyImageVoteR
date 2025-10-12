@@ -189,13 +189,12 @@ votingUI <- function(id, cfg) {
 #' @return None. Side effect only: registers reactive observers and UI updates.
 #' @export
 votingServer <- function(
-  id,
-  cfg,
-  login_trigger,
-  db_pool,
-  get_mutation_trigger_source,
-  tab_trigger = NULL
-) {
+    id,
+    cfg,
+    login_trigger,
+    db_pool,
+    get_mutation_trigger_source,
+    tab_trigger = NULL) {
   shiny::moduleServer(id, function(input, output, session) {
     # validate cfg cols using "validate_cols" function from db.R
     validate_cols(db_pool, "annotations", cfg$db_cols)
@@ -275,6 +274,9 @@ votingServer <- function(
 
       # Update the annotations_df with the new agreement
       coord <- mut_df$coordinates
+
+      # TOOD
+      # check if alternative_vartype is still in use
 
       print(paste("Updating annotations for coordinates:", coord))
       print(paste("Agreement:", input$agreement))
