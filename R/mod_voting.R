@@ -699,5 +699,99 @@ votingServer <- function(
         color_seq(mut_df$ALT, cfg$nt2color_map)
       )
     })
+
+    # Observer to restore saved votes when navigating between images
+    shiny::observe({
+      mut_df <- get_mutation()
+      if (is.null(mut_df) || mut_df$coordinates == "done") {
+        return()
+      }
+
+      # Read the user's annotations file to get saved values
+      user_annotations_file <- session$userData$userAnnotationsFile
+      shiny::req(user_annotations_file)
+
+      annotations_df <- read.table(
+        user_annotations_file,
+        header = TRUE,
+        sep = "\t",
+        stringsAsFactors = FALSE
+      )
+
+      # Find the row for the current coordinate
+      coord <- mut_df$coordinates
+      rowIdx <- which(annotations_df$coordinates == coord)
+
+      if (length(rowIdx) > 0) {
+        saved_agreement <- annotations_df[rowIdx, "agreement"]
+        saved_observation <- annotations_df[rowIdx, "observation"]
+        saved_comment <- annotations_df[rowIdx, "comment"]
+        saved_alternative_vartype <- annotations_df[rowIdx, "alternative_vartype"]
+
+        # Update radio buttons for agreement
+        if (!is.na(saved_agreement) && saved_agreement != "") {
+          shiny::updateRadioButtons(
+            session,
+            "agreement",
+            selected = saved_agreement
+          )
+        } else {
+          # Reset to no selection if no saved value
+          shiny::updateRadioButtons(
+            session,
+            "agreement",
+            selected = character(0)
+          )
+        }
+
+        # Update checkboxes for observation
+        if (!is.na(saved_observation) && saved_observation != "") {
+          observation_values <- strsplit(saved_observation, ";")[[1]]
+          shinyWidgets::updateCheckboxGroupButtons(
+            session,
+            "observation",
+            selected = observation_values
+          )
+        } else {
+          # Clear all checkboxes if no saved value
+          shinyWidgets::updateCheckboxGroupButtons(
+            session,
+            "observation",
+            selected = character(0)
+          )
+        }
+
+        # Update comment text input
+        if (!is.na(saved_comment) && saved_comment != "") {
+          shiny::updateTextInput(
+            session,
+            "comment",
+            value = saved_comment
+          )
+        } else {
+          # Clear comment if no saved value
+          shiny::updateTextInput(
+            session,
+            "comment",
+            value = ""
+          )
+        }
+
+        # Update alternative vartype if it exists
+        if (!is.null(saved_alternative_vartype) && !is.na(saved_alternative_vartype) && saved_alternative_vartype != "") {
+          shiny::updateTextInput(
+            session,
+            "alternative_vartype",
+            value = saved_alternative_vartype
+          )
+        } else if ("alternative_vartype" %in% names(input)) {
+          shiny::updateTextInput(
+            session,
+            "alternative_vartype",
+            value = ""
+          )
+        }
+      }
+    })
   })
 }

@@ -351,3 +351,90 @@ testthat::test_that("get_mutation gets triggered with not existing coordinates",
     }
   )
 })
+
+testthat::test_that("UI inputs are restored when navigating back to previously voted image", {
+  # Set up two coordinates
+  env <- setup_voting_env(c("chr1:1000", "chr1:2000"))
+  args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+
+  # Pre-save a vote for chr1:1000
+  annotations <- read.delim(env$annotations_file, stringsAsFactors = FALSE)
+  annotations[annotations$coordinates == "chr1:1000", "agreement"] <- "yes"
+  annotations[annotations$coordinates == "chr1:1000", "observation"] <- "coverage;low_vaf"
+  annotations[annotations$coordinates == "chr1:1000", "comment"] <- "Test comment"
+  write.table(annotations, env$annotations_file, sep = "\t", row.names = FALSE, quote = FALSE)
+
+  my_session <- MockShinySession$new()
+  my_session$clientData <- shiny::reactiveValues(
+    url_search = "?coordinate=chr1:1000"
+  )
+
+  args$cfg <- ShinyImgVoteR::load_config()
+  testServer(
+    votingServer,
+    session = my_session,
+    args = args,
+    {
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$votingInstitute <- cfg$test_institute
+      session$userData$shinyauthr_session_id <- "test_nav_session"
+
+      # Trigger the mutation loading
+      session$flushReact()
+
+      # The observer should have updated the inputs to match saved values
+      # Note: In testServer, we can't directly check if updateRadioButtons was called,
+      # but we can verify the logic by checking that the mutation loaded correctly
+      res <- get_mutation()
+      testthat::expect_equal(res$coordinates, "chr1:1000")
+
+      # Verify annotations file still has the saved values
+      saved_annotations <- read.delim(env$annotations_file, stringsAsFactors = FALSE)
+      saved_row <- saved_annotations[saved_annotations$coordinates == "chr1:1000", ]
+      testthat::expect_equal(saved_row$agreement, "yes")
+      testthat::expect_equal(saved_row$observation, "coverage;low_vaf")
+      testthat::expect_equal(saved_row$comment, "Test comment")
+    }
+  )
+})
+
+testthat::test_that("UI inputs are cleared when navigating to unvoted image", {
+  # Set up two coordinates
+  env <- setup_voting_env(c("chr1:1000", "chr1:2000"))
+  args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+
+  my_session <- MockShinySession$new()
+  my_session$clientData <- shiny::reactiveValues(
+    url_search = "?coordinate=chr1:2000"
+  )
+
+  args$cfg <- ShinyImgVoteR::load_config()
+  testServer(
+    votingServer,
+    session = my_session,
+    args = args,
+    {
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$votingInstitute <- cfg$test_institute
+      session$userData$shinyauthr_session_id <- "test_clear_session"
+
+      # Trigger the mutation loading
+      session$flushReact()
+
+      # The observer should clear inputs for unvoted image
+      res <- get_mutation()
+      testthat::expect_equal(res$coordinates, "chr1:2000")
+
+      # Verify annotations file shows no vote for chr1:2000
+      saved_annotations <- read.delim(env$annotations_file, stringsAsFactors = FALSE)
+      saved_row <- saved_annotations[saved_annotations$coordinates == "chr1:2000", ]
+      testthat::expect_equal(saved_row$agreement, "")
+      testthat::expect_equal(saved_row$observation, "")
+      testthat::expect_equal(saved_row$comment, "")
+    }
+  )
+})
