@@ -614,17 +614,44 @@ votingServer <- function(
         }
       }
     )
+    create_voting_image_output <- function() {
+      leaflet::leafletOutput(
+        session$ns("voting_image"),
+        width = "100%",
+        height = "840px"
+      )
+    }
+
     output$voting_image_div <- shiny::renderUI({
       mut_df <- get_mutation()
       if (is.null(mut_df)) {
         return(NULL)
       }
       shiny::div(
-        leaflet::leafletOutput(
-          session$ns("voting_image"),
-          width = "100%",
-          height = "840px"
-        )
+        id = session$ns("voting_image_container"),
+        create_voting_image_output()
+      )
+    })
+
+    shiny::observeEvent(next_trigger(), {
+      if (!identical(get_mutation_trigger_source(), "next")) {
+        return()
+      }
+
+      session$onFlushed(
+        function() {
+          shiny::removeUI(
+            selector = paste0("#", session$ns("voting_image")),
+            immediate = TRUE
+          )
+          shiny::insertUI(
+            selector = paste0("#", session$ns("voting_image_container")),
+            where = "beforeEnd",
+            ui = create_voting_image_output(),
+            immediate = TRUE
+          )
+        },
+        once = TRUE
       )
     })
 
