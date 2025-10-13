@@ -321,12 +321,8 @@ votingServer <- function(
       # Update the annotations_df with the new agreement
       coord <- mut_df$coordinates
 
-      # TOOD
-      # check if alternative_vartype is still in use
-
       print(paste("Updating annotations for coordinates:", coord))
       print(paste("Agreement:", input$agreement))
-      print(paste("Alternative vartype:", input$alternative_vartype))
       print(paste("Observation:", input$observation))
       print(paste("Comment:", input$comment))
 
@@ -358,13 +354,6 @@ votingServer <- function(
       print(annotations_df)
 
       # only update if provided
-      if (!is.null(input$alternative_vartype)) {
-        annotations_df[
-          rowIdx,
-          "alternative_vartype"
-        ] <- input$alternative_vartype
-      }
-
       if (!is.null(input$observation)) {
         annotations_df[rowIdx, "observation"] <- paste(
           input$observation,
@@ -704,7 +693,6 @@ votingServer <- function(
         saved_agreement <- annotations_df[rowIdx, "agreement"]
         saved_observation <- annotations_df[rowIdx, "observation"]
         saved_comment <- annotations_df[rowIdx, "comment"]
-        saved_alternative_vartype <- annotations_df[rowIdx, "alternative_vartype"]
 
         # Update radio buttons for agreement
         if (!is.na(saved_agreement) && saved_agreement != "") {
@@ -751,21 +739,6 @@ votingServer <- function(
           shiny::updateTextInput(
             session,
             "comment",
-            value = ""
-          )
-        }
-
-        # Update alternative vartype if it exists
-        if (!is.null(saved_alternative_vartype) && !is.na(saved_alternative_vartype) && saved_alternative_vartype != "") {
-          shiny::updateTextInput(
-            session,
-            "alternative_vartype",
-            value = saved_alternative_vartype
-          )
-        } else if ("alternative_vartype" %in% names(input)) {
-          shiny::updateTextInput(
-            session,
-            "alternative_vartype",
             value = ""
           )
         }

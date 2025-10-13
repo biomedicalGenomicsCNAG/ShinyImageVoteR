@@ -8,11 +8,9 @@ setup_voting_env <- function(coordinates) {
 
   test_annotations_file <- file.path(test_user_data_dir, "test_annotations.txt")
 
-  # check if alternative_vartype is still in use
   test_annotations <- data.frame(
     coordinates = coordinates,
     agreement = "",
-    alternative_vartype = "",
     observation = "",
     comment = "",
     shinyauthr_session_id = "",

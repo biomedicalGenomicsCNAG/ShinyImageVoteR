@@ -49,7 +49,6 @@ vote2dbcolumn_map:
 user_annotations_colnames:
 - coordinates
 - agreement
-- alternative_vartype
 - observation
 - comment
 - shinyauthr_session_id
