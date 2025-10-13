@@ -273,7 +273,12 @@ votingServer <- function(
           shinyjs::enable(session$ns("nextBtn"))
         })
       } else {
-        shinyjs::disable(session$ns("nextBtn"))
+        print("Disabling nextBtn")
+        print(paste("agreement:", agreement))
+
+        session$onFlushed(function() {
+          shinyjs::disable(session$ns("nextBtn"))
+        })
       }
     })
 
