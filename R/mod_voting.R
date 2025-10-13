@@ -45,6 +45,22 @@ votingUI <- function(id, cfg) {
         # TODO
         # look into making the tool tip editable
         # https://github.com/dreamRs/shinyWidgets/issues/719
+        shiny::tags$details(
+          shiny::tags$summary("⚙️ Show image width slider"),
+          shinyWidgets::noUiSliderInput(
+            ns("image_width"),
+            label = "Image width (%)",
+            min = 10,
+            max = 100,
+            value = 100,
+            step = 1,
+            tooltips = TRUE, # show the value
+
+            behaviour = c("tap", "drag"),
+            width = "98%",
+            height = "20px"
+          ),
+        ),
         shiny::uiOutput(ns("voting_image_div"))
       ),
 
@@ -610,11 +626,18 @@ votingServer <- function(
         return(NULL)
       }
       shiny::div(
-        plotly::plotlyOutput(
-          session$ns("voting_image"),
-          width = "100%",
-          height = "840px"
+        shiny::img(
+          src = glue::glue("images/{mut_df$path}"),
+          style = paste0("width: ", input$image_width, "%;")
         )
+        # plotly::plotlyOutput(
+        #   session$ns("voting_image"),
+        #   width = "80%",
+
+        #   # TODO
+        #   # should be dynamically calculated based the screen size
+        #   height = "835px"
+        # )
       )
     })
 
@@ -625,74 +648,55 @@ votingServer <- function(
       }
 
       image_url <- glue::glue("images/{mut_df$path}")
-      image_file <- file.path(cfg$images_dir, mut_df$path)
 
-      if (!file.exists(image_file)) {
-        warning(glue::glue("Image file not found: {image_file}"))
-        return(NULL)
-      }
-
-      image_data <- png::readPNG(image_file)
-      img_dims <- dim(image_data)
-      rm(image_data)
-
-      if (length(img_dims) < 2) {
-        warning(glue::glue("Could not determine dimensions for: {image_file}"))
-        return(NULL)
-      }
-
-      img_height <- img_dims[1]
-      img_width <- img_dims[2]
-
-      plotly::plot_ly() %>%
-        plotly::add_trace(
-          x = c(0, img_width),
-          y = c(0, img_height),
-          type = "scatter",
-          mode = "markers",
-          marker = list(opacity = 0),
-          hoverinfo = "none",
-          showlegend = FALSE
-        ) %>%
+      plotly::plot_ly(
+        x = c(0, 1),
+        y = c(0, 1),
+        type = "scatter",
+        mode = "markers",
+        marker = list(opacity = 0)
+      ) %>%
         plotly::layout(
-          images = list(list(
-            source = image_url,
-            xref = "x",
-            yref = "y",
-            x = 0,
-            y = img_height,
-            sizex = img_width,
-            sizey = img_height,
-            sizing = "stretch",
-            layer = "below"
-          )),
+          images = list(
+            list(
+              source = image_url,
+              xref = "paper",
+              yref = "paper",
+              x = 0,
+              y = 1,
+              sizex = 1,
+              sizey = 1,
+              sizing = "contain",
+              layer = "below",
+              xanchor = "left",
+              yanchor = "top"
+            )
+          ),
           xaxis = list(
-            range = c(0, img_width),
-            showgrid = FALSE,
-            zeroline = FALSE,
             visible = FALSE,
+            range = c(0, 1),
             constrain = "domain"
           ),
           yaxis = list(
-            range = c(img_height, 0),
-            showgrid = FALSE,
-            zeroline = FALSE,
             visible = FALSE,
-            scaleanchor = "x",
-            scaleratio = 1
+            range = c(0, 1),
+            scaleanchor = "x"
           ),
-          dragmode = "pan",
-          margin = list(l = 0, r = 0, t = 0, b = 0)
+          margin = list(l = 0, r = 0, b = 0, t = 0)
         ) %>%
         plotly::config(
           displaylogo = FALSE,
           modeBarButtonsToRemove = c(
-            "autoScale2d",
-            "lasso2d",
             "select2d",
-            "toImage"
+            "lasso2d",
+            "autoScale2d",
+            "hoverClosestCartesian",
+            "hoverCompareCartesian"
           ),
-          scrollZoom = TRUE
+          toImageButtonOptions = list(
+            format = "png",
+            filename = basename(mut_df$path)
+          )
         )
     })
 
