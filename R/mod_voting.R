@@ -630,74 +630,7 @@ votingServer <- function(
           src = glue::glue("images/{mut_df$path}"),
           style = paste0("width: ", input$image_width, "%;")
         )
-        # plotly::plotlyOutput(
-        #   session$ns("voting_image"),
-        #   width = "80%",
-
-        #   # TODO
-        #   # should be dynamically calculated based the screen size
-        #   height = "835px"
-        # )
       )
-    })
-
-    output$voting_image <- plotly::renderPlotly({
-      mut_df <- get_mutation()
-      if (is.null(mut_df)) {
-        return(NULL)
-      }
-
-      image_url <- glue::glue("images/{mut_df$path}")
-
-      plotly::plot_ly(
-        x = c(0, 1),
-        y = c(0, 1),
-        type = "scatter",
-        mode = "markers",
-        marker = list(opacity = 0)
-      ) %>%
-        plotly::layout(
-          images = list(
-            list(
-              source = image_url,
-              xref = "paper",
-              yref = "paper",
-              x = 0,
-              y = 1,
-              sizex = 1,
-              sizey = 1,
-              sizing = "contain",
-              layer = "below",
-              xanchor = "left",
-              yanchor = "top"
-            )
-          ),
-          xaxis = list(
-            visible = FALSE,
-            range = c(0, 1),
-            constrain = "domain"
-          ),
-          yaxis = list(
-            visible = FALSE,
-            range = c(0, 1),
-            scaleanchor = "x"
-          ),
-          margin = list(l = 0, r = 0, b = 0, t = 0)
-        ) %>%
-        plotly::config(
-          displaylogo = FALSE,
-          modeBarButtonsToRemove = c(
-            "select2d",
-            "lasso2d",
-            "autoScale2d",
-            "hoverClosestCartesian",
-            "hoverCompareCartesian"
-          ),
-          toImageButtonOptions = list(
-            format = "png",
-            filename = basename(mut_df$path)
-          )
-        )
     })
 
     output$somatic_mutation <- shiny::renderText({
