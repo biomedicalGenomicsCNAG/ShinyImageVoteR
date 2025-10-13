@@ -139,10 +139,17 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       DT::datatable(
         show_df,
         escape = FALSE,
-        selection = list(mode = "multiple", target = "row"),
         rownames = FALSE,
+        extensions = c("Select", "Buttons"),
+        selection = "none",
         options = list(
-          pageLength = 10
+          pageLength = 10,
+          select = list(style = "os", items = "row"),
+          dom = "Blfrtip", # enables buttons
+          buttons = list(
+            "selectAll", # DT built-in
+            "selectNone", # DT built-in
+          )
         )
       )
     })
