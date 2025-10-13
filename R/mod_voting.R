@@ -36,16 +36,6 @@ votingUI <- function(id, cfg) {
         )
       )
     ),
-    shiny::singleton(
-      shiny::includeScript(
-        file.path(
-          get_app_dir(),
-          "www",
-          "leaflet.js"
-        )
-      )
-    ),
-
     # Responsive layout: image on left, controls on right for larger screens
     shiny::fluidRow(
       class = "voting-row",
@@ -620,7 +610,7 @@ votingServer <- function(
         return(NULL)
       }
       shiny::div(
-        leaflet::leafletOutput(
+        plotly::plotlyOutput(
           session$ns("voting_image"),
           width = "100%",
           height = "840px"
@@ -628,38 +618,81 @@ votingServer <- function(
       )
     })
 
-    output$voting_image <- leaflet::renderLeaflet({
+    output$voting_image <- plotly::renderPlotly({
       mut_df <- get_mutation()
       if (is.null(mut_df)) {
         return(NULL)
       }
 
       image_url <- glue::glue("images/{mut_df$path}")
+      image_file <- file.path(cfg$images_dir, mut_df$path)
 
-      leaflet::leaflet(
-        options = leaflet::leafletOptions(
-          crs = leaflet::leafletCRS(crsClass = "L.CRS.Simple"),
-          minZoom = -1, # coarse limits; we'll refine dynamically
-          maxZoom = 4,
-          zoomSnap = 0,
-          zoomDelta = 0.25,
-          zoomControl = FALSE, # we'll add our own toolbar
-          preferCanvas = TRUE
-        )
-      ) %>%
-        leaflet::addControl(
-          html = htmltools::HTML(
-            '<div id="imgTools" style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:6px;display:flex;gap:6px;align-items:center">
-              <button id="zoomIn"  title="Zoom in"  style="padding:2px 8px">+</button>
-              <button id="zoomOut" title="Zoom out" style="padding:2px 10px">-</button>
-              <button id="fitBtn"  title="Fit to view" style="padding:2px 8px">Fit</button>
-            </div>'
-          ),
-          position = "topleft"
+      if (!file.exists(image_file)) {
+        warning(glue::glue("Image file not found: {image_file}"))
+        return(NULL)
+      }
+
+      image_data <- png::readPNG(image_file)
+      img_dims <- dim(image_data)
+      rm(image_data)
+
+      if (length(img_dims) < 2) {
+        warning(glue::glue("Could not determine dimensions for: {image_file}"))
+        return(NULL)
+      }
+
+      img_height <- img_dims[1]
+      img_width <- img_dims[2]
+
+      plotly::plot_ly() %>%
+        plotly::add_trace(
+          x = c(0, img_width),
+          y = c(0, img_height),
+          type = "scatter",
+          mode = "markers",
+          marker = list(opacity = 0),
+          hoverinfo = "none",
+          showlegend = FALSE
         ) %>%
-        htmlwidgets::onRender(
-          "window.renderLeafletImageOverlay",
-          data = list(imageUrl = image_url)
+        plotly::layout(
+          images = list(list(
+            source = image_url,
+            xref = "x",
+            yref = "y",
+            x = 0,
+            y = img_height,
+            sizex = img_width,
+            sizey = img_height,
+            sizing = "stretch",
+            layer = "below"
+          )),
+          xaxis = list(
+            range = c(0, img_width),
+            showgrid = FALSE,
+            zeroline = FALSE,
+            visible = FALSE,
+            constrain = "domain"
+          ),
+          yaxis = list(
+            range = c(img_height, 0),
+            showgrid = FALSE,
+            zeroline = FALSE,
+            visible = FALSE,
+            scaleanchor = "x",
+            scaleratio = 1
+          ),
+          dragmode = "pan",
+          margin = list(l = 0, r = 0, t = 0, b = 0)
+        ) %>%
+        plotly::config(
+          displaylogo = FALSE,
+          modeBarButtonsToRemove = c(
+            "autoScale2d",
+            "lasso2d",
+            "select2d",
+            "toImage"
+          ),
+          scrollZoom = TRUE
         )
     })
 
