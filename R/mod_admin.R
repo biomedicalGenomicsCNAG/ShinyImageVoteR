@@ -13,7 +13,19 @@ adminUI <- function(id, cfg) {
   shiny::fluidPage(
     theme = cfg$theme,
     DT::dataTableOutput(ns("users_table")),
-    shiny::actionButton(ns("refresh_tokens"), "Refresh")
+    shiny::div(
+      shiny::actionButton(ns("refresh_tokens"), "Refresh"),
+      shiny::actionButton(
+        ns("download_annotations_btn"),
+        "Download annotations",
+        class = "btn btn-secondary"
+      ),
+      shiny::downloadButton(
+        ns("download_annotations"),
+        "Download annotations",
+        style = "display:none;"
+      )
+    )
   )
 }
 
@@ -60,16 +72,16 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     )
 
-    output$users_table <- DT::renderDT({
-      tbl <- users_tbl()
+    users_table_display <- shiny::reactive({
+      raw_tbl <- users_tbl()
       base_url <- build_base_url(session)
-      # --- rows
-      tbl$link <- paste0(
+      display_tbl <- raw_tbl
+      display_tbl$link <- paste0(
         base_url,
         "?pwd_retrieval_token=",
-        tbl$pwd_retrieval_token
+        raw_tbl$pwd_retrieval_token
       )
-      tbl$email_btn <- sprintf(
+      display_tbl$email_btn <- sprintf(
         '<button
             class="btn btn-primary btn-sm"
             onclick="Shiny.setInputValue(
@@ -79,18 +91,15 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           Email Template
         </button>',
         session$ns("email_template_btn"),
-        tbl$userid
+        raw_tbl$userid
       )
-      # Remove the password retrieval token column
-      tbl$pwd_retrieval_token <- NULL
+      display_tbl$pwd_retrieval_token <- NULL
       cols <- c("User ID", "Institute", "Password Retrieval Link", "Action")
-      names(tbl) <- cols
+      names(display_tbl) <- cols
 
-      # Ensure character cols & base df
-      tbl[] <- lapply(tbl, as.character)
-      tbl <- as.data.frame(tbl, stringsAsFactors = FALSE, check.names = FALSE)
+      display_tbl[] <- lapply(display_tbl, as.character)
+      display_tbl <- as.data.frame(display_tbl, stringsAsFactors = FALSE, check.names = FALSE)
 
-      # --- Dummy new row (names & order must match `cols`)
       ns <- session$ns
 
       add_new_user_btn_html <- sprintf(
@@ -131,18 +140,29 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         stringsAsFactors = FALSE,
         check.names = FALSE
       )
-      new_row <- new_row[, cols, drop = FALSE] # enforce same order
+      new_row <- new_row[, cols, drop = FALSE]
 
-      # Prefer bind_rows for robustness; could also do: rbind(new_row[cols], tbl)
-      show_df <- dplyr::bind_rows(new_row, tbl)
+      show_df <- dplyr::bind_rows(new_row, display_tbl)
 
+      list(
+        display = show_df,
+        raw = raw_tbl,
+        row_lookup = c(NA_integer_, seq_len(nrow(raw_tbl)))
+      )
+    })
+
+    output$users_table <- DT::renderDT({
+      data <- users_table_display()
       DT::datatable(
-        show_df,
+        data$display,
         escape = FALSE,
-        selection = list(mode = "multiple", target = "row"),
+        selection = list(mode = "single", target = "row"),
         rownames = FALSE,
+        extensions = "Select",
         options = list(
-          pageLength = 10
+          dom = "frtip",
+          pageLength = 10,
+          select = list(style = "single")
         )
       )
     })
@@ -254,6 +274,127 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       # Trigger table refresh
       table_refresh_trigger(table_refresh_trigger() + 1)
     })
+
+    download_context <- shiny::reactiveVal(NULL)
+
+    shiny::observeEvent(input$download_annotations_btn, {
+      table_data <- users_table_display()
+      selected <- input$users_table_rows_selected
+
+      if (length(selected) == 0) {
+        shiny::showModal(shiny::modalDialog(
+          title = "Select a user",
+          "Please select a user before downloading annotations.",
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+
+      selected_idx <- as.integer(selected[1])
+      row_lookup <- table_data$row_lookup %||% integer(0)
+
+      if (selected_idx < 1 || selected_idx > length(row_lookup)) {
+        shiny::showModal(shiny::modalDialog(
+          title = "Select a user",
+          "Please choose a valid user row before downloading annotations.",
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+
+      raw_idx <- row_lookup[selected_idx]
+      raw_tbl <- table_data$raw
+
+      if (is.na(raw_idx) || raw_idx < 1 || raw_idx > nrow(raw_tbl)) {
+        shiny::showModal(shiny::modalDialog(
+          title = "Select a user",
+          "Please select a user row (not the input row) before downloading annotations.",
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+
+      user_id <- raw_tbl$userid[raw_idx]
+      institute <- raw_tbl$institute[raw_idx]
+
+      user_id <- trimws(ifelse(is.na(user_id), "", as.character(user_id)))
+      institute <- trimws(ifelse(is.na(institute), "", as.character(institute)))
+
+      if (user_id == "" || institute == "") {
+        shiny::showModal(shiny::modalDialog(
+          title = "Select a user",
+          "Please select a user row (not the input row) before downloading annotations.",
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+
+      base_dir <- Sys.getenv("IMGVOTER_USER_DATA_DIR", unset = cfg$user_data_dir %||% "")
+
+      if (base_dir == "") {
+        shiny::showModal(shiny::modalDialog(
+          title = "Configuration error",
+          "The user data directory is not configured.",
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+
+      annotations_path <- file.path(
+        base_dir,
+        institute,
+        user_id,
+        paste0(user_id, "_annotations.tsv")
+      )
+
+      if (!file.exists(annotations_path)) {
+        shiny::showModal(shiny::modalDialog(
+          title = "File not found",
+          paste0(
+            "No annotation file was found for user ",
+            user_id,
+            " at institute ",
+            institute,
+            "."
+          ),
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+
+      download_context(list(
+        userid = user_id,
+        institute = institute,
+        path = annotations_path
+      ))
+
+      shinyjs::runjs(sprintf(
+        "document.getElementById('%s').click();",
+        session$ns("download_annotations")
+      ))
+    })
+
+    output$download_annotations <- shiny::downloadHandler(
+      filename = function() {
+        ctx <- download_context()
+        shiny::req(ctx)
+        basename(ctx$path)
+      },
+      content = function(file) {
+        ctx <- download_context()
+        shiny::req(ctx)
+        if (!file.exists(ctx$path)) {
+          stop("Annotation file no longer exists.")
+        }
+        file.copy(ctx$path, file, overwrite = TRUE)
+      }
+    )
   })
 }
 
