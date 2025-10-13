@@ -28,11 +28,9 @@ votingUI <- function(id, cfg) {
     theme = cfg$theme,
     shinyjs::useShinyjs(),
     shiny::singleton(
-      shiny::includeScript(
-        file.path(
-          get_app_dir(),
-          "www",
-          "hotkeys.js"
+      shiny::tags$head(
+        shiny::tags$script(
+          src = "https://unpkg.com/@panzoom/panzoom@4.6.0/dist/panzoom.min.js"
         )
       )
     ),
@@ -41,11 +39,19 @@ votingUI <- function(id, cfg) {
         file.path(
           get_app_dir(),
           "www",
-          "leaflet.js"
+          "zoom.js"
         )
       )
     ),
-
+    shiny::singleton(
+      shiny::includeScript(
+        file.path(
+          get_app_dir(),
+          "www",
+          "hotkeys.js"
+        )
+      )
+    ),
     # Responsive layout: image on left, controls on right for larger screens
     shiny::fluidRow(
       class = "voting-row",
@@ -55,6 +61,25 @@ votingUI <- function(id, cfg) {
         # TODO
         # look into making the tool tip editable
         # https://github.com/dreamRs/shinyWidgets/issues/719
+        shiny::tags$details(
+          shiny::tags$summary("⚙️ Show image width slider"),
+          shiny::tags$span(
+            "Hint: Use mouse wheel or pinch gesture to zoom in/out. When zoomed in click and drag to pan."
+          ),
+          shinyWidgets::noUiSliderInput(
+            ns("image_width"),
+            label = "Image width (%)",
+            min = 10,
+            max = 100,
+            value = 100,
+            step = 1,
+            tooltips = TRUE, # show the value
+
+            behaviour = c("tap", "drag"),
+            width = "98%",
+            height = "20px"
+          ),
+        ),
         shiny::uiOutput(ns("voting_image_div"))
       ),
 
@@ -619,48 +644,25 @@ votingServer <- function(
       if (is.null(mut_df)) {
         return(NULL)
       }
-      shiny::div(
-        leaflet::leafletOutput(
-          session$ns("voting_image"),
-          width = "100%",
-          height = "840px"
+      container_id <- session$ns("voting_image_container")
+      image_id <- session$ns("voting_image")
+
+      shiny::tagList(
+        shiny::div(
+          id = container_id,
+          class = "voting-image-container",
+          `data-panzoom-container` = "true",
+          style = paste0("width: ", input$image_width, "%"),
+          shiny::img(
+            id = image_id,
+            `data-panzoom-image` = "true",
+            src = glue::glue("images/{mut_df$path}"),
+            class = "voting-image",
+            style = "width: 100%;",
+            alt = sprintf("Mutation image for %s", mut_df$coordinates)
+          )
         )
       )
-    })
-
-    output$voting_image <- leaflet::renderLeaflet({
-      mut_df <- get_mutation()
-      if (is.null(mut_df)) {
-        return(NULL)
-      }
-
-      image_url <- glue::glue("images/{mut_df$path}")
-
-      leaflet::leaflet(
-        options = leaflet::leafletOptions(
-          crs = leaflet::leafletCRS(crsClass = "L.CRS.Simple"),
-          minZoom = -1, # coarse limits; we'll refine dynamically
-          maxZoom = 4,
-          zoomSnap = 0,
-          zoomDelta = 0.25,
-          zoomControl = FALSE, # we'll add our own toolbar
-          preferCanvas = TRUE
-        )
-      ) %>%
-        leaflet::addControl(
-          html = htmltools::HTML(
-            '<div id="imgTools" style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:6px;display:flex;gap:6px;align-items:center">
-              <button id="zoomIn"  title="Zoom in"  style="padding:2px 8px">+</button>
-              <button id="zoomOut" title="Zoom out" style="padding:2px 10px">-</button>
-              <button id="fitBtn"  title="Fit to view" style="padding:2px 8px">Fit</button>
-            </div>'
-          ),
-          position = "topleft"
-        ) %>%
-        htmlwidgets::onRender(
-          "window.renderLeafletImageOverlay",
-          data = list(imageUrl = image_url)
-        )
     })
 
     output$somatic_mutation <- shiny::renderText({
