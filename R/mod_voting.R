@@ -27,28 +27,12 @@ votingUI <- function(id, cfg) {
   shiny::fluidPage(
     theme = cfg$theme,
     shinyjs::useShinyjs(),
-    shiny::singleton(
-      shiny::tags$head(
-        shiny::tags$script(
-          src = "https://unpkg.com/@panzoom/panzoom@4.6.0/dist/panzoom.min.js"
-        )
-      )
-    ),
-    shiny::singleton(
-      shiny::includeScript(
-        file.path(
-          get_app_dir(),
-          "www",
-          "zoom.js"
-        )
-      )
-    ),
-    shiny::singleton(
-      shiny::includeScript(
-        file.path(
-          get_app_dir(),
-          "www",
-          "hotkeys.js"
+    # Include required JavaScript files
+    purrr::map(
+      c("panzoom.min.js", "init-panzoom.js", "hotkeys.js"),
+      ~ shiny::singleton(
+        shiny::includeScript(
+          file.path(get_app_dir(), "www/js/", .x)
         )
       )
     ),
