@@ -14,25 +14,6 @@ adminUI <- function(id, cfg) {
     theme = cfg$theme,
     DT::dataTableOutput(ns("pwd_retrieval_table")),
     shiny::actionButton(ns("refresh_tokens"), "Refresh")
-    # shiny::br(),
-    # shiny::fluidRow(
-    #   shiny::column(
-    #     4,
-    #     shiny::textInput(ns("new_userid"), "User ID")
-    #   ),
-    #   shiny::column(
-    #     4,
-    #     shiny::textInput(ns("new_institute"), "Institute")
-    #   ),
-    #   shiny::column(
-    #     2,
-    #     shiny::actionButton(ns("add_user"), "Add user")
-    #   ),
-    #   shiny::column(
-    #     2,
-    #     shiny::actionButton(ns("refresh_tokens"), "Refresh")
-    #   )
-    # )
   )
 }
 
@@ -81,29 +62,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
 
     output$pwd_retrieval_table <- DT::renderDT({
       tbl <- pwd_retrieval_tbl()
-
-      # TODO
-      # it is no working on the production server
-      # https://simplevm-proxy-prod.denbi.dkfz.de/automaticlobster_100/b1mg-variant-voter-beta/?
-      # there the following gets rendered:
-      # http://simplevm-proxy-prod.denbi.dkfz.de:?pwd_retrieval_token=<token>
-
-      # TODO
-      # Put below in a function to reduce code duplication
-      # --- Build base URL
-      protocol <- if (session$clientData$url_port == 443) {
-        "https://"
-      } else {
-        "http://"
-      }
-      hostname <- session$clientData$url_hostname
-      port <- if (session$clientData$url_port %in% c(80, 443)) {
-        ""
-      } else {
-        paste0(":", session$clientData$url_port)
-      }
-      base_url <- paste0(protocol, hostname, port)
-
+      base_url <- build_base_url(session)
       # --- rows
       tbl$link <- paste0(
         base_url,
@@ -111,7 +70,14 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         tbl$pwd_retrieval_token
       )
       tbl$email_btn <- sprintf(
-        '<button class="btn btn-primary btn-sm" onclick="Shiny.setInputValue(\'%s\', \'%s\', {priority: \'event\'});">Email Template</button>',
+        '<button
+            class="btn btn-primary btn-sm"
+            onclick="Shiny.setInputValue(
+              \'%s\', \'%s\',
+              {priority: \'event\'});"
+        >
+          Email Template
+        </button>',
         session$ns("email_template_btn"),
         tbl$userid
       )
@@ -128,16 +94,22 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       ns <- session$ns
 
       add_new_user_btn_html <- sprintf(
-        '<button class="btn btn-success btn-sm"
-                  title="Add user"
-                  onclick="(function(){
-                    var u = document.getElementById(\'%s\').value.trim();
-                    var i = document.getElementById(\'%s\').value.trim();
-                    // nonce ensures the event fires even with same values
-                    Shiny.setInputValue(\'%s\', {userid: u, institute: i, nonce: Math.random()}, {priority:\'event\'});
-                  })()">
-            &#x2795; new user
-          </button>',
+        '<button
+            class="btn btn-success btn-sm"
+            title="Add user"
+            onclick="(function(){
+              var u = document.getElementById(\'%s\').value.trim();
+              var i = document.getElementById(\'%s\').value.trim();
+              // nonce ensures the event fires even with same values
+              Shiny.setInputValue(
+                \'%s\',
+                {userid: u, institute: i, nonce: Math.random()},
+                {priority:\'event\'}
+              );
+            })()"
+        >
+          &#x2795; new user
+        </button>',
         ns("new_userid"),
         ns("new_institute"),
         ns("add_user_btn")
@@ -180,19 +152,8 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       user_row <- tbl[tbl$userid == user_id, ]
 
       if (nrow(user_row) > 0) {
-        # Get current URL components
-        protocol <- if (session$clientData$url_port == 443) {
-          "https://"
-        } else {
-          "http://"
-        }
-        hostname <- session$clientData$url_hostname
-        port <- if (session$clientData$url_port %in% c(80, 443)) {
-          ""
-        } else {
-          paste0(":", session$clientData$url_port)
-        }
-        base_url <- paste0(protocol, hostname, port)
+        # Get base URL using helper function
+        base_url <- build_base_url(session)
 
         retrieval_link <- paste0(
           base_url,
@@ -268,18 +229,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         params = list(user_id, institute, password, token)
       )
 
-      protocol <- if (session$clientData$url_port == 443) {
-        "https://"
-      } else {
-        "http://"
-      }
-      hostname <- session$clientData$url_hostname
-      port <- if (session$clientData$url_port %in% c(80, 443)) {
-        ""
-      } else {
-        paste0(":", session$clientData$url_port)
-      }
-      base_url <- paste0(protocol, hostname, port)
+      base_url <- build_base_url(session)
       retrieval_link <- paste0(base_url, "?pwd_retrieval_token=", token)
 
       shiny::showModal(shiny::modalDialog(

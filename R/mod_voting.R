@@ -67,7 +67,8 @@ votingUI <- function(id, cfg) {
         shiny::uiOutput(ns("voting_image_div"))
       ),
 
-      # Voting controls column - stacks below on small screens, right side on larger screens
+      # Voting controls column
+      # stacks below on small screens otherwise right of image
       shiny::column(
         width = 2,
         class = "ctrl-col",
@@ -200,7 +201,7 @@ votingServer <- function(
     get_mutation_trigger_source,
     tab_trigger = NULL) {
   shiny::moduleServer(id, function(input, output, session) {
-    # validate cfg cols using "validate_cols" function from db.R
+    # validate cfg cols using "validate_cols" function from db_utils.R
     validate_cols(db_pool, "annotations", cfg$db_cols)
 
     # Helper function to create the "done" tibble
