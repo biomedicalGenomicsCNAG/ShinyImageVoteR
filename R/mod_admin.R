@@ -12,8 +12,18 @@ adminUI <- function(id, cfg) {
   ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,
-    DT::dataTableOutput(ns("users_table")),
-    shiny::actionButton(ns("refresh_tokens"), "Refresh")
+    shinyjs::useShinyjs(),
+    shiny::div(
+      class = "d-flex gap-2 mb-3",
+      shiny::actionButton(ns("refresh_tokens"), "Refresh"),
+      shiny::actionButton(ns("download_annotations_btn"), "Download annotations"),
+      shiny::downloadButton(
+        ns("download_annotations"),
+        label = "",
+        style = "display: none;"
+      )
+    ),
+    DT::dataTableOutput(ns("users_table"))
   )
 }
 
@@ -140,19 +150,128 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         show_df,
         escape = FALSE,
         rownames = FALSE,
-        extensions = c("Select", "Buttons"),
-        selection = "none",
+        extensions = c("Buttons"),
+        selection = list(mode = "single", target = "row"),
         options = list(
           pageLength = 10,
-          select = list(style = "os", items = "row"),
           dom = "Blfrtip", # enables buttons
           buttons = list(
-            "selectAll", # DT built-in
-            "selectNone", # DT built-in
+            "selectAll",
+            "selectNone"
           )
         )
       )
     })
+
+    # Track selected user
+    selected_user <- shiny::reactive({
+      sel <- input$users_table_rows_selected
+      tbl <- users_tbl()
+
+      if (length(sel) == 0 || is.null(tbl) || nrow(tbl) == 0) {
+        return(NULL)
+      }
+
+      idx <- sel[1] - 1
+
+      if (idx < 1 || idx > nrow(tbl)) {
+        return(NULL)
+      }
+
+      list(
+        userid = tbl$userid[idx],
+        institute = tbl$institute[idx]
+      )
+    })
+
+    shiny::observe({
+      shinyjs::toggleState("download_annotations_btn", condition = !is.null(selected_user()))
+    })
+
+    selected_annotation_path <- shiny::reactiveVal(NULL)
+
+    find_annotation_file <- function(user_info) {
+      if (is.null(user_info)) {
+        return(NULL)
+      }
+
+      user_dir <- file.path(cfg$user_data_dir, user_info$institute, user_info$userid)
+
+      if (!dir.exists(user_dir)) {
+        return(NULL)
+      }
+
+      preferred <- file.path(user_dir, paste0(user_info$userid, "_annotations.tsv"))
+
+      if (file.exists(preferred)) {
+        print(paste("Found preferred annotation file:", preferred))
+        return(preferred)
+      }
+
+      files <- list.files(user_dir, pattern = "_annotations\\.tsv$", full.names = TRUE)
+
+      if (length(files) == 0) {
+        return(NULL)
+      }
+
+      print("Annotations files found:")
+      print(files)
+
+      files[[1]]
+    }
+
+    output$download_annotations <- shiny::downloadHandler(
+      filename = function() {
+        path <- selected_annotation_path()
+
+        shiny::req(path)
+        shiny::req(file.exists(path))
+
+        basename(path)
+      },
+      content = function(file) {
+        path <- selected_annotation_path()
+
+        shiny::req(path)
+        shiny::req(file.exists(path))
+
+        # normalize for weird relative paths / symlinks
+        src <- normalizePath(path, mustWork = TRUE)
+        dst <- normalizePath(file, mustWork = FALSE)
+
+        tryCatch(
+          {
+            ok <- file.copy(src, dst, overwrite = TRUE)
+            if (!ok) stop("file.copy returned FALSE (likely permissions or path problem)")
+          },
+          error = function(e) {
+            shiny::showNotification(
+              paste("Download failed:", conditionMessage(e)),
+              type = "error", duration = 7
+            )
+            stop(e) # rethrow so the browser gets a proper download error
+          }
+        )
+      },
+      contentType = "text/tab-separated-values; charset=utf-8"
+    )
+
+    shiny::outputOptions(
+      output,
+      "download_annotations",
+      suspendWhenHidden = FALSE
+    )
+
+    shiny::observeEvent(selected_user(),
+      {
+        info <- selected_user()
+
+        if (is.null(info)) {
+          selected_annotation_path(NULL)
+        }
+      },
+      ignoreNULL = FALSE
+    )
 
     # Handle email template button clicks
     shiny::observeEvent(input$email_template_btn, {
@@ -194,6 +313,45 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           footer = shiny::modalButton("Close")
         ))
       }
+    })
+
+    shiny::observeEvent(input$download_annotations_btn, {
+      print("Download annotations button clicked")
+      info <- selected_user()
+      print("Selected user info:")
+      print(info)
+
+      annotation_path <- find_annotation_file(info)
+      print("Found annotation path:")
+      print(annotation_path)
+
+      if (is.null(annotation_path)) {
+        print("No annotation file found, showing modal.")
+        shiny::showModal(shiny::modalDialog(
+          title = "Annotations not found",
+          paste0(
+            "No annotations file was found for ",
+            info$userid,
+            " at institute ",
+            info$institute,
+            "."
+          ),
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+
+      print("Setting selected annotation path")
+      selected_annotation_path(annotation_path)
+
+      print("Triggering download...")
+      print("session$ns('download_annotations'):")
+      print(session$ns("download_annotations"))
+      shinyjs::runjs(sprintf(
+        "document.getElementById('%s').click();",
+        session$ns("download_annotations")
+      ))
     })
 
     shiny::observeEvent(input$add_user_btn, {
