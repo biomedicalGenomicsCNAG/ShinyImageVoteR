@@ -12,7 +12,7 @@ adminUI <- function(id, cfg) {
   ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,
-    DT::dataTableOutput(ns("pwd_retrieval_table")),
+    DT::dataTableOutput(ns("users_table")),
     shiny::actionButton(ns("refresh_tokens"), "Refresh")
   )
 }
@@ -41,7 +41,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     })
 
-    pwd_retrieval_tbl <- shiny::eventReactive(
+    users_tbl <- shiny::eventReactive(
       c(
         login_trigger(),
         input$refresh_tokens,
@@ -60,8 +60,8 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     )
 
-    output$pwd_retrieval_table <- DT::renderDT({
-      tbl <- pwd_retrieval_tbl()
+    output$users_table <- DT::renderDT({
+      tbl <- users_tbl()
       base_url <- build_base_url(session)
       # --- rows
       tbl$link <- paste0(
@@ -139,16 +139,18 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       DT::datatable(
         show_df,
         escape = FALSE,
-        selection = "none",
+        selection = list(mode = "multiple", target = "row"),
         rownames = FALSE,
-        options = list(pageLength = 10)
+        options = list(
+          pageLength = 10
+        )
       )
     })
 
     # Handle email template button clicks
     shiny::observeEvent(input$email_template_btn, {
       user_id <- input$email_template_btn
-      tbl <- pwd_retrieval_tbl()
+      tbl <- users_tbl()
       user_row <- tbl[tbl$userid == user_id, ]
 
       if (nrow(user_row) > 0) {
