@@ -28,6 +28,22 @@ votingUI <- function(id, cfg) {
     theme = cfg$theme,
     shinyjs::useShinyjs(),
     shiny::singleton(
+      shiny::tags$head(
+        shiny::tags$script(
+          src = "https://unpkg.com/@panzoom/panzoom@4.6.0/dist/panzoom.min.js"
+        )
+      )
+    ),
+    shiny::singleton(
+      shiny::includeScript(
+        file.path(
+          get_app_dir(),
+          "www",
+          "zoom.js"
+        )
+      )
+    ),
+    shiny::singleton(
       shiny::includeScript(
         file.path(
           get_app_dir(),
@@ -47,6 +63,9 @@ votingUI <- function(id, cfg) {
         # https://github.com/dreamRs/shinyWidgets/issues/719
         shiny::tags$details(
           shiny::tags$summary("⚙️ Show image width slider"),
+          shiny::tags$span(
+            "Hint: Use mouse wheel or pinch gesture to zoom in/out. When zoomed in click and drag to pan."
+          ),
           shinyWidgets::noUiSliderInput(
             ns("image_width"),
             label = "Image width (%)",
@@ -625,10 +644,23 @@ votingServer <- function(
       if (is.null(mut_df)) {
         return(NULL)
       }
-      shiny::div(
-        shiny::img(
-          src = glue::glue("images/{mut_df$path}"),
-          style = paste0("width: ", input$image_width, "%;")
+      container_id <- session$ns("voting_image_container")
+      image_id <- session$ns("voting_image")
+
+      shiny::tagList(
+        shiny::div(
+          id = container_id,
+          class = "voting-image-container",
+          `data-panzoom-container` = "true",
+          style = paste0("width: ", input$image_width, "%"),
+          shiny::img(
+            id = image_id,
+            `data-panzoom-image` = "true",
+            src = glue::glue("images/{mut_df$path}"),
+            class = "voting-image",
+            style = "width: 100%;",
+            alt = sprintf("Mutation image for %s", mut_df$coordinates)
+          )
         )
       )
     })
