@@ -517,13 +517,20 @@ votingServer <- function(
           }
 
           # Query the database for the mutation with these coordinates
-          # First, check if we have REF and ALT from the annotations_df
-          rowIdx_annot <- which(annotations_df$coordinates == coord)
-          ref_val <- NULL
-          alt_val <- NULL
-          if (length(rowIdx_annot) > 0) {
-            ref_val <- annotations_df$REF[rowIdx_annot[1]]
-            alt_val <- annotations_df$ALT[rowIdx_annot[1]]
+          # First, try to get REF and ALT from URL params
+          url_ref <- parseQueryString(session$clientData$url_search)$ref
+          url_alt <- parseQueryString(session$clientData$url_search)$alt
+          
+          ref_val <- url_ref
+          alt_val <- url_alt
+          
+          # If not in URL, try to get from annotations_df
+          if (is.null(ref_val) || is.null(alt_val)) {
+            rowIdx_annot <- which(annotations_df$coordinates == coord)
+            if (length(rowIdx_annot) > 0) {
+              if (is.null(ref_val)) ref_val <- annotations_df$REF[rowIdx_annot[1]]
+              if (is.null(alt_val)) alt_val <- annotations_df$ALT[rowIdx_annot[1]]
+            }
           }
 
           query_keys <- if (!is.null(cfg$db_query_keys)) cfg$db_query_keys else NULL
@@ -550,8 +557,13 @@ votingServer <- function(
             print(session_annotations_df)
 
             if (nrow(session_annotations_df) > 0) {
-              rowIdx <- which(session_annotations_df$coordinates == coord)
-              print(paste("Row index for coordinate:", coord, "is", rowIdx))
+              # Match by coordinate, REF, and ALT to handle duplicates
+              rowIdx <- which(
+                session_annotations_df$coordinates == coord &
+                session_annotations_df$REF == ref_val &
+                session_annotations_df$ALT == alt_val
+              )
+              print(paste("Row index for coordinate:", coord, "REF:", ref_val, "ALT:", alt_val, "is", rowIdx))
               if (length(rowIdx) > 0) {
                 session$onFlushed(function() {
                   if (rowIdx == 1) {
@@ -633,11 +645,13 @@ votingServer <- function(
 
               # If a mutation is found, return it
               coord <- df[1, ]$coordinates
+              ref_val <- df[1, ]$REF
+              alt_val <- df[1, ]$ALT
 
               current_mutation(df[1, ])
               vote_start_time(Sys.time())
               shiny::updateQueryString(
-                paste0("?coordinate=", coord),
+                paste0("?coordinate=", coord, "&ref=", ref_val, "&alt=", alt_val),
                 mode = "push",
                 session = session
               )
