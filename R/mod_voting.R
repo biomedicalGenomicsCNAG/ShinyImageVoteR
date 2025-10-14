@@ -310,14 +310,22 @@ votingServer <- function(
 
       # Update the annotations_df with the new agreement
       coord <- mut_df$coordinates
+      ref_val <- mut_df$REF
+      alt_val <- mut_df$ALT
 
       print(paste("Updating annotations for coordinates:", coord))
+      print(paste("REF:", ref_val, "ALT:", alt_val))
       print(paste("Agreement:", input$agreement))
       print(paste("Observation:", input$observation))
       print(paste("Comment:", input$comment))
 
       # use the row index to update the annotations_df
-      rowIdx <- which(annotations_df$coordinates == coord)
+      # Match by coordinates, REF, and ALT to handle duplicates
+      rowIdx <- which(
+        annotations_df$coordinates == coord &
+        annotations_df$REF == ref_val &
+        annotations_df$ALT == alt_val
+      )
       print(paste("Row index for coordinates:", coord, "is", rowIdx))
 
       if (length(rowIdx) == 0) {
@@ -380,9 +388,9 @@ votingServer <- function(
             vote_col,
             " = ",
             vote_col,
-            " + 1 WHERE coordinates = ?"
+            " + 1 WHERE coordinates = ? AND REF = ? AND ALT = ?"
           ),
-          params = list(coord)
+          params = list(coord, ref_val, alt_val)
         )
       }
 
@@ -425,9 +433,9 @@ votingServer <- function(
                 new_vote_col,
                 " = ",
                 new_vote_col,
-                " + 1 WHERE coordinates = ?"
+                " + 1 WHERE coordinates = ? AND REF = ? AND ALT = ?"
               ),
-              params = list(coord)
+              params = list(coord, ref_val, alt_val)
             )
           }
         } else {
@@ -509,7 +517,20 @@ votingServer <- function(
           }
 
           # Query the database for the mutation with these coordinates
-          df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
+          # First, check if we have REF and ALT from the annotations_df
+          rowIdx_annot <- which(annotations_df$coordinates == coord)
+          ref_val <- NULL
+          alt_val <- NULL
+          if (length(rowIdx_annot) > 0) {
+            ref_val <- annotations_df$REF[rowIdx_annot[1]]
+            alt_val <- annotations_df$ALT[rowIdx_annot[1]]
+          }
+
+          query_keys <- if (!is.null(cfg$db_query_keys)) cfg$db_query_keys else NULL
+          df <- query_annotations_db_by_coord(
+            db_pool, coord, cfg$db_cols,
+            ref = ref_val, alt = alt_val, query_keys = query_keys
+          )
 
           if (nrow(df) == 1) {
             current_mutation(df[1, ])
@@ -581,7 +602,15 @@ votingServer <- function(
             print("cfg$db_cols:")
             print(cfg$db_cols)
 
-            df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
+            # Get REF and ALT from annotations_df for this row
+            ref_val <- annotations_df$REF[i]
+            alt_val <- annotations_df$ALT[i]
+
+            query_keys <- if (!is.null(cfg$db_query_keys)) cfg$db_query_keys else NULL
+            df <- query_annotations_db_by_coord(
+              db_pool, coord, cfg$db_cols,
+              ref = ref_val, alt = alt_val, query_keys = query_keys
+            )
 
             # query <- paste0(
             #   "SELECT ",
@@ -675,9 +704,15 @@ votingServer <- function(
         stringsAsFactors = FALSE
       )
 
-      # Find the row for the current coordinate
+      # Find the row for the current coordinate, REF, and ALT
       coord <- mut_df$coordinates
-      rowIdx <- which(annotations_df$coordinates == coord)
+      ref_val <- mut_df$REF
+      alt_val <- mut_df$ALT
+      rowIdx <- which(
+        annotations_df$coordinates == coord &
+        annotations_df$REF == ref_val &
+        annotations_df$ALT == alt_val
+      )
 
       if (length(rowIdx) > 0) {
         saved_agreement <- annotations_df[rowIdx, "agreement"]
