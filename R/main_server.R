@@ -199,25 +199,30 @@ makeVotingAppServer <- function(db_pool, cfg) {
       )
 
       # create user annotations file
-      # query the database for all coordinates
-      query <- "SELECT coordinates FROM annotations"
-      coords <- DBI::dbGetQuery(db_pool, query)
+      # query the database for all coordinates, REF, and ALT
+      query <- "SELECT coordinates, REF, ALT FROM annotations"
+      variants <- DBI::dbGetQuery(db_pool, query)
 
-      coords_vec <- as.character(coords[[1]])
-      randomised_coords <- sample(
-        coords_vec,
-        length(coords_vec),
+      # Randomize the order of variants
+      randomised_indices <- sample(
+        seq_len(nrow(variants)),
+        nrow(variants),
         replace = FALSE
       )
+      variants <- variants[randomised_indices, ]
 
-      # Initialize with empty strings except for coordinates
+      # Initialize with empty strings except for coordinates, REF, ALT
       annotations_df <- setNames(
         as.data.frame(
           lapply(cfg$user_annotations_colnames, function(col) {
             if (col == "coordinates") {
-              randomised_coords
+              variants$coordinates
+            } else if (col == "REF") {
+              variants$REF
+            } else if (col == "ALT") {
+              variants$ALT
             } else {
-              rep("", length(randomised_coords))
+              rep("", nrow(variants))
             }
           }),
           stringsAsFactors = FALSE

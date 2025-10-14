@@ -42,6 +42,10 @@ db_general_cols:
 - ALT
 - variant
 - path
+db_query_keys:
+- coordinates
+- REF
+- ALT
 vote2dbcolumn_map:
   'yes': vote_count_correct
   'no': vote_count_no_variant
@@ -49,6 +53,8 @@ vote2dbcolumn_map:
   not_confident: vote_count_not_sure
 user_annotations_colnames:
 - coordinates
+- REF
+- ALT
 - agreement
 - alternative_vartype
 - observation

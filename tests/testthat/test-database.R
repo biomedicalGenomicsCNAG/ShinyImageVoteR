@@ -20,11 +20,11 @@ testthat::test_that("Database connection and queries work", {
   
   # Test that we can query the database
   total_images <- dbGetQuery(test_pool, "SELECT COUNT(*) as n FROM annotations")$n
-  testthat::expect_equal(total_images, 3)
+  testthat::expect_equal(total_images, 4)
   
   # Test coordinate retrieval
   coords_result <- dbGetQuery(test_pool, "SELECT coordinates FROM annotations")
-  testthat::expect_equal(nrow(coords_result), 3)
+  testthat::expect_equal(nrow(coords_result), 4)
   testthat::expect_true("chr1:1000" %in% coords_result$coordinates)
   testthat::expect_true("chr2:2000" %in% coords_result$coordinates)
   testthat::expect_true("chr3:3000" %in% coords_result$coordinates)
@@ -145,7 +145,7 @@ testthat::test_that("Pool connection management works", {
   
   # Test that we can use the connection
   result <- dbGetQuery(conn, "SELECT COUNT(*) as n FROM annotations")
-  testthat::expect_equal(result$n, 3)
+  testthat::expect_equal(result$n, 4)
   
   # Return connection
   pool::poolReturn(conn)
@@ -154,5 +154,61 @@ testthat::test_that("Pool connection management works", {
   expect_silent(poolClose(test_pool))
   
   # Clean up
+  unlink(mock_db$file)
+})
+
+testthat::test_that("Query by coordinate with REF/ALT handles duplicates correctly", {
+  # Create mock database
+  mock_db <- create_mock_db()
+  test_pool <- mock_db$pool
+  
+  # Verify we have duplicate coordinates
+  duplicate_coords <- dbGetQuery(test_pool, 
+    "SELECT coordinates, REF, ALT FROM annotations WHERE coordinates = 'chr2:2000'")
+  testthat::expect_equal(nrow(duplicate_coords), 2)
+  
+  # Test querying with just coordinates should fail due to duplicates
+  conn <- pool::poolCheckout(test_pool)
+  on.exit(pool::poolReturn(conn), add = TRUE)
+  
+  testthat::expect_error(
+    query_annotations_db_by_coord(
+      conn, 
+      "chr2:2000", 
+      c("coordinates", "REF", "ALT", "path"),
+      query_keys = c("coordinates")
+    ),
+    "Expected at most 1 row"
+  )
+  
+  # Test querying with coordinates + REF + ALT should succeed
+  result1 <- query_annotations_db_by_coord(
+    conn, 
+    "chr2:2000", 
+    c("coordinates", "REF", "ALT", "path"),
+    ref = "G",
+    alt = "C",
+    query_keys = c("coordinates", "REF", "ALT")
+  )
+  testthat::expect_equal(nrow(result1), 1)
+  testthat::expect_equal(result1$REF, "G")
+  testthat::expect_equal(result1$ALT, "C")
+  testthat::expect_equal(result1$path, "/test/path2.png")
+  
+  result2 <- query_annotations_db_by_coord(
+    conn, 
+    "chr2:2000", 
+    c("coordinates", "REF", "ALT", "path"),
+    ref = "C",
+    alt = "A",
+    query_keys = c("coordinates", "REF", "ALT")
+  )
+  testthat::expect_equal(nrow(result2), 1)
+  testthat::expect_equal(result2$REF, "C")
+  testthat::expect_equal(result2$ALT, "A")
+  testthat::expect_equal(result2$path, "/test/path2b.png")
+  
+  # Clean up
+  poolClose(test_pool)
   unlink(mock_db$file)
 })

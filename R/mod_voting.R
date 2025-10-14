@@ -310,14 +310,22 @@ votingServer <- function(
 
       # Update the annotations_df with the new agreement
       coord <- mut_df$coordinates
+      ref_val <- mut_df$REF
+      alt_val <- mut_df$ALT
 
       print(paste("Updating annotations for coordinates:", coord))
+      print(paste("REF:", ref_val, "ALT:", alt_val))
       print(paste("Agreement:", input$agreement))
       print(paste("Observation:", input$observation))
       print(paste("Comment:", input$comment))
 
       # use the row index to update the annotations_df
-      rowIdx <- which(annotations_df$coordinates == coord)
+      # Match by coordinates, REF, and ALT to handle duplicates
+      rowIdx <- which(
+        annotations_df$coordinates == coord &
+        annotations_df$REF == ref_val &
+        annotations_df$ALT == alt_val
+      )
       print(paste("Row index for coordinates:", coord, "is", rowIdx))
 
       if (length(rowIdx) == 0) {
@@ -380,9 +388,9 @@ votingServer <- function(
             vote_col,
             " = ",
             vote_col,
-            " + 1 WHERE coordinates = ?"
+            " + 1 WHERE coordinates = ? AND REF = ? AND ALT = ?"
           ),
-          params = list(coord)
+          params = list(coord, ref_val, alt_val)
         )
       }
 
@@ -425,9 +433,9 @@ votingServer <- function(
                 new_vote_col,
                 " = ",
                 new_vote_col,
-                " + 1 WHERE coordinates = ?"
+                " + 1 WHERE coordinates = ? AND REF = ? AND ALT = ?"
               ),
-              params = list(coord)
+              params = list(coord, ref_val, alt_val)
             )
           }
         } else {
@@ -509,7 +517,27 @@ votingServer <- function(
           }
 
           # Query the database for the mutation with these coordinates
-          df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
+          # First, try to get REF and ALT from URL params
+          url_ref <- parseQueryString(session$clientData$url_search)$ref
+          url_alt <- parseQueryString(session$clientData$url_search)$alt
+          
+          ref_val <- url_ref
+          alt_val <- url_alt
+          
+          # If not in URL, try to get from annotations_df
+          if (is.null(ref_val) || is.null(alt_val)) {
+            rowIdx_annot <- which(annotations_df$coordinates == coord)
+            if (length(rowIdx_annot) > 0) {
+              if (is.null(ref_val)) ref_val <- annotations_df$REF[rowIdx_annot[1]]
+              if (is.null(alt_val)) alt_val <- annotations_df$ALT[rowIdx_annot[1]]
+            }
+          }
+
+          query_keys <- if (!is.null(cfg$db_query_keys)) cfg$db_query_keys else NULL
+          df <- query_annotations_db_by_coord(
+            db_pool, coord, cfg$db_cols,
+            ref = ref_val, alt = alt_val, query_keys = query_keys
+          )
 
           if (nrow(df) == 1) {
             current_mutation(df[1, ])
@@ -529,8 +557,13 @@ votingServer <- function(
             print(session_annotations_df)
 
             if (nrow(session_annotations_df) > 0) {
-              rowIdx <- which(session_annotations_df$coordinates == coord)
-              print(paste("Row index for coordinate:", coord, "is", rowIdx))
+              # Match by coordinate, REF, and ALT to handle duplicates
+              rowIdx <- which(
+                session_annotations_df$coordinates == coord &
+                session_annotations_df$REF == ref_val &
+                session_annotations_df$ALT == alt_val
+              )
+              print(paste("Row index for coordinate:", coord, "REF:", ref_val, "ALT:", alt_val, "is", rowIdx))
               if (length(rowIdx) > 0) {
                 session$onFlushed(function() {
                   if (rowIdx == 1) {
@@ -581,7 +614,15 @@ votingServer <- function(
             print("cfg$db_cols:")
             print(cfg$db_cols)
 
-            df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
+            # Get REF and ALT from annotations_df for this row
+            ref_val <- annotations_df$REF[i]
+            alt_val <- annotations_df$ALT[i]
+
+            query_keys <- if (!is.null(cfg$db_query_keys)) cfg$db_query_keys else NULL
+            df <- query_annotations_db_by_coord(
+              db_pool, coord, cfg$db_cols,
+              ref = ref_val, alt = alt_val, query_keys = query_keys
+            )
 
             # query <- paste0(
             #   "SELECT ",
@@ -604,11 +645,13 @@ votingServer <- function(
 
               # If a mutation is found, return it
               coord <- df[1, ]$coordinates
+              ref_val <- df[1, ]$REF
+              alt_val <- df[1, ]$ALT
 
               current_mutation(df[1, ])
               vote_start_time(Sys.time())
               shiny::updateQueryString(
-                paste0("?coordinate=", coord),
+                paste0("?coordinate=", coord, "&ref=", ref_val, "&alt=", alt_val),
                 mode = "push",
                 session = session
               )
@@ -675,9 +718,15 @@ votingServer <- function(
         stringsAsFactors = FALSE
       )
 
-      # Find the row for the current coordinate
+      # Find the row for the current coordinate, REF, and ALT
       coord <- mut_df$coordinates
-      rowIdx <- which(annotations_df$coordinates == coord)
+      ref_val <- mut_df$REF
+      alt_val <- mut_df$ALT
+      rowIdx <- which(
+        annotations_df$coordinates == coord &
+        annotations_df$REF == ref_val &
+        annotations_df$ALT == alt_val
+      )
 
       if (length(rowIdx) > 0) {
         saved_agreement <- annotations_df[rowIdx, "agreement"]
