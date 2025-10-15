@@ -51,6 +51,28 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       }
     })
 
+    # Helper function to count votes for a user
+    count_user_votes <- function(userid, institute) {
+      user_dir <- file.path(cfg$user_data_dir, institute, userid)
+      user_annotations_file <- file.path(user_dir, paste0(userid, "_annotations.tsv"))
+      
+      if (!file.exists(user_annotations_file)) {
+        return(0)
+      }
+      
+      tryCatch({
+        user_annotations_df <- read.table(
+          user_annotations_file,
+          header = TRUE,
+          sep = "\t",
+          stringsAsFactors = FALSE
+        )
+        sum(!is.na(user_annotations_df$shinyauthr_session_id))
+      }, error = function(e) {
+        return(0)
+      })
+    }
+
     users_tbl <- shiny::eventReactive(
       c(
         login_trigger(),
@@ -60,40 +82,59 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       ),
       {
         shiny::req(login_trigger()$admin == 1)
-        DBI::dbGetQuery(
+        # Get all users from the database
+        all_users <- DBI::dbGetQuery(
           db_pool,
-          paste(
-            "SELECT userid, institute, pwd_retrieval_token FROM passwords",
-            "WHERE pwd_retrieval_token IS NOT NULL AND pwd_retrieved_timestamp IS NULL"
-          )
+          "SELECT userid, institute, pwd_retrieval_token, pwd_retrieved_timestamp FROM passwords"
         )
+        
+        # Add vote counts for each user
+        all_users$votes_count <- mapply(
+          count_user_votes,
+          all_users$userid,
+          all_users$institute,
+          SIMPLIFY = TRUE
+        )
+        
+        all_users
       }
     )
 
     output$users_table <- DT::renderDT({
       tbl <- users_tbl()
       base_url <- build_base_url(session)
+      
       # --- rows
-      tbl$link <- paste0(
-        base_url,
-        "?pwd_retrieval_token=",
-        tbl$pwd_retrieval_token
+      # Create password retrieval link only for users with pending tokens
+      tbl$link <- ifelse(
+        !is.na(tbl$pwd_retrieval_token) & is.na(tbl$pwd_retrieved_timestamp),
+        paste0(base_url, "?pwd_retrieval_token=", tbl$pwd_retrieval_token),
+        ""
       )
-      tbl$email_btn <- sprintf(
-        '<button
-            class="btn btn-primary btn-sm"
-            onclick="Shiny.setInputValue(
-              \'%s\', \'%s\',
-              {priority: \'event\'});"
-        >
-          Email Template
-        </button>',
-        session$ns("email_template_btn"),
-        tbl$userid
+      
+      # Create email button only for users with pending tokens
+      tbl$email_btn <- ifelse(
+        !is.na(tbl$pwd_retrieval_token) & is.na(tbl$pwd_retrieved_timestamp),
+        sprintf(
+          '<button
+              class="btn btn-primary btn-sm"
+              onclick="Shiny.setInputValue(
+                \'%s\', \'%s\',
+                {priority: \'event\'});"
+          >
+            Email Template
+          </button>',
+          session$ns("email_template_btn"),
+          tbl$userid
+        ),
+        ""
       )
+      
       # Remove the password retrieval token column
       tbl$pwd_retrieval_token <- NULL
-      cols <- c("User ID", "Institute", "Password Retrieval Link", "Action")
+      tbl$pwd_retrieved_timestamp <- NULL
+      
+      cols <- c("User ID", "Institute", "Votes Count", "Password Retrieval Link", "Action")
       names(tbl) <- cols
 
       # Ensure character cols & base df
@@ -136,6 +177,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           NULL,
           width = "100%"
         )),
+        `Votes Count` = "",
         `Password Retrieval Link` = "",
         Action = add_new_user_btn_html,
         stringsAsFactors = FALSE,
