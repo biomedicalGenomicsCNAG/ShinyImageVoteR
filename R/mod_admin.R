@@ -1,7 +1,7 @@
 #' Admin module UI
 #'
-#' Displays password retrieval tokens for users who have not retrieved their password yet and
-#' allows admins to add new users.
+#' Displays all users with their vote counts, password retrieval tokens for users who 
+#' have not retrieved their password yet, and allows admins to add new users.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration object
@@ -29,8 +29,9 @@ adminUI <- function(id, cfg) {
 
 #' Admin module server
 #'
-#' Shows password retrieval tokens for users who have not accessed their retrieval link and
-#' allows admins to add new users.
+#' Shows all users with their vote counts, password retrieval tokens for users who have 
+#' not accessed their retrieval link, and allows admins to add new users. Vote counts are 
+#' calculated from user annotation TSV files.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration
