@@ -396,6 +396,17 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         params = list(user_id, institute, password, token)
       )
 
+      # Create user directory structure
+      tryCatch(
+        {
+          create_user_directory(cfg$user_data_dir, institute, user_id)
+          message(paste("Created directory for user:", user_id, "at institute:", institute))
+        },
+        error = function(e) {
+          warning(paste("Failed to create directory for user:", user_id, "-", e$message))
+        }
+      )
+
       base_url <- build_base_url(session)
       retrieval_link <- paste0(base_url, "?pwd_retrieval_token=", token)
 
