@@ -149,12 +149,13 @@ makeVotingAppServer <- function(db_pool, cfg) {
         session$userData$userAnnotationsFile
       ))
 
-      safe_dir_create(user_dir)
+      # Create user directory structure (institute and user folders)
+      create_user_directory(
+        Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+        voting_institute,
+        user_id
+      )
 
-      # if (!dir.exists(user_dir)) {
-      #   cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
-      #   dir.create(user_dir, recursive = TRUE)
-      # }
 
       if (file.exists(session$userData$userInfoFile)) {
         get_mutation_trigger_source("login")

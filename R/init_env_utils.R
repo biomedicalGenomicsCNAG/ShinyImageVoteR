@@ -79,6 +79,54 @@ safe_dir_create <- function(
   )
 }
 
+#' Create user directory structure
+#'
+#' Creates the directory structure for a user under their institute folder.
+#' This ensures both the institute and user directories exist.
+#'
+#' @param user_data_dir Character. Base directory for user data
+#' @param institute Character. Institute name
+#' @param user_id Character. User ID
+#'
+#' @return Character. Path to the created user directory
+#' @export
+create_user_directory <- function(user_data_dir, institute, user_id) {
+  # Validate institute and user_id
+  pattern <- "^[A-Za-z0-9_]+$"
+  
+  if (!grepl(pattern, institute)) {
+    stop(
+      "Invalid institute name: '",
+      institute,
+      "'. Only letters, digits and underscores are allowed."
+    )
+  }
+  
+  if (!grepl(pattern, user_id)) {
+    stop(
+      "Invalid user ID: '",
+      user_id,
+      "'. Only letters, digits and underscores are allowed."
+    )
+  }
+  
+  # Create institute directory if it doesn't exist
+  institute_dir <- file.path(user_data_dir, institute)
+  if (!dir.exists(institute_dir)) {
+    dir.create(institute_dir, recursive = TRUE, showWarnings = FALSE)
+    message("Created institute directory: ", institute_dir)
+  }
+  
+  # Create user directory
+  user_dir <- file.path(institute_dir, user_id)
+  if (!dir.exists(user_dir)) {
+    dir.create(user_dir, recursive = FALSE, showWarnings = FALSE)
+    message("Created user directory: ", user_dir)
+  }
+  
+  return(user_dir)
+}
+
 # Ensure that .gitignore in dir contains the given patterns
 #'
 #' This function checks if a .gitignore file exists in the specified directory.
