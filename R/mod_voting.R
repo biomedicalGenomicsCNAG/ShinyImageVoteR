@@ -194,12 +194,13 @@ votingUI <- function(id, cfg) {
 #' @return None. Side effect only: registers reactive observers and UI updates.
 #' @export
 votingServer <- function(
-    id,
-    cfg,
-    login_trigger,
-    db_pool,
-    get_mutation_trigger_source,
-    tab_trigger = NULL) {
+  id,
+  cfg,
+  login_trigger,
+  db_pool,
+  get_mutation_trigger_source,
+  tab_trigger = NULL
+) {
   shiny::moduleServer(id, function(input, output, session) {
     # validate cfg cols using "validate_cols" function from db_utils.R
     validate_cols(db_pool, "annotations", cfg$db_cols)
@@ -245,12 +246,19 @@ votingServer <- function(
         return()
       }
 
-      if (!is.null(mut_df$coordinates) && identical(as.character(mut_df$coordinates), "done")) {
+      if (
+        !is.null(mut_df$coordinates) &&
+          identical(as.character(mut_df$coordinates), "done")
+      ) {
         shinyjs::disable(session$ns("nextBtn"))
         return()
       }
 
-      if (!is.null(agreement) && length(agreement) > 0 && !identical(agreement, "")) {
+      if (
+        !is.null(agreement) &&
+          length(agreement) > 0 &&
+          !identical(agreement, "")
+      ) {
         print("Enabling nextBtn")
         print(paste("agreement:", agreement))
 
@@ -302,7 +310,8 @@ votingServer <- function(
         user_annotations_file,
         header = TRUE,
         sep = "\t",
-        stringsAsFactors = FALSE
+        stringsAsFactors = FALSE,
+        quote = "",
       )
 
       print("Annotations DataFrame before update:")
@@ -462,7 +471,8 @@ votingServer <- function(
           user_annotations_file,
           header = TRUE,
           sep = "\t",
-          stringsAsFactors = FALSE
+          stringsAsFactors = FALSE,
+          quote = ""
         )
 
         # actionButton "Back" or Go back one page in browser pressed
@@ -672,7 +682,8 @@ votingServer <- function(
         user_annotations_file,
         header = TRUE,
         sep = "\t",
-        stringsAsFactors = FALSE
+        stringsAsFactors = FALSE,
+        quote = ""
       )
 
       # Find the row for the current coordinate
