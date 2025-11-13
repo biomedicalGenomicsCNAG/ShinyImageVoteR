@@ -103,7 +103,7 @@ votingUI <- function(id, cfg) {
                       )
                     }
                   ),
-                  choiceValues = c("yes", "no", "diff_var", "not_confident"),
+                  choiceValues = unname(cfg$radio_options2val_map),
                   selected = character(0),
                 )
               ),

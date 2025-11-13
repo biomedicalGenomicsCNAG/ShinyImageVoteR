@@ -22,7 +22,14 @@ library(ShinyImgVoteR)
 library(shiny)
 
 Sys.setenv("IMGVOTER_BASE_DIR" = getwd())
-config_file_path <- file.path(get_app_dir(), "default_env", "config", "config.yaml")
+
+config_file_path <- file.path(
+  get_app_dir(),
+  "default_env",
+  "config", "config.yaml"
+)
+
+# load config seems to fail with the new yaml
 cfg <- load_config(config_file_path)
 
 init_environment(config_file_path)
@@ -34,7 +41,10 @@ shiny::addResourcePath(
 
 shiny::addResourcePath(
   "www",
-  system.file("shiny-app","www",package="ShinyImgVoteR")
+  system.file(
+    "shiny-app", "www",
+    package = "ShinyImgVoteR"
+  )
 )
 
 message("CONFIG YAML:\t", normalizePath(config_file_path))

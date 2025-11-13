@@ -99,10 +99,47 @@ load_config <- function(config_file_path) {
   # cfg$user_data_dir <- Sys.getenv("IMGVOTER_USER_DATA_DIR", cfg$user_data_dir)
   # cfg$user_data_dir <- normalizePath(cfg$user_data_dir, mustWork = TRUE)
 
-  cfg$observations2val_map <- setNames(
-    as.vector(cfg$observations_dict),
-    paste0(names(cfg$observations_dict), " [", cfg$observation_hotkeys, "]")
+  cfg$observations2val_map <- tryCatch(
+    {
+      # --- main expression ---
+      setNames(
+        as.vector(cfg$observations_dict),
+        paste0(names(cfg$observations_dict), " [", cfg$observation_hotkeys, "]")
+      )
+    },
+    error = function(e) {
+      # write a small debugging dump to a file
+      log_file <- file.path(
+        "/home/ivo/projects/bioinfo/cnag/repos/B1MG-variant-voting",
+        "debug_observations.log"
+      )
+
+      cat(
+        "Error in observations2val_map:\n",
+        "Message: ",
+        conditionMessage(e),
+        "\n",
+        "names(cfg$observations_dict): ",
+        paste(names(cfg$observations_dict), collapse = ", "),
+        "\n",
+        "cfg$observation_hotkeys: ",
+        paste(cfg$observation_hotkeys, collapse = ", "),
+        "\n",
+        file = log_file,
+        append = TRUE
+      )
+
+      message("Wrote debug log to: ", log_file)
+
+      # fallback value
+      character("An error occurred while creating observations2val_map")
+    }
   )
+
+  # cfg$observations2val_map <- setNames(
+  #   as.vector(cfg$observations_dict),
+  #   paste0(names(cfg$observations_dict), " [", cfg$observation_hotkeys, "]")
+  # )
 
   cfg$vote_counts_cols <- c(
     unlist(cfg$vote2dbcolumn_map, use.names = FALSE),

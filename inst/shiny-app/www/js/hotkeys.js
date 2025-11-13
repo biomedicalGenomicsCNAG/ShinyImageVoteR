@@ -46,7 +46,8 @@ document.addEventListener("keydown", (e) => {
   const groups = {
     // ——— radio buttons ———
     agreement: {
-      keys: { 1: "yes", 2: "no", 3: "diff_var", 4: "not_confident" },
+      // TODO should not be hardcoded
+      keys: { 1: "yes", 2: "diff_var", 3: "germline_leak", 4: "not_confident" },
       toggle: false,
     },
     // ——— checkboxes ———
@@ -57,7 +58,6 @@ document.addEventListener("keydown", (e) => {
         d: "alignment",
         f: "complex",
         g: "img_qual_issue",
-        h: "platform_issue",
       },
       toggle: true,
     },
