@@ -2,10 +2,26 @@ library(testthat)
 library(shiny)
 library(ShinyImgVoteR)
 
-cfg <- ShinyImgVoteR::load_config()
+cfg <- ShinyImgVoteR::load_config(
+  config_file_path = system.file(
+    "shiny-app",
+    "default_env",
+    "config",
+    "config.yaml",
+    package = "ShinyImgVoteR"
+  )
+)
 
 testthat::test_that("Leaderboard module UI renders correctly", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   ui_result <- ShinyImgVoteR::leaderboardUI("test", cfg)
   expect_s3_class(ui_result, "shiny.tag.list")
   
@@ -15,7 +31,15 @@ testthat::test_that("Leaderboard module UI renders correctly", {
 })
 
 testthat::test_that("Leaderboard server handles tab trigger parameter", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   # Test that the function accepts the new tab_trigger parameter
   testServer(leaderboardServer, args = list(
     cfg,
@@ -28,7 +52,15 @@ testthat::test_that("Leaderboard server handles tab trigger parameter", {
 })
 
 testthat::test_that("Leaderboard reactive triggers correctly", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   Sys.setenv(
     IMGVOTER_USER_GROUPS_COMMA_SEPARATED = paste(cfg$institute_ids, collapse = ",")
   )
@@ -61,7 +93,6 @@ testthat::test_that("Leaderboard reactive triggers correctly", {
       data.frame(
         coordinates = c("chr1:1000", "chr2:2000"),
         agreement = c("yes", "no"),
-        alternative_vartype = c("", ""),
         observation = c("", ""),
         comment = c("", ""),
         shinyauthr_session_id = c("session1", "session1"),
@@ -101,7 +132,15 @@ testthat::test_that("Leaderboard reactive triggers correctly", {
 })
 
 testthat::test_that("Leaderboard works without tab trigger (backward compatibility)", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   # Test that the module still works when tab_trigger is not provided
   login_trigger <- shiny::reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   

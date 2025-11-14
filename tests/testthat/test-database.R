@@ -11,7 +11,15 @@ library(ShinyImgVoteR)
 # # source necessary files
 # source(file.path(app_dir, "config.R"))
 
-cfg <- ShinyImgVoteR::load_config()
+cfg <- ShinyImgVoteR::load_config(
+  config_file_path = system.file(
+    "shiny-app",
+    "default_env",
+    "config",
+    "config.yaml",
+    package = "ShinyImgVoteR"
+  )
+)
 
 testthat::test_that("Database connection and queries work", {
   # Create mock database

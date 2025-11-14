@@ -125,7 +125,6 @@ session$userData$userAnnotationsFile <- tempfile(fileext = ".tsv")
       data.frame(
         coordinates = c("chr1:1000", "chr2:2000"),
         agreement = c("yes", "no"),
-        alternative_vartype = c("", ""),
         observation = c("", ""),
         comment = c("", ""),
         shinyauthr_session_id = c("session123", "session123"),
@@ -201,7 +200,6 @@ testthat::test_that("User stats server works without tab trigger (backward compa
       data.frame(
         coordinates = "chr1:1000",
         agreement = "yes",
-        alternative_vartype = "",
         observation = "",
         comment = "",
         shinyauthr_session_id = "session123",
