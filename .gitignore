@@ -13,3 +13,5 @@ inst/doc
 
 app_env/images/*/*.png
 docs
+.env
+.Renviron
