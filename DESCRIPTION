@@ -21,6 +21,7 @@ Imports:
     yaml,
     digest,
     later,
+    shinyauthr,
     shinyjs,
     shinyWidgets,
     tibble,
