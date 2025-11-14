@@ -1,4 +1,4 @@
-url: ~
+url: https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/
 template:
   bootstrap: 5
 home:
@@ -11,3 +11,4 @@ articles:
   - 02-setup
   - 03-usage
   - 04-test-coverage
+

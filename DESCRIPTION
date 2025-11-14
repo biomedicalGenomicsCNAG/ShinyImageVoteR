@@ -38,3 +38,4 @@ Suggests:
     rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+URL: https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/

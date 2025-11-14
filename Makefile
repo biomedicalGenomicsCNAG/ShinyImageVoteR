@@ -177,3 +177,6 @@ pkgdown-build:
 
 pkgdown-prev:
 	$(R) -e "pkgdown::preview_site()"
+
+gh-pages:
+	$(R) -e "usethis::use_pkgdown_github_pages()"
