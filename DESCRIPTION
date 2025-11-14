@@ -33,7 +33,6 @@ Suggests:
     pak,
     DT,
     devtools,
-    vscDebugger,
     knitr,
     rmarkdown
 Config/testthat/edition: 3
