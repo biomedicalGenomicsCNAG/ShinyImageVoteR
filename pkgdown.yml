@@ -1,0 +1,13 @@
+pandoc: 3.1.11
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  00-vignettes: 00-vignettes.html
+  01-introduction: 01-introduction.html
+  02-setup: 02-setup.html
+  03-usage: 03-usage.html
+  04-test-coverage: 04-test-coverage.html
+last_built: 2025-11-14T17:28Z
+urls:
+  reference: https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference
+  article: https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/articles
