@@ -1,0 +1,10 @@
+pandoc: 2.9.2.1
+pkgdown: 2.1.3
+pkgdown_sha: ~
+articles:
+  00-vignettes: 00-vignettes.html
+  01-introduction: 01-introduction.html
+  02-setup: 02-setup.html
+  03-usage: 03-usage.html
+  04-test-coverage: 04-test-coverage.html
+last_built: 2025-11-14T15:48Z

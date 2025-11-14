@@ -10,6 +10,5 @@ db.sqlite
 inst/doc
 /doc/
 /Meta/
-docs
 
 app_env/images/*/*.png
