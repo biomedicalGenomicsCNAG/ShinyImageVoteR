@@ -27,6 +27,7 @@ Imports:
     tibble,
     data.table,
     markdown,
+    R.utils
 Suggests:
     testthat (>= 3.0.0),
     covr,
