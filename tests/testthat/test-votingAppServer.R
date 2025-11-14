@@ -44,7 +44,15 @@ testthat::test_that("login event creates user data files", {
   # browser()
   # debugonce(ShinyImgVoteR::makeVotingAppServer)
 
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   testthat::with_mocked_bindings(
     .package = "ShinyImgVoteR",
     `loginServer` = stub_loginServer,
@@ -79,7 +87,15 @@ testthat::test_that("login event creates user data files", {
 testthat::test_that("user_stats_tab_trigger returns timestamp when tab selected", {
   mock_pool <- create_mock_db()$pool
   
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   testServer(ShinyImgVoteR::makeVotingAppServer(mock_pool, cfg), {
     session$setInputs(main_navbar = "User stats")
     expect_s3_class(user_stats_tab_trigger(), "POSIXt")
@@ -94,7 +110,15 @@ testthat::test_that("user_stats_tab_trigger returns timestamp when tab selected"
 testthat::test_that("leaderboard_tab_trigger returns timestamp when tab selected", {
   mock_pool <- create_mock_db()$pool
 
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   testServer(ShinyImgVoteR::makeVotingAppServer(mock_pool, cfg), {
     session$setInputs(main_navbar = "Leaderboard")
     expect_s3_class(leaderboard_tab_trigger(), "POSIXt")

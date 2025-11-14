@@ -11,7 +11,12 @@ app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
 
 
 testthat::test_that("About module UI renders correctly", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(config_file_path = file.path(
+    app_dir,
+    "default_env",
+    "config",
+    "config.yaml"
+  ))
   ui_result <- aboutUI("test", cfg)
   expect_s3_class(ui_result, "shiny.tag.list")
   ui_html <- as.character(ui_result)

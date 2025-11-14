@@ -25,6 +25,25 @@ create_mock_db <- function() {
     )
   ")
 
+  # Create trigger for vote total updates
+  DBI::dbExecute(
+    conn,
+    "
+    CREATE TRIGGER update_vote_total_update
+    AFTER UPDATE ON annotations
+    FOR EACH ROW
+    BEGIN
+      UPDATE annotations
+      SET vote_count_total =
+          vote_count_correct +
+          vote_count_no_variant +
+          vote_count_different_variant +
+          vote_count_not_sure
+      WHERE rowid = NEW.rowid;
+    END;
+  "
+  )
+
   # Insert test data
   test_mutations <- list(
     list("chr1:1000", "A", "T", "SNV", "/test/path1.png"),
@@ -52,6 +71,7 @@ create_mock_db <- function() {
   DBI::dbExecute(conn, "
     CREATE TABLE passwords (
       userid TEXT PRIMARY KEY,
+      admin BOOLEAN DEFAULT 0,
       institute TEXT,
       password TEXT,
       pwd_retrieval_token TEXT,
