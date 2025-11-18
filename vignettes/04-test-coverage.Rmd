@@ -1,11 +1,32 @@
 ---
-title: "Test Coverage"
+title: "04. Test Coverage"
+author: "Ivo Christopher Leist"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: rmarkdown::html_document
 vignette: >
   %\VignetteIndexEntry{Test Coverage}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+## Test Coverage
+
+The vignette demonstrates how to generate a coverage report for the package using the **covr** package. To run the coverage analysis locally, execute:
+
+```r
+library(covr)
+coverage <- package_coverage()
+report(coverage, browse = FALSE, file = "coverage.html")
+```
+
+The generated `coverage.html` file provides a detailed view of which functions are exercised by the test suite located in `tests/testthat/`.
+
+You can also view a summary in the console:
+
+```r
+print(coverage)
+```
+
 
 <!-- ```{r cov, echo=FALSE, message=FALSE}
 library(magrittr)

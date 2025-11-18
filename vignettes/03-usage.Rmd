@@ -1,6 +1,6 @@
 ---
 title: "03. Usage"
-author: "Ivo Chritopher Leist"
+author: "Ivo Christopher Leist"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: rmarkdown::html_vignette
 vignette: >

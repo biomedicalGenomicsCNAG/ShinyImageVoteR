@@ -7,4 +7,7 @@ articles:
   02-setup: 02-setup.html
   03-usage: 03-usage.html
   04-test-coverage: 04-test-coverage.html
-last_built: 2025-11-14T15:48Z
+last_built: 2025-11-18T12:08Z
+urls:
+  reference: https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference
+  article: https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/articles

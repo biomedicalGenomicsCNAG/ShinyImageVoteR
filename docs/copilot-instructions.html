@@ -34,21 +34,46 @@
 
 <div id="copilot-instructions" class="section level1">
 <div class="section level2">
-<h2 id="coding-conventions">Coding Conventions<a class="anchor" aria-label="anchor" href="#coding-conventions"></a></h2>
-<ul><li>Use Shiny modules consistently: both in one file UI (<code>&lt;module&gt;UI</code>) + server (<code>&lt;module&gt;Server</code>)</li>
-<li>Modules files named <code>mod_&lt;module&gt;.R</code>
-</li>
-<li>Indent code with 2 spaces</li>
+<h2 id="project-snapshot">Project Snapshot<a class="anchor" aria-label="anchor" href="#project-snapshot"></a></h2>
+<ul><li>
+<code>ShinyImgVoteR</code> is an R package that ships a Shiny app from <code>inst/shiny-app</code>; <code>R/main_ui.R</code> plus <code>R/main_server.R</code> wire modules around an SQLite annotations DB and per-user TSV logs.</li>
+<li>Launch locally with <code><a href="https://rstudio.github.io/renv/reference/restore.html" class="external-link">renv::restore()</a></code> followed by <code>devtools::load_all(".")</code> and <code><a href="reference/run_voting_app.html">ShinyImgVoteR::run_voting_app()</a></code> (or <code>dev_scripts/run_shinyimgvoter.R</code>); hosted deployments use the same entrypoint (see <code>app.R</code>).</li>
 </ul></div>
 <div class="section level2">
-<h2 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h2>
-<ul><li>Use <code>testthat</code> for unit tests</li>
-<li>Use <code>testServer</code> for testing Shiny modules</li>
-<li>To run all tests, use <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code>
-</li>
-<li>Ensure tests are placed in <code>tests/testthat/</code>
-</li>
-<li>To get test coverage, use `covr::package_coverage()</li>
+<h2 id="architecture--flow">Architecture &amp; Flow<a class="anchor" aria-label="anchor" href="#architecture--flow"></a></h2>
+<ul><li>
+<code><a href="reference/init_environment.html">init_environment()</a></code> (R/init*env.R) prepares <code>app_env/</code> by copying templates from <code>inst/shiny-app/default_env</code>, normalising relative paths with <code>IMGVOTER_BASE_DIR</code>, and exporting <code>IMGVOTER*\*</code> env vars consumed throughout the app—always let this run before filesystem touches.</li>
+<li>
+<code><a href="reference/load_config.html">load_config()</a></code> (R/load_config.R) ingests <code>config/config.yaml</code>, merges env overrides, expands derived fields (<code>cfg$db_cols</code>, <code>cfg$vote2dbcolumn_map</code>, <code>cfg$observations2val_map</code>); pass the resulting <code>cfg</code> into every module.</li>
+<li>
+<code><a href="reference/makeVotingAppServer.html">makeVotingAppServer()</a></code> orchestrates authentication via <code>mod_login.R</code>/<code>shinyauthr</code>, tab triggers, logout cleanup, and registers modules; when extending functionality keep UI (<code>main_ui.R</code>) and server tab triggers in sync.</li>
+<li>Voting flow (<code>mod_voting.R</code>): reads the next coordinate from per-user TSVs, saves votes, and updates SQLite counts using <code>cfg$vote2dbcolumn_map</code>; <code><a href="reference/validate_cols.html">validate_cols()</a></code> guards SQL identifiers so new config columns must exist in the DB schema defined in <code><a href="reference/create_database.html">create_database()</a></code>.</li>
+<li>Dynamic tabs (Admin, etc.) are inserted at runtime—if you add tabs, update <code>make_tab_trigger()</code> and the navbar in <code>main_ui.R</code> so query-string syncing keeps working.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="conventions">Conventions<a class="anchor" aria-label="anchor" href="#conventions"></a></h2>
+<ul><li>Modules live in <code>R/mod_&lt;name&gt;.R</code> with paired <code>&lt;name&gt;UI()</code>/<code>&lt;name&gt;Server()</code> exports; UI functions accept <code>cfg</code> whenever styling or labels differ from defaults.</li>
+<li>Indent R code with 2 spaces; prefer <code>session$ns()</code> for dynamic IDs and keep module state in <code>session$userData</code> when persisting per-user context.</li>
+<li>Reuse helpers in <code>R/init_env_utils.R</code> (<code>safe_dir_create</code>, <code>copy_dir_from_app</code>, <code>ensure_gitignore</code>) instead of rolling bespoke filesystem logic—tests rely on their validation behaviour.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="config-data--assets">Config, Data &amp; Assets<a class="anchor" aria-label="anchor" href="#config-data--assets"></a></h2>
+<ul><li>Runtime assets live in <code>app_env/</code> (config, images, server_data, user_data); defaults reside under <code>inst/shiny-app/default_env</code>. Tests mirror this structure in <code>tests/testthat/app_env/</code>—keep both copies updated when templates change.</li>
+<li>User progress persists in TSVs (<code>user_data/&lt;institute&gt;/&lt;userid&gt;</code>); columns must match <code>cfg$user_annotations_colnames</code> so <code>mod_voting.R</code> can restore prior choices and compute timing stats.</li>
+<li>Front-end behaviour (zoom, keyboard shortcuts) loads from <code>inst/shiny-app/www/js</code>; include new scripts via the <code><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">purrr::map</a></code> block in <code><a href="reference/votingUI.html">votingUI()</a></code> to ensure singleton injection.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="testing--tooling">Testing &amp; Tooling<a class="anchor" aria-label="anchor" href="#testing--tooling"></a></h2>
+<ul><li>Run <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code> (after <code><a href="https://rstudio.github.io/renv/reference/restore.html" class="external-link">renv::restore()</a></code>) for the full suite; module tests use <code>testServer()</code> (<code>tests/testthat/test-*-module.R</code>) and helpers such as <code>tests/testthat/helper-db.R::create_mock_db()</code>.</li>
+<li>Coverage via <code><a href="http://covr.r-lib.org/reference/package_coverage.html" class="external-link">covr::package_coverage()</a></code> or <code>dev_scripts/coverage.R</code>; outputs land in <code>tests/coverage/</code>.</li>
+<li>When altering module signatures or config loading, update the fixtures in <code>tests/testthat/setup.R</code> and <code>tests/testthat/helper-*.R</code> so login, DB, and environment mocks stay aligned.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="common-pitfalls">Common Pitfalls<a class="anchor" aria-label="anchor" href="#common-pitfalls"></a></h2>
+<ul><li>Skipping <code><a href="reference/init_environment.html">init_environment()</a></code> leaves relative paths unresolved and prevents <code>IMGVOTER_*</code> env vars from being set—most file IO and DB calls will fail.</li>
+<li>
+<code><a href="reference/load_config.html">load_config()</a></code> decorates observation labels with hotkey hints; hard-coding labels elsewhere breaks keyboard shortcut expectations.</li>
+<li>Schema tweaks go through <code>R/db_utils.R::create_database()</code>; adjust the SQLite template in <code>tests/testthat/app_env/db.sqlite</code> and regenerate user fixtures when you add or rename columns.</li>
 </ul></div>
 </div>
 
