@@ -555,3 +555,115 @@ testthat::test_that("UI inputs are restored when navigating back to previously v
 #     }
 #   )
 # })
+
+testthat::test_that("get_mutation skips screenshots with 3 or more total votes", {
+  # Set up environment with 3 coordinates
+  env <- setup_voting_env(c("chr1:1000", "chr2:2000", "chr3:3000"))
+  args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+
+  # Manually set chr1:1000 to have 3 votes and chr2:2000 to have 2 votes
+  # chr3:3000 should have 0 votes
+  DBI::dbExecute(
+    args$db_pool,
+    "UPDATE annotations SET vote_count_correct = 2, vote_count_no_variant = 1 WHERE coordinates = 'chr1:1000'"
+  )
+  DBI::dbExecute(
+    args$db_pool,
+    "UPDATE annotations SET vote_count_correct = 1, vote_count_no_variant = 1 WHERE coordinates = 'chr2:2000'"
+  )
+
+  # Verify the vote counts were set correctly
+  chr1_votes <- DBI::dbGetQuery(args$db_pool, "SELECT vote_count_total FROM annotations WHERE coordinates = 'chr1:1000'")
+  chr2_votes <- DBI::dbGetQuery(args$db_pool, "SELECT vote_count_total FROM annotations WHERE coordinates = 'chr2:2000'")
+  chr3_votes <- DBI::dbGetQuery(args$db_pool, "SELECT vote_count_total FROM annotations WHERE coordinates = 'chr3:3000'")
+
+  testthat::expect_equal(chr1_votes$vote_count_total, 3)
+  testthat::expect_equal(chr2_votes$vote_count_total, 2)
+  testthat::expect_equal(chr3_votes$vote_count_total, 0)
+
+  my_session <- MockShinySession$new()
+  my_session$clientData <- shiny::reactiveValues(
+    url_search = ""
+  )
+
+  args$cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
+
+  testServer(
+    votingServer,
+    session = my_session,
+    args = args,
+    {
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$votingInstitute <- cfg$test_institute
+      session$userData$shinyauthr_session_id <- "test_vote_limit_session"
+
+      # Trigger the mutation loading
+      session$flushReact()
+
+      # get_mutation should skip chr1:1000 (3 votes) and return chr2:2000 (2 votes)
+      res <- get_mutation()
+      testthat::expect_equal(res$coordinates, "chr2:2000")
+    }
+  )
+})
+
+testthat::test_that("get_mutation returns done when all screenshots have 3+ votes", {
+  # Set up environment with 2 coordinates
+  env <- setup_voting_env(c("chr1:1000", "chr2:2000"))
+  args <- make_args(env$annotations_file)
+  cleanup_db <- setup_test_db(args)
+  on.exit(cleanup_db())
+
+  # Set both coordinates to have 3 or more votes
+  DBI::dbExecute(
+    args$db_pool,
+    "UPDATE annotations SET vote_count_correct = 3 WHERE coordinates = 'chr1:1000'"
+  )
+  DBI::dbExecute(
+    args$db_pool,
+    "UPDATE annotations SET vote_count_correct = 4 WHERE coordinates = 'chr2:2000'"
+  )
+
+  my_session <- MockShinySession$new()
+  my_session$clientData <- shiny::reactiveValues(
+    url_search = ""
+  )
+
+  args$cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
+
+  testServer(
+    votingServer,
+    session = my_session,
+    args = args,
+    {
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$votingInstitute <- cfg$test_institute
+      session$userData$shinyauthr_session_id <- "test_all_voted_session"
+
+      # Trigger the mutation loading
+      session$flushReact()
+
+      # get_mutation should return "done" since all screenshots have 3+ votes
+      res <- get_mutation()
+      testthat::expect_equal(res$coordinates, "done")
+    }
+  )
+})

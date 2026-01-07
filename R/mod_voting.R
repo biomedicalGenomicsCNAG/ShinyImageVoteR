@@ -604,15 +604,13 @@ votingServer <- function(
             # print(df)
 
             if (nrow(df) == 1) {
-              # TODO
-              # Filter logic for the actual voting
-              # Reasoning why this is commented out in the README
+              # Check if screenshot has already been voted 3 or more times
+              if (!is.null(df$vote_count_total) && !is.na(df$vote_count_total) && df$vote_count_total >= 3) {
+                print(paste("Skipping coordinate", coord, "- already voted", df$vote_count_total, "times"))
+                next
+              }
 
-              # inspiration for the filtering logic from legacy code:
-              # filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
-              # filter(!(no >= 3 & no / total_votes > 0.7))
-
-              # If a mutation is found, return it
+              # If a mutation is found and has fewer than 3 votes, return it
               coord <- df[1, ]$coordinates
 
               current_mutation(df[1, ])
