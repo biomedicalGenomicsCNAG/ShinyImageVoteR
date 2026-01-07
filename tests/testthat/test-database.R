@@ -79,20 +79,20 @@ testthat::test_that("Vote counting updates work correctly", {
   # Test another vote type
   DBI::dbExecute(test_pool, "
     UPDATE annotations 
-    SET vote_count_no_variant = vote_count_no_variant + 1,
+    SET vote_count_germline = vote_count_germline + 1,
         vote_count_total = vote_count_total + 1
     WHERE coordinates = ?
   ", params = list(coordinates))
   
   # Verify the update
   result <- DBI::dbGetQuery(test_pool, "
-    SELECT vote_count_correct, vote_count_no_variant, vote_count_total 
+    SELECT vote_count_correct, vote_count_germline, vote_count_total 
     FROM annotations 
     WHERE coordinates = ?
   ", params = list(coordinates))
   
   testthat::expect_equal(result$vote_count_correct, 1)
-  testthat::expect_equal(result$vote_count_no_variant, 1)
+  testthat::expect_equal(result$vote_count_germline, 1)
   testthat::expect_equal(result$vote_count_total, 2)
   
   # Clean up
@@ -103,9 +103,10 @@ testthat::test_that("Vote counting updates work correctly", {
 testthat::test_that("Database column mappings are correct", {
   # Test that vote mappings match database columns
   testthat::expect_equal(cfg$vote2dbcolumn_map$yes, "vote_count_correct")
-  testthat::expect_equal(cfg$vote2dbcolumn_map$no, "vote_count_no_variant")
   testthat::expect_equal(cfg$vote2dbcolumn_map$diff_var, "vote_count_different_variant")
-  testthat::expect_equal(cfg$vote2dbcolumn_map$not_confident, "vote_count_not_sure")
+  testthat::expect_equal(cfg$vote2dbcolumn_map$germline, "vote_count_germline")
+  testthat::expect_equal(cfg$vote2dbcolumn_map$no_reads, "vote_count_no_reads")
+  testthat::expect_equal(cfg$vote2dbcolumn_map$none_of_above, "vote_count_none_of_above")
   
   # Test that all vote count columns are included in cfg_vote_counts_cols
   for (vote_col in cfg$vote2dbcolumn_map) {

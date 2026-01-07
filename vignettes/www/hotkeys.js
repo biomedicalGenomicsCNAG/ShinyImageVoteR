@@ -33,18 +33,17 @@ document.addEventListener("keydown", (e) => {
 	const groups = {
 		// ——— radio buttons ———
 		agreement: {
-			keys: { 1: "yes", 2: "no", 3: "diff_var", 4: "not_confident" },
+			keys: { 1: "yes", 2: "diff_var", 3: "germline", 4: "no_reads", 5: "none_of_above" },
 			toggle: false,
 		},
 		// ——— checkboxes ———
 		observation: {
 			keys: {
 				a: "coverage",
-				s: "low_vaf",
-				d: "alignment",
-				f: "complex",
-				g: "img_qual_issue",
-				h: "platform_issue",
+				b: "low_vaf",
+				c: "alignment",
+				d: "complex",
+				e: "img_qual_issue",
 			},
 			toggle: true,
 		},

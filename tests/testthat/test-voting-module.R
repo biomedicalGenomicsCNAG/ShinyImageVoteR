@@ -169,13 +169,13 @@ testthat::test_that("votingServer handles different agreement types", {
       session$setInputs(agreement = "yes")
       testthat::expect_equal(input$agreement, "yes")
 
-      # Test 'no' agreement
-      session$setInputs(agreement = "no")
-      testthat::expect_equal(input$agreement, "no")
+      # Test 'diff_var' agreement
+      session$setInputs(agreement = "diff_var")
+      testthat::expect_equal(input$agreement, "diff_var")
 
-      # Test 'not_confident' agreement
-      session$setInputs(agreement = "not_confident")
-      testthat::expect_equal(input$agreement, "not_confident")
+      # Test 'germline' agreement
+      session$setInputs(agreement = "germline")
+      testthat::expect_equal(input$agreement, "germline")
 
       testthat::expect_true(TRUE) # If we reach here, it worked
     }
@@ -296,8 +296,8 @@ testthat::test_that("votingServer writes agreement to annotations file on nextBt
       assign("current_mutation", current_mutation, envir = parent.frame())
 
       # Simulate the user clicking Next with an agreement
-      session$setInputs(agreement = "no")
-      testthat::expect_equal(input$agreement, "no")
+      session$setInputs(agreement = "diff_var")
+      testthat::expect_equal(input$agreement, "diff_var")
 
       session$setInputs(observation = "Test observation")
       testthat::expect_equal(input$observation, "Test observation")
@@ -361,7 +361,7 @@ testthat::test_that("votingServer handles duplicate voting from same session", {
 
       # Second vote attempt (should be detected as already voted)
       session$setInputs(
-        agreement = "no",
+        agreement = "diff_var",
         comment = "Second vote"
       )
       session$setInputs(nextBtn = 2)
