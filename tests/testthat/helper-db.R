@@ -18,9 +18,10 @@ create_mock_db <- function() {
       variant TEXT,
       path TEXT,
       vote_count_correct INTEGER DEFAULT 0,
-      vote_count_no_variant INTEGER DEFAULT 0,
       vote_count_different_variant INTEGER DEFAULT 0,
-      vote_count_not_sure INTEGER DEFAULT 0,
+      vote_count_germline INTEGER DEFAULT 0,
+      vote_count_no_reads INTEGER DEFAULT 0,
+      vote_count_none_of_above INTEGER DEFAULT 0,
       vote_count_total INTEGER DEFAULT 0
     )
   ")
@@ -36,9 +37,10 @@ create_mock_db <- function() {
       UPDATE annotations
       SET vote_count_total =
           vote_count_correct +
-          vote_count_no_variant +
           vote_count_different_variant +
-          vote_count_not_sure
+          vote_count_germline +
+          vote_count_no_reads +
+          vote_count_none_of_above
       WHERE rowid = NEW.rowid;
     END;
   "

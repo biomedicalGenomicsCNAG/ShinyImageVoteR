@@ -103,7 +103,7 @@ votingUI <- function(id, cfg) {
                       )
                     }
                   ),
-                  choiceValues = c("yes", "no", "diff_var", "not_confident"),
+                  choiceValues = c("yes", "diff_var", "germline", "no_reads", "none_of_above"),
                   selected = character(0),
                 )
               ),
@@ -111,7 +111,7 @@ votingUI <- function(id, cfg) {
                 class = "conditional-section",
                 shiny::conditionalPanel(
                   condition = sprintf(
-                    "input['%s'] == 'not_confident'",
+                    "input['%s'] == 'none_of_above'",
                     ns("agreement")
                   ),
                   shinyWidgets::checkboxGroupButtons(
@@ -126,7 +126,7 @@ votingUI <- function(id, cfg) {
                 shiny::conditionalPanel(
                   condition = sprintf(
                     "input['%1$s'] == 'diff_var' ||
-                    input['%1$s'] == 'not_confident'",
+                    input['%1$s'] == 'none_of_above'",
                     ns("agreement")
                   ),
                   shiny::textInput(
