@@ -624,6 +624,25 @@ votingServer <- function(
             }
           }
         }
+
+        # If we reach here, all remaining unvoted screenshots have 3+ votes
+        # Show "done" to indicate no more screenshots are available
+        print("All remaining screenshots have been voted 3 or more times.")
+        res <- create_done_tibble()
+        shiny::updateQueryString(
+          "?coordinate=done",
+          mode = "push",
+          session = session
+        )
+
+        session$onFlushed(function() {
+          shinyjs::hideElement(session$ns("voting_questions_div"))
+          shinyjs::hideElement(session$ns("nextBtn"))
+          shinyjs::disable(session$ns("nextBtn"))
+        })
+        current_mutation(res)
+        vote_start_time(Sys.time())
+        return(res)
       }
     )
     output$voting_image_div <- shiny::renderUI({
