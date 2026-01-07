@@ -563,15 +563,15 @@ testthat::test_that("get_mutation skips screenshots with 3 or more total votes",
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
 
-  # Manually set chr1:1000 to have 3 votes and chr2:2000 to have 2 votes
-  # chr3:3000 should have 0 votes
+  # Set vote_count_total directly
+  # chr1:1000 has 3 votes (at max), chr2:2000 has 2 votes, chr3:3000 has 0 votes
   DBI::dbExecute(
     args$db_pool,
-    "UPDATE annotations SET vote_count_correct = 2, vote_count_no_variant = 1 WHERE coordinates = 'chr1:1000'"
+    "UPDATE annotations SET vote_count_total = 3 WHERE coordinates = 'chr1:1000'"
   )
   DBI::dbExecute(
     args$db_pool,
-    "UPDATE annotations SET vote_count_correct = 1, vote_count_no_variant = 1 WHERE coordinates = 'chr2:2000'"
+    "UPDATE annotations SET vote_count_total = 2 WHERE coordinates = 'chr2:2000'"
   )
 
   # Verify the vote counts were set correctly
@@ -624,14 +624,14 @@ testthat::test_that("get_mutation returns done when all screenshots have 3+ vote
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
 
-  # Set both coordinates to have 3 or more votes
+  # Set vote_count_total directly to 3 or more for both coordinates
   DBI::dbExecute(
     args$db_pool,
-    "UPDATE annotations SET vote_count_correct = 3 WHERE coordinates = 'chr1:1000'"
+    "UPDATE annotations SET vote_count_total = 3 WHERE coordinates = 'chr1:1000'"
   )
   DBI::dbExecute(
     args$db_pool,
-    "UPDATE annotations SET vote_count_correct = 4 WHERE coordinates = 'chr2:2000'"
+    "UPDATE annotations SET vote_count_total = 4 WHERE coordinates = 'chr2:2000'"
   )
 
   my_session <- MockShinySession$new()
