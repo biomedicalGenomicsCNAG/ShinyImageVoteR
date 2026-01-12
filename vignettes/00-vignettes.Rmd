@@ -4,7 +4,7 @@ author: "Ivo Christopher Leist"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{ShinyImgVoteR}
+  %\VignetteIndexEntry{00. Vignettes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

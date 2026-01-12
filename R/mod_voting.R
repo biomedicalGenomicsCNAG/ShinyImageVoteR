@@ -103,7 +103,7 @@ votingUI <- function(id, cfg) {
                       )
                     }
                   ),
-                  choiceValues = c("yes", "diff_var", "germline", "no_reads", "none_of_above"),
+                  choiceValues = c("yes", "diff_var", "germline", "no_or_few_reads", "none_of_above"),
                   selected = character(0),
                 )
               ),
