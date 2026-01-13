@@ -7,9 +7,10 @@
 #' @return Character path to the database file
 #' @export
 create_database <- function(
-    db_path,
-    to_be_voted_images_file,
-    grouped_credentials) {
+  db_path,
+  to_be_voted_images_file,
+  grouped_credentials
+) {
   # Look for data file in config/annotation_screenshots_paths first
   db_full_path <- normalizePath(db_path)
 
@@ -35,9 +36,10 @@ create_database <- function(
       ALT TEXT,
       path TEXT,
       vote_count_correct INTEGER DEFAULT 0,
-      vote_count_no_variant INTEGER DEFAULT 0,
       vote_count_different_variant INTEGER DEFAULT 0,
-      vote_count_not_sure INTEGER DEFAULT 0,
+      vote_count_germline INTEGER DEFAULT 0,
+      vote_count_no_or_few_reads INTEGER DEFAULT 0,
+      vote_count_none_of_above INTEGER DEFAULT 0,
       vote_count_total INTEGER DEFAULT 0
     )
   "
@@ -54,9 +56,10 @@ create_database <- function(
       UPDATE annotations
       SET vote_count_total =
           vote_count_correct +
-          vote_count_no_variant +
           vote_count_different_variant +
-          vote_count_not_sure
+          vote_count_germline +
+          vote_count_no_or_few_reads +
+          vote_count_none_of_above
       WHERE rowid = NEW.rowid;
     END;
   "
@@ -111,8 +114,9 @@ create_database <- function(
 #' @param to_be_voted_images_file Character. Path to the file containing image annotations
 #' @return NULL
 populate_annotations_table <- function(
-    conn,
-    to_be_voted_images_file) {
+  conn,
+  to_be_voted_images_file
+) {
   # Read the to_be_voted_images_file
   if (!file.exists(to_be_voted_images_file)) {
     stop("File not found: ", to_be_voted_images_file)
@@ -511,7 +515,14 @@ validate_cols <- function(conn, table, cfg_db_cols) {
 #'   If not provided, defaults to c("coordinates", "REF", "ALT") if ref and alt
 #'   are provided, otherwise just "coordinates".
 #' @return A data frame with the query results
-query_annotations_db_by_coord <- function(conn, coord, cols, ref = NULL, alt = NULL, query_keys = NULL) {
+query_annotations_db_by_coord <- function(
+  conn,
+  coord,
+  cols,
+  ref = NULL,
+  alt = NULL,
+  query_keys = NULL
+) {
   table <- tolower("annotations") # only one table for now
 
   # 1) enforce exactly one coordinate (scalar, not vector/list, not NA)
@@ -536,7 +547,10 @@ query_annotations_db_by_coord <- function(conn, coord, cols, ref = NULL, alt = N
   params <- list()
 
   if ("coordinates" %in% query_keys) {
-    where_clauses <- c(where_clauses, paste0(DBI::dbQuoteIdentifier(conn, "coordinates"), " = ?"))
+    where_clauses <- c(
+      where_clauses,
+      paste0(DBI::dbQuoteIdentifier(conn, "coordinates"), " = ?")
+    )
     params <- c(params, list(coord))
   }
 
@@ -544,7 +558,10 @@ query_annotations_db_by_coord <- function(conn, coord, cols, ref = NULL, alt = N
     if (is.null(ref)) {
       stop("REF is in query_keys but ref parameter is NULL")
     }
-    where_clauses <- c(where_clauses, paste0(DBI::dbQuoteIdentifier(conn, "REF"), " = ?"))
+    where_clauses <- c(
+      where_clauses,
+      paste0(DBI::dbQuoteIdentifier(conn, "REF"), " = ?")
+    )
     params <- c(params, list(ref))
   }
 
@@ -552,7 +569,10 @@ query_annotations_db_by_coord <- function(conn, coord, cols, ref = NULL, alt = N
     if (is.null(alt)) {
       stop("ALT is in query_keys but alt parameter is NULL")
     }
-    where_clauses <- c(where_clauses, paste0(DBI::dbQuoteIdentifier(conn, "ALT"), " = ?"))
+    where_clauses <- c(
+      where_clauses,
+      paste0(DBI::dbQuoteIdentifier(conn, "ALT"), " = ?")
+    )
     params <- c(params, list(alt))
   }
 
@@ -575,7 +595,8 @@ query_annotations_db_by_coord <- function(conn, coord, cols, ref = NULL, alt = N
   # 6) enforce at most one result row
   if (nrow(result) > 1) {
     key_info <- paste(
-      "coordinates =", coord,
+      "coordinates =",
+      coord,
       if (!is.null(ref)) paste(", REF =", ref) else "",
       if (!is.null(alt)) paste(", ALT =", alt) else ""
     )

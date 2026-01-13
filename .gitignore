@@ -11,3 +11,6 @@ inst/doc
 /doc/
 /Meta/
 docs
+
+.env
+.Renviron
