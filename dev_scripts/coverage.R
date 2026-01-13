@@ -4,7 +4,7 @@
 library(magrittr)
 
 cov <- covr::package_coverage(quiet = FALSE)
-# covr::codecov(coverage = cov)
+covr::codecov(coverage = cov, token = Sys.getenv('CODECOV_TOKEN'))
 
 cov_dir <- file.path(getwd(), "tests", "coverage")
 covr::report(cov, file.path(cov_dir, "coverage.html"))

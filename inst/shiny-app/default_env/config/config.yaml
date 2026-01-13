@@ -9,8 +9,8 @@ sqlite_file: "./app_env/db.sqlite"
 shutdown_trigger_file: "./app_env/config/STOP"
 
 application_title: ShinyImgVoteR (B1MG Somatic Mutation Voting)
-radioBtns_label: Is the somatic mutation above correct? [num keys 1-4]
-checkboxes_label: Please select the reason(s) for your uncertainty [keyboard keys a-g]
+radioBtns_label: Please select your assessment [num keys 1-5]
+checkboxes_label: Please select the reason(s) [keyboard keys a-g]
 radio_options2val_map:
   Yes, it is the above shown somatic mutation: 'yes'
   No, it is a different somatic mutation: diff_var

@@ -1,6 +1,6 @@
 ---
 title: "03. Usage"
-author: "Ivo Chritopher Leist"
+author: "Ivo Christopher Leist"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -12,9 +12,16 @@ runtime: shiny_prerendered
 
 ## Introduction
 
-This vignette demonstrates…
+<div class="fancy-box">
+  In this vignette different parts of the ShinyImgVoteR application are demonstrated.
 
-## Basic App
+  - Login: Login with user credentials (userid/password) in order to access the application.
+  - Voting: Voting on displayed images
+  - Leaderboard: Shows voting progress of different user groups in real-time.
+  - User Statistics: Shows the user's voting behavior statistics.
+  - Admin View: Administrative functionalities for creating users, download votes etc.
+</div>
+
 
 ```{r setup, include=FALSE}
 # load your package and shiny
@@ -50,14 +57,14 @@ message("IMAGES DIR:\t", normalizePath(cfg$images_dir))
 message("SQLITE DB:\t", normalizePath(cfg$sqlite_file))
 ```
 
-
-## UI (this becomes part of the HTML shell)
+<div class="fancy-box">
+## Login View
 
 ```{r ui, echo=FALSE}
-shiny::fluidPage(
-  shiny::tags$h3("Current Working Directory"),
-  shiny::verbatimTextOutput("cwd")
-)
+# shiny::fluidPage(
+#   shiny::tags$h3("Current Working Directory"),
+#   shiny::verbatimTextOutput("cwd")
+# )
 ```
 
 ```{r ui2, echo=FALSE, include=TRUE}
@@ -65,11 +72,21 @@ Sys.setenv("IMGVOTER_CONFIG_FILE" = config_file_path)
 votingAppUI(cfg)
 ```
 
-```{r server, context="server"}
-output$cwd <- renderText({
-  getwd()
-})
+```{r server, context="server", include=FALSE}
+# output$cwd <- renderText({
+#   getwd()
+# })
 con <- DBI::dbConnect(RSQLite::SQLite(), dbname = cfg$sqlite_file)
 on.exit(DBI::dbDisconnect(con), add = TRUE)
 makeVotingAppServer(con)
+```
+</div>
+
+<!-- TODO
+Rewrite the application which skips the login view for demonstration purposes.
+so the voting view can be shown directly in the vignette.
+-->
+```{r ui3, echo=FALSE, include=TRUE}
+Sys.setenv("IMGVOTER_CONFIG_FILE" = config_file_path)
+votingAppUI(cfg)
 ```

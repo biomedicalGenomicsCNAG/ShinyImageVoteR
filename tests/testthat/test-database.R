@@ -11,7 +11,15 @@ library(ShinyImgVoteR)
 # # source necessary files
 # source(file.path(app_dir, "config.R"))
 
-cfg <- ShinyImgVoteR::load_config()
+cfg <- ShinyImgVoteR::load_config(
+  config_file_path = system.file(
+    "shiny-app",
+    "default_env",
+    "config",
+    "config.yaml",
+    package = "ShinyImgVoteR"
+  )
+)
 
 testthat::test_that("Database connection and queries work", {
   # Create mock database
@@ -86,7 +94,7 @@ testthat::test_that("Vote counting updates work correctly", {
     test_pool,
     "
     UPDATE annotations 
-    SET vote_count_no_variant = vote_count_no_variant + 1,
+    SET vote_count_germline = vote_count_germline + 1,
         vote_count_total = vote_count_total + 1
     WHERE coordinates = ?
   ",
@@ -97,7 +105,7 @@ testthat::test_that("Vote counting updates work correctly", {
   result <- DBI::dbGetQuery(
     test_pool,
     "
-    SELECT vote_count_correct, vote_count_no_variant, vote_count_total 
+    SELECT vote_count_correct, vote_count_germline, vote_count_total 
     FROM annotations 
     WHERE coordinates = ?
   ",
@@ -105,7 +113,7 @@ testthat::test_that("Vote counting updates work correctly", {
   )
 
   testthat::expect_equal(result$vote_count_correct, 1)
-  testthat::expect_equal(result$vote_count_no_variant, 1)
+  testthat::expect_equal(result$vote_count_germline, 1)
   testthat::expect_equal(result$vote_count_total, 2)
 
   # Clean up
@@ -121,7 +129,6 @@ testthat::test_that("Database column mappings are correct", {
     "vote_count_different_variant"
   )
   testthat::expect_equal(cfg$vote2dbcolumn_map$germline, "vote_count_germline")
-  testthat::expect_equal(cfg$vote2dbcolumn_map$no_reads, "vote_count_no_reads")
   testthat::expect_equal(
     cfg$vote2dbcolumn_map$no_or_few_reads,
     "vote_count_no_or_few_reads"

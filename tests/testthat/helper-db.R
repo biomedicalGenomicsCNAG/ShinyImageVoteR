@@ -22,7 +22,6 @@ create_mock_db <- function() {
       vote_count_correct INTEGER DEFAULT 0,
       vote_count_different_variant INTEGER DEFAULT 0,
       vote_count_germline INTEGER DEFAULT 0,
-      vote_count_no_reads INTEGER DEFAULT 0,
       vote_count_no_or_few_reads INTEGER DEFAULT 0,
       vote_count_none_of_above INTEGER DEFAULT 0,
       vote_count_total INTEGER DEFAULT 0
@@ -87,6 +86,7 @@ create_mock_db <- function() {
     "
     CREATE TABLE passwords (
       userid TEXT PRIMARY KEY,
+      admin BOOLEAN DEFAULT 0,
       institute TEXT,
       password TEXT,
       pwd_retrieval_token TEXT,

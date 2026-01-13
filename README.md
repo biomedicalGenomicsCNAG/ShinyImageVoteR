@@ -1,9 +1,20 @@
-# Shiny IMGVOTER (B1MG Voting App)
+# ShinyImgVoteR
 
-Sophisticated voting system designed for collaborative annotation of genetic mutations, with features for tracking user behavior, handling vote changes, and maintaining data integrity across multiple users.
+Is an open-source R Shiny image voting application initially developed for collaborative reviewing of
+mutation calls from sequencing data in the course of the [Beyond 1 Million Genomes (B1MG) project](https://b1mg-project.eu). Refer to [ShinyImgVoteR's role in the B1MG project](doc/01-introduction.html) for more context.
 
-Voting application that allows users to vote on different B1MG mutations.
-Users get presented a randomly picked image of a B1MG mutation and can vote for it.
+## Overview
+
+The application enables users to vote on any set of images with features for tracking user behavior 
+(e.g. average time before casting a vote), handling vote changes by allowing users to update their previous votes, and supporting keyboard shortcuts for efficient voting.
+
+Users get presented a randomly picked image, as for instance an IGV (Integrative Genomics Viewer) screenshot displaying a genetic mutation, and can express their opinion on the shown mutation using predefined categories, confirming or rejecting its validity, proposing that there is a different mutation at the same location.
+
+
+
+
+
+such as "True Positive", "False Positive", or "Uncertain". Votes are stored in a TSV file per user, and an SQLite database maintains aggregated vote counts for each mutation.
 
 FLOW:
 
@@ -33,7 +44,7 @@ R -e "ShinyImgVoteR::run_app()"
 
 ### AUTHOR
 
-Written by Ivo Christopher Leist, PhD student at CNAG [https://www.cnag.eu](https://www.cnag.eu).
+Written by Ivo Christopher Leist, PhD Candidate at CNAG [https://www.cnag.eu](https://www.cnag.eu).
 
 ### COPYRIGHT AND LICENSE
 
