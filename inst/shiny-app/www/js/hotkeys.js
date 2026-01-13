@@ -53,10 +53,10 @@ document.addEventListener("keydown", (e) => {
     observation: {
       keys: {
         a: "coverage",
-        b: "low_vaf",
-        c: "alignment",
-        d: "complex",
-        e: "img_qual_issue",
+        s: "low_vaf",
+        d: "alignment",
+        f: "complex",
+        g: "img_qual_issue",
       },
       toggle: true,
     },
