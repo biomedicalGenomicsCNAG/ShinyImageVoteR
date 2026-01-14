@@ -25,11 +25,21 @@ cfg <- ShinyImgVoteR::load_config(
 testthat::test_that("color_seq colors nucleotides correctly", {
   seq <- "ACGT-"
   expected <- paste0(
-    '<span style="color:', cfg$nt2color_map["A"], '">A</span>',
-    '<span style="color:', cfg$nt2color_map["C"], '">C</span>',
-    '<span style="color:', cfg$nt2color_map["G"], '">G</span>',
-    '<span style="color:', cfg$nt2color_map["T"], '">T</span>',
-    '<span style="color:', cfg$nt2color_map["-"], '">-</span>'
+    '<span style="color:',
+    cfg$nt2color_map["A"],
+    '">A</span>',
+    '<span style="color:',
+    cfg$nt2color_map["C"],
+    '">C</span>',
+    '<span style="color:',
+    cfg$nt2color_map["G"],
+    '">G</span>',
+    '<span style="color:',
+    cfg$nt2color_map["T"],
+    '">T</span>',
+    '<span style="color:',
+    cfg$nt2color_map["-"],
+    '">-</span>'
   )
   result <- ShinyImgVoteR:::color_seq(seq, cfg$nt2color_map)
   testthat::expect_equal(result, expected)
@@ -99,13 +109,19 @@ testthat::test_that("voting module namespace works correctly", {
 
 testthat::test_that("hotkey configuration is consistent", {
   # Check that observation hotkeys match the number of observations
-  testthat::expect_equal(length(cfg$observation_hotkeys), length(cfg$observations_dict))
+  testthat::expect_equal(
+    length(cfg$observation_hotkeys),
+    length(cfg$observations_dict)
+  )
 
   # Check that hotkeys are single characters
   testthat::expect_true(all(nchar(cfg$observation_hotkeys) == 1))
 
   # Check that hotkeys are unique
-  testthat::expect_equal(length(cfg$observation_hotkeys), length(unique(cfg$observation_hotkeys)))
+  testthat::expect_equal(
+    length(cfg$observation_hotkeys),
+    length(unique(cfg$observation_hotkeys))
+  )
 })
 
 # Test: module can be invoked
@@ -169,13 +185,17 @@ testthat::test_that("votingServer handles different agreement types", {
       session$setInputs(agreement = "yes")
       testthat::expect_equal(input$agreement, "yes")
 
-      # Test 'no' agreement
-      session$setInputs(agreement = "no")
-      testthat::expect_equal(input$agreement, "no")
+      # Test 'diff_var' agreement
+      session$setInputs(agreement = "diff_var")
+      testthat::expect_equal(input$agreement, "diff_var")
 
-      # Test 'not_confident' agreement
-      session$setInputs(agreement = "not_confident")
-      testthat::expect_equal(input$agreement, "not_confident")
+      # Test 'germline' agreement
+      session$setInputs(agreement = "germline")
+      testthat::expect_equal(input$agreement, "germline")
+
+      # Test 'none_of_above' agreement
+      session$setInputs(agreement = "none_of_above")
+      testthat::expect_equal(input$agreement, "none_of_above")
 
       testthat::expect_true(TRUE) # If we reach here, it worked
     }
@@ -296,8 +316,8 @@ testthat::test_that("votingServer writes agreement to annotations file on nextBt
       assign("current_mutation", current_mutation, envir = parent.frame())
 
       # Simulate the user clicking Next with an agreement
-      session$setInputs(agreement = "no")
-      testthat::expect_equal(input$agreement, "no")
+      session$setInputs(agreement = "diff_var")
+      testthat::expect_equal(input$agreement, "diff_var")
 
       session$setInputs(observation = "Test observation")
       testthat::expect_equal(input$observation, "Test observation")
@@ -314,6 +334,12 @@ testthat::test_that("votingServer writes agreement to annotations file on nextBt
 
       # expected headers
       expected_headers <- c(
+        "coordinates",
+        "agreement",
+        "alternative_vartype",
+        "observation",
+        "comment",
+        "shinyauthr_session_id",
         "coordinates", "agreement",
         "observation", "comment", "shinyauthr_session_id",
         "time_till_vote_casted_in_seconds"
@@ -361,7 +387,7 @@ testthat::test_that("votingServer handles duplicate voting from same session", {
 
       # Second vote attempt (should be detected as already voted)
       session$setInputs(
-        agreement = "no",
+        agreement = "diff_var",
         comment = "Second vote"
       )
       session$setInputs(nextBtn = 2)
@@ -376,7 +402,13 @@ testthat::test_that("get_mutation returns done tibble when all variants voted", 
   env <- setup_voting_env(c("chr1:1000"))
   ann <- read.delim(env$annotations_file, stringsAsFactors = FALSE)
   ann$agreement <- "yes"
-  write.table(ann, env$annotations_file, sep = "\t", row.names = FALSE, quote = FALSE)
+  write.table(
+    ann,
+    env$annotations_file,
+    sep = "\t",
+    row.names = FALSE,
+    quote = FALSE
+  )
 
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
@@ -460,9 +492,21 @@ testthat::test_that("UI inputs are restored when navigating back to previously v
   # Pre-save a vote for chr1:1000
   annotations <- read.delim(env$annotations_file, stringsAsFactors = FALSE)
   annotations[annotations$coordinates == "chr1:1000", "agreement"] <- "yes"
-  annotations[annotations$coordinates == "chr1:1000", "observation"] <- "coverage;low_vaf"
-  annotations[annotations$coordinates == "chr1:1000", "comment"] <- "Test comment"
-  write.table(annotations, env$annotations_file, sep = "\t", row.names = FALSE, quote = FALSE)
+  annotations[
+    annotations$coordinates == "chr1:1000",
+    "observation"
+  ] <- "coverage;low_vaf"
+  annotations[
+    annotations$coordinates == "chr1:1000",
+    "comment"
+  ] <- "Test comment"
+  write.table(
+    annotations,
+    env$annotations_file,
+    sep = "\t",
+    row.names = FALSE,
+    quote = FALSE
+  )
 
   my_session <- MockShinySession$new()
   my_session$clientData <- shiny::reactiveValues(
@@ -497,8 +541,13 @@ testthat::test_that("UI inputs are restored when navigating back to previously v
       testthat::expect_equal(res$coordinates, "chr1:1000")
 
       # Verify annotations file still has the saved values
-      saved_annotations <- read.delim(env$annotations_file, stringsAsFactors = FALSE)
-      saved_row <- saved_annotations[saved_annotations$coordinates == "chr1:1000", ]
+      saved_annotations <- read.delim(
+        env$annotations_file,
+        stringsAsFactors = FALSE
+      )
+      saved_row <- saved_annotations[
+        saved_annotations$coordinates == "chr1:1000",
+      ]
       testthat::expect_equal(saved_row$agreement, "yes")
       testthat::expect_equal(saved_row$observation, "coverage;low_vaf")
       testthat::expect_equal(saved_row$comment, "Test comment")
@@ -542,6 +591,20 @@ testthat::test_that("UI inputs are restored when navigating back to previously v
 #       # Trigger the mutation loading
 #       session$flushReact()
 
+#       # Verify annotations file shows no vote for chr1:2000
+#       saved_annotations <- read.delim(
+#         env$annotations_file,
+#         stringsAsFactors = FALSE
+#       )
+#       saved_row <- saved_annotations[
+#         saved_annotations$coordinates == "chr1:2000",
+#       ]
+#       testthat::expect_equal(saved_row$agreement, "")
+#       testthat::expect_equal(saved_row$observation, "")
+#       testthat::expect_equal(saved_row$comment, "")
+#     }
+#   )
+# })
 #       # The observer should clear inputs for unvoted image
 #       res <- get_mutation()
 #       testthat::expect_equal(res$coordinates, "chr1:2000")

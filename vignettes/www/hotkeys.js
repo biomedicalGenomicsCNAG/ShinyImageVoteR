@@ -8,7 +8,13 @@ document.addEventListener("keydown", (e) => {
 	console.log("Key pressed:", e.key);
 	// ——— special buttons ———
 	if (e.key === "Enter") {
-		document.getElementById("voting-nextBtn")?.click();
+		// make sure that the button is enabled
+		const nextBtn = document.getElementById("voting-nextBtn");
+		if (nextBtn?.disabled) {
+			console.log("Next button is disabled, not proceeding");
+			return;
+		}
+		nextBtn.click();
 		return;
 	}
 
@@ -22,7 +28,14 @@ document.addEventListener("keydown", (e) => {
 		) {
 			return;
 		}
-		document.getElementById("voting-backBtn")?.click();
+
+		// make sure that the button is enabled
+		const backBtn = document.getElementById("voting-backBtn");
+		if (backBtn?.disabled) {
+			console.log("Back button is disabled, not proceeding");
+			return;
+		}
+		backBtn.click();
 		return;
 	}
 
@@ -33,7 +46,7 @@ document.addEventListener("keydown", (e) => {
 	const groups = {
 		// ——— radio buttons ———
 		agreement: {
-			keys: { 1: "yes", 2: "no", 3: "diff_var", 4: "not_confident" },
+			keys: { 1: "yes", 2: "diff_var", 3: "germline", 4: "no_or_few_reads", 5: "none_of_above" },
 			toggle: false,
 		},
 		// ——— checkboxes ———
@@ -44,7 +57,6 @@ document.addEventListener("keydown", (e) => {
 				d: "alignment",
 				f: "complex",
 				g: "img_qual_issue",
-				h: "platform_issue",
 			},
 			toggle: true,
 		},
