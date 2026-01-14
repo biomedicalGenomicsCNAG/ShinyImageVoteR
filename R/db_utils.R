@@ -7,9 +7,10 @@
 #' @return Character path to the database file
 #' @export
 create_database <- function(
-    db_path,
-    to_be_voted_images_file,
-    grouped_credentials) {
+  db_path,
+  to_be_voted_images_file,
+  grouped_credentials
+) {
   # Look for data file in config/annotation_screenshots_paths first
   db_full_path <- normalizePath(db_path)
 
@@ -35,9 +36,10 @@ create_database <- function(
       ALT TEXT,
       path TEXT,
       vote_count_correct INTEGER DEFAULT 0,
-      vote_count_no_variant INTEGER DEFAULT 0,
       vote_count_different_variant INTEGER DEFAULT 0,
-      vote_count_not_sure INTEGER DEFAULT 0,
+      vote_count_germline INTEGER DEFAULT 0,
+      vote_count_no_or_few_reads INTEGER DEFAULT 0,
+      vote_count_none_of_above INTEGER DEFAULT 0,
       vote_count_total INTEGER DEFAULT 0
     )
   "
@@ -54,9 +56,10 @@ create_database <- function(
       UPDATE annotations
       SET vote_count_total =
           vote_count_correct +
-          vote_count_no_variant +
           vote_count_different_variant +
-          vote_count_not_sure
+          vote_count_germline +
+          vote_count_no_or_few_reads +
+          vote_count_none_of_above
       WHERE rowid = NEW.rowid;
     END;
   "
@@ -111,8 +114,9 @@ create_database <- function(
 #' @param to_be_voted_images_file Character. Path to the file containing image annotations
 #' @return NULL
 populate_annotations_table <- function(
-    conn,
-    to_be_voted_images_file) {
+  conn,
+  to_be_voted_images_file
+) {
   # Read the to_be_voted_images_file
   if (!file.exists(to_be_voted_images_file)) {
     stop("File not found: ", to_be_voted_images_file)
@@ -498,14 +502,27 @@ validate_cols <- function(conn, table, cfg_db_cols) {
   TRUE
 }
 
-#' Query annotations table by coordinates
+#' Query annotations table by coordinates and optionally REF/ALT
 #' This function queries the annotations table for a given set of coordinates,
-#' returning only the specified columns.
+#' returning only the specified columns. Optionally filters by REF and ALT
+#' to handle cases where coordinates alone are not unique.
 #' @param conn Database connection object
 #' @param coord Character. The coordinates to query (exact match)
 #' @param cols Character vector. The columns to retrieve
+#' @param ref Character. Optional REF allele to query (exact match)
+#' @param alt Character. Optional ALT allele to query (exact match)
+#' @param query_keys Character vector. Optional query keys to use for filtering.
+#'   If not provided, defaults to c("coordinates", "REF", "ALT") if ref and alt
+#'   are provided, otherwise just "coordinates".
 #' @return A data frame with the query results
-query_annotations_db_by_coord <- function(conn, coord, cols) {
+query_annotations_db_by_coord <- function(
+  conn,
+  coord,
+  cols,
+  ref = NULL,
+  alt = NULL,
+  query_keys = NULL
+) {
   table <- tolower("annotations") # only one table for now
 
   # 1) enforce exactly one coordinate (scalar, not vector/list, not NA)
@@ -515,31 +532,76 @@ query_annotations_db_by_coord <- function(conn, coord, cols) {
     ))
   }
 
-  # Optional: tighten type if you expect a specific one
-  # if (!is.character(coord)) stop("Coordinate must be character (TEXT).")
+  # 2) Determine which query keys to use
+  if (is.null(query_keys)) {
+    # Default behavior: if ref and alt provided, use all three keys
+    if (!is.null(ref) && !is.null(alt)) {
+      query_keys <- c("coordinates", "REF", "ALT")
+    } else {
+      query_keys <- c("coordinates")
+    }
+  }
 
-  # 2) quote identifiers
+  # 3) Build WHERE clause based on query_keys
+  where_clauses <- c()
+  params <- list()
+
+  if ("coordinates" %in% query_keys) {
+    where_clauses <- c(
+      where_clauses,
+      paste0(DBI::dbQuoteIdentifier(conn, "coordinates"), " = ?")
+    )
+    params <- c(params, list(coord))
+  }
+
+  if ("REF" %in% query_keys) {
+    if (is.null(ref)) {
+      stop("REF is in query_keys but ref parameter is NULL")
+    }
+    where_clauses <- c(
+      where_clauses,
+      paste0(DBI::dbQuoteIdentifier(conn, "REF"), " = ?")
+    )
+    params <- c(params, list(ref))
+  }
+
+  if ("ALT" %in% query_keys) {
+    if (is.null(alt)) {
+      stop("ALT is in query_keys but alt parameter is NULL")
+    }
+    where_clauses <- c(
+      where_clauses,
+      paste0(DBI::dbQuoteIdentifier(conn, "ALT"), " = ?")
+    )
+    params <- c(params, list(alt))
+  }
+
+  # 4) quote identifiers for SELECT columns
   q_cols <- DBI::dbQuoteIdentifier(conn, unique(cols))
   q_table <- DBI::dbQuoteIdentifier(conn, table)
-  q_coord_col <- DBI::dbQuoteIdentifier(conn, "coordinates")
 
-  # 3) build + execute with a single placeholder
+  # 5) build + execute query
   sql <- paste0(
     "SELECT rowid, ",
     paste(q_cols, collapse = ", "),
     " FROM ",
     q_table,
     " WHERE ",
-    q_coord_col,
-    " = ?"
+    paste(where_clauses, collapse = " AND ")
   )
 
-  result <- DBI::dbGetQuery(conn, sql, params = list(coord))
+  result <- DBI::dbGetQuery(conn, sql, params = params)
 
-  # 4) enforce at most one result row
+  # 6) enforce at most one result row
   if (nrow(result) > 1) {
+    key_info <- paste(
+      "coordinates =",
+      coord,
+      if (!is.null(ref)) paste(", REF =", ref) else "",
+      if (!is.null(alt)) paste(", ALT =", alt) else ""
+    )
     stop(glue::glue(
-      "Expected at most 1 row for coordinate '{coord}', got {nrow(result)} rows."
+      "Expected at most 1 row for {key_info}, got {nrow(result)} rows."
     ))
   }
   result
