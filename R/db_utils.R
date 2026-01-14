@@ -38,7 +38,6 @@ create_database <- function(
       vote_count_correct INTEGER DEFAULT 0,
       vote_count_different_variant INTEGER DEFAULT 0,
       vote_count_germline INTEGER DEFAULT 0,
-      vote_count_no_or_few_reads INTEGER DEFAULT 0,
       vote_count_none_of_above INTEGER DEFAULT 0,
       vote_count_total INTEGER DEFAULT 0
     )
@@ -58,7 +57,6 @@ create_database <- function(
           vote_count_correct +
           vote_count_different_variant +
           vote_count_germline +
-          vote_count_no_or_few_reads +
           vote_count_none_of_above
       WHERE rowid = NEW.rowid;
     END;

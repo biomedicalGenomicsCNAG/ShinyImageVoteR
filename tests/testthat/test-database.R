@@ -130,10 +130,6 @@ testthat::test_that("Database column mappings are correct", {
   )
   testthat::expect_equal(cfg$vote2dbcolumn_map$germline, "vote_count_germline")
   testthat::expect_equal(
-    cfg$vote2dbcolumn_map$no_or_few_reads,
-    "vote_count_no_or_few_reads"
-  )
-  testthat::expect_equal(
     cfg$vote2dbcolumn_map$none_of_above,
     "vote_count_none_of_above"
   )

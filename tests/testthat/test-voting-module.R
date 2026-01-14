@@ -504,7 +504,7 @@ testthat::test_that("UI inputs are restored when navigating back to previously v
   annotations[
     annotations$coordinates == "chr1:1000",
     "observation"
-  ] <- "coverage;low_vaf"
+  ] <- "coverage;low_af"
   annotations[
     annotations$coordinates == "chr1:1000",
     "comment"
@@ -558,7 +558,7 @@ testthat::test_that("UI inputs are restored when navigating back to previously v
         saved_annotations$coordinates == "chr1:1000",
       ]
       testthat::expect_equal(saved_row$agreement, "yes")
-      testthat::expect_equal(saved_row$observation, "coverage;low_vaf")
+      testthat::expect_equal(saved_row$observation, "coverage;low_af")
       testthat::expect_equal(saved_row$comment, "Test comment")
     }
   )
