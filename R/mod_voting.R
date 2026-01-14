@@ -606,10 +606,26 @@ votingServer <- function(
             if (nrow(df) == 1) {
               # Check if screenshot has already been voted max times
               max_votes <- cfg$max_votes_per_screenshot
-              if (is.null(max_votes)) max_votes <- 3 # Default to 3 if not configured
-              
-              if (!is.null(df$vote_count_total) && !is.na(df$vote_count_total) && df$vote_count_total >= max_votes) {
-                print(paste("Skipping coordinate", coord, "- already voted", df$vote_count_total, "times (max:", max_votes, ")"))
+
+              # Default to 3 if not configured
+              if (is.null(max_votes)) {
+                max_votes <- 3
+              }
+
+              if (
+                !is.null(df$vote_count_total) &&
+                  !is.na(df$vote_count_total) &&
+                  df$vote_count_total >= max_votes
+              ) {
+                print(paste(
+                  "Skipping coordinate",
+                  coord,
+                  "- already voted",
+                  df$vote_count_total,
+                  "times (max:",
+                  max_votes,
+                  ")"
+                ))
                 next
               }
 
@@ -630,7 +646,9 @@ votingServer <- function(
 
         # If we reach here, all remaining unvoted screenshots have max votes
         # Show "done" to indicate no more screenshots are available
-        print("All remaining screenshots have been voted the maximum number of times.")
+        print(
+          "All remaining screenshots have been voted the maximum number of times."
+        )
         res <- create_done_tibble()
         shiny::updateQueryString(
           "?coordinate=done",

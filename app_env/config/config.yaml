@@ -10,26 +10,22 @@ shutdown_trigger_file: "./app_env/config/STOP"
 
 application_title: ShinyImgVoteR (B1MG Somatic Mutation Voting)
 radioBtns_label: Is the somatic mutation above correct? [num keys 1-4]
-checkboxes_label: Please select the reason(s) for your uncertainty [keyboard keys a-h]
+checkboxes_label: Please select the reason(s) for your uncertainty [keyboard keys a-f]
 radio_options2val_map:
-  Yes, it is: 'yes'
-  There is no mutation: 'no'
-  There is a different mutation: diff_var
-  I'm not sure: not_confident
+  Yes, it is the somatic mutation shown above: 'yes'
+  No, it is a different somatic mutation: diff_var
+  No, it is germline leakage: germline
+  None of the above: none_of_above
 observations_dict:
   Issues with coverage: coverage
-  Low allele frequency: low_vaf
   Alignment issues: alignment
-  Complex event: complex
-  Quality issues with the image: img_qual_issue
-  Issue with the voting platform: platform_issue
+  Complex events: complex
+  Screenshot is inconclusive: img_inconclusive
 observation_hotkeys:
 - a
 - s
 - d
 - f
-- g
-- h
 nt2color_map:
   T: "#E31A1C"
   C: "#1F78B4"
@@ -43,9 +39,9 @@ db_general_cols:
 - path
 vote2dbcolumn_map:
   'yes': vote_count_correct
-  'no': vote_count_no_variant
   diff_var: vote_count_different_variant
-  not_confident: vote_count_not_sure
+  germline: vote_count_germline
+  none_of_above: vote_count_none_of_above
 user_annotations_colnames:
 - coordinates
 - agreement
@@ -53,5 +49,5 @@ user_annotations_colnames:
 - comment
 - shinyauthr_session_id
 - time_till_vote_casted_in_seconds
-max_votes_per_screenshot: 3
+max_votes_per_screenshot: 5
 cookie_expiry: 1
