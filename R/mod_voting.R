@@ -696,15 +696,77 @@ votingServer <- function(
             # print(df)
 
             if (nrow(df) == 1) {
-              # TODO
-              # Filter logic for the actual voting
-              # Reasoning why this is commented out in the README
+              # Check if screenshot has already been voted max times
+              max_votes <- cfg$max_votes_per_screenshot
 
-              # inspiration for the filtering logic from legacy code:
-              # filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
-              # filter(!(no >= 3 & no / total_votes > 0.7))
+              # Default to 3 if not configured
+              if (is.null(max_votes)) {
+                max_votes <- 3
+              }
 
-              # If a mutation is found, return it
+              if (
+                !is.null(df$vote_count_total) &&
+                  !is.na(df$vote_count_total) &&
+                  df$vote_count_total >= max_votes
+              ) {
+                print(paste(
+                  "Skipping coordinate",
+                  coord,
+                  "- already voted",
+                  df$vote_count_total,
+                  "times (max:",
+                  max_votes,
+                  ")"
+                ))
+                skip_reason <- paste0(
+                  "skipped - max votes (",
+                  max_votes,
+                  ") reached"
+                )
+
+                if ("agreement" %in% colnames(annotations_df)) {
+                  annotations_df[i, "agreement"] <- skip_reason
+                }
+
+                if ("observation" %in% colnames(annotations_df)) {
+                  annotations_df[i, "observation"] <- NA_character_
+                }
+
+                if ("comment" %in% colnames(annotations_df)) {
+                  annotations_df[i, "comment"] <- NA_character_
+                }
+
+                if ("shinyauthr_session_id" %in% colnames(annotations_df)) {
+                  session_id <- session$userData$shinyauthr_session_id
+                  if (is.null(session_id)) {
+                    session_id <- NA_character_
+                  }
+                  annotations_df[i, "shinyauthr_session_id"] <- session_id
+                }
+
+                if (
+                  "time_till_vote_casted_in_seconds" %in%
+                    colnames(annotations_df)
+                ) {
+                  annotations_df[
+                    i,
+                    "time_till_vote_casted_in_seconds"
+                  ] <- NA_real_
+                }
+
+                write.table(
+                  annotations_df,
+                  file = user_annotations_file,
+                  sep = "\t",
+                  row.names = FALSE,
+                  col.names = TRUE,
+                  quote = FALSE
+                )
+
+                next
+              }
+
+              # If a mutation is found and has fewer than max votes, return it
               coord <- df[1, ]$coordinates
               ref_val <- df[1, ]$REF
               alt_val <- df[1, ]$ALT
@@ -727,6 +789,27 @@ votingServer <- function(
             }
           }
         }
+
+        # If we reach here, all remaining unvoted screenshots have max votes
+        # Show "done" to indicate no more screenshots are available
+        print(
+          "All remaining screenshots have been voted the maximum number of times."
+        )
+        res <- create_done_tibble()
+        shiny::updateQueryString(
+          "?coordinate=done",
+          mode = "push",
+          session = session
+        )
+
+        session$onFlushed(function() {
+          shinyjs::hideElement(session$ns("voting_questions_div"))
+          shinyjs::hideElement(session$ns("nextBtn"))
+          shinyjs::disable(session$ns("nextBtn"))
+        })
+        current_mutation(res)
+        vote_start_time(Sys.time())
+        return(res)
       }
     )
     output$voting_image_div <- shiny::renderUI({

@@ -89,7 +89,7 @@ setup-userdata: install
 # run: install setup-userdata
 run: install 
 	@echo "Starting Shiny application with external user_data..."
-	$(RSCRIPT) -e "devtools::load_all(); run_voting_app()"
+	$(RSCRIPT) -e "devtools::load_all(); run_voting_app(config_file_path='./app_env/config/config.yaml')"
 
 # Generate documentation
 .PHONY: document

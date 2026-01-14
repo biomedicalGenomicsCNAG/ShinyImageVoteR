@@ -11,6 +11,11 @@ init_environment <- function(
 ) {
   # check if "IMGVOTER_BASE_DIR" is set, then set it as base directory
   base_dir <- Sys.getenv("IMGVOTER_BASE_DIR", unset = getwd())
+  print("Base directory:")
+  print(base_dir)
+
+  print("config_file_path before checking default:")
+  print(config_file_path)
 
   default_file_path <- file.path(
     get_app_dir(),

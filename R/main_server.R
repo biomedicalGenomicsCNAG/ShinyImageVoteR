@@ -169,7 +169,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
         substr(digest::digest(combined, algo = "crc32"), 1, 7),
         base = 16
       )
-      print("Seed for randomization:")
+      print("Seed for randomisation:")
       print(seed)
       "********"
 

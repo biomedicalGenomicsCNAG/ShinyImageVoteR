@@ -55,4 +55,5 @@ user_annotations_colnames:
 - comment
 - shinyauthr_session_id
 - time_till_vote_casted_in_seconds
+max_votes_per_screenshot: 5
 cookie_expiry: 1
