@@ -107,7 +107,6 @@ votingUI <- function(id, cfg) {
                     "yes",
                     "diff_var",
                     "germline",
-                    "no_or_few_reads",
                     "none_of_above"
                   ),
                   selected = character(0),
@@ -720,6 +719,51 @@ votingServer <- function(
                   max_votes,
                   ")"
                 ))
+                skip_reason <- paste0(
+                  "skipped - max votes (",
+                  max_votes,
+                  ") reached"
+                )
+
+                if ("agreement" %in% colnames(annotations_df)) {
+                  annotations_df[i, "agreement"] <- skip_reason
+                }
+
+                if ("observation" %in% colnames(annotations_df)) {
+                  annotations_df[i, "observation"] <- NA_character_
+                }
+
+                if ("comment" %in% colnames(annotations_df)) {
+                  annotations_df[i, "comment"] <- NA_character_
+                }
+
+                if ("shinyauthr_session_id" %in% colnames(annotations_df)) {
+                  session_id <- session$userData$shinyauthr_session_id
+                  if (is.null(session_id)) {
+                    session_id <- NA_character_
+                  }
+                  annotations_df[i, "shinyauthr_session_id"] <- session_id
+                }
+
+                if (
+                  "time_till_vote_casted_in_seconds" %in%
+                    colnames(annotations_df)
+                ) {
+                  annotations_df[
+                    i,
+                    "time_till_vote_casted_in_seconds"
+                  ] <- NA_real_
+                }
+
+                write.table(
+                  annotations_df,
+                  file = user_annotations_file,
+                  sep = "\t",
+                  row.names = FALSE,
+                  col.names = TRUE,
+                  quote = FALSE
+                )
+
                 next
               }
 

@@ -445,6 +445,94 @@ testthat::test_that("get_mutation returns done tibble when all variants voted", 
   )
 })
 
+testthat::test_that(
+  "screenshots over max votes are logged as skipped in annotations",
+  {
+    temp_dir <- tempdir()
+    annotations_path <- file.path(
+      temp_dir,
+      paste0("skip_annotations_", Sys.getpid(), ".tsv")
+    )
+
+    annotations_df <- data.frame(
+      coordinates = "chr1:1000",
+      REF = "A",
+      ALT = "T",
+      agreement = NA_character_,
+      observation = NA_character_,
+      comment = NA_character_,
+      shinyauthr_session_id = NA_character_,
+      time_till_vote_casted_in_seconds = NA_real_,
+      stringsAsFactors = FALSE
+    )
+
+    write.table(
+      annotations_df,
+      annotations_path,
+      sep = "\t",
+      row.names = FALSE,
+      col.names = TRUE,
+      quote = FALSE,
+      na = "NA"
+    )
+
+    args <- make_args(annotations_path)
+    cleanup_db <- setup_test_db(args)
+    on.exit(cleanup_db())
+
+    args$cfg <- ShinyImgVoteR::load_config(
+      config_file_path = system.file(
+        "shiny-app",
+        "default_env",
+        "config",
+        "config.yaml",
+        package = "ShinyImgVoteR"
+      )
+    )
+
+    config_max_votes <- args$cfg$max_votes_per_screenshot
+    if (is.null(config_max_votes)) {
+      config_max_votes <- 3
+    }
+    expected_skip_reason <- paste0(
+      "skipped - max votes (",
+      config_max_votes,
+      ") reached"
+    )
+
+    DBI::dbExecute(
+      db_pool,
+      "UPDATE annotations SET vote_count_correct = 1 WHERE coordinates = ? AND REF = ? AND ALT = ?",
+      params = list("chr1:1000", "A", "T")
+    )
+
+    testServer(
+      votingServer,
+      args = args,
+      {
+        session$userData$userAnnotationsFile <- annotations_path
+        session$userData$votingInstitute <- cfg$test_institute
+        session$userData$shinyauthr_session_id <- "skip_session"
+
+        session$setInputs(nextBtn = 1)
+        session$flushReact()
+        result <- get_mutation()
+
+        testthat::expect_equal(result$coordinates, "done")
+
+        updated_annotations <- read.delim(
+          annotations_path,
+          stringsAsFactors = FALSE
+        )
+        testthat::expect_equal(
+          updated_annotations$agreement[1],
+          expected_skip_reason
+        )
+      }
+    )
+  }
+)
+
 # testthat::test_that("get_mutation gets triggered with not existing coordinates", {
 #   env <- setup_voting_env(c("chr1:1000"))
 #   args <- make_args(env$annotations_file)

@@ -16,7 +16,7 @@ ShinyImgVoteR 0.1.1 (Development)
   - It can be set via `max_votes_per_screenshot` in config.yaml
   - Default is 3 votes if not specified
   - If maximum votes reached for a screenshot, it will be skipped for future users
-  - Skipped screenshots are logged in user annotations file with reason "max_votes_reached" in the agreement column #not implemented yet
+  - Skipped screenshots are logged in user annotations file with reason "skipped - max votes (x) reached" in the agreement column #not implemented yet
 
 ShinyImgVoteR 0.1.0
 ================
