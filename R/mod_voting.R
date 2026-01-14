@@ -264,15 +264,15 @@ votingServer <- function(
           length(agreement) > 0 &&
           !identical(agreement, "")
       ) {
-        print("Enabling nextBtn")
-        print(paste("agreement:", agreement))
+        # print("Enabling nextBtn")
+        # print(paste("agreement:", agreement))
 
         session$onFlushed(function() {
           shinyjs::enable(session$ns("nextBtn"))
         })
       } else {
-        print("Disabling nextBtn")
-        print(paste("agreement:", agreement))
+        #print("Disabling nextBtn")
+        #print(paste("agreement:", agreement))
 
         session$onFlushed(function() {
           shinyjs::disable(session$ns("nextBtn"))
@@ -628,7 +628,6 @@ votingServer <- function(
                 })
               }
             }
-            print("HERE")
             return(df[1, ])
           } else {
             print("No mutation found for the given coordinate")
