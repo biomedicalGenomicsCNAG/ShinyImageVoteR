@@ -15,7 +15,7 @@ leaderboardUI <- function(id, cfg) {
   ns <- shiny::NS(id)
   shiny::fluidPage(
     theme = cfg$theme,
-    shiny::tableOutput(ns("institutes_voting_counts")),
+    shiny::uiOutput(ns("institutes_voting_counts")),
     shiny::actionButton(ns("refresh_counts"), "Refresh counts")
   )
 }
@@ -63,18 +63,27 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
             recursive = FALSE
           )
           if (length(user_dirs) == 0) {
-            return(data.frame(
-              institute = institute,
-              users = 0,
-              total_images_voted = 0,
-              skipped_images = 0,
-              unique_images_voted = 0
+            return(list(
+              summary = data.frame(
+                institute = institute,
+                users = 0,
+                total_images_voted = 0,
+                skipped_images = 0,
+                unique_images_voted = 0
+              ),
+              per_user = data.frame(
+                user_id = character(0),
+                images_voted = integer(0),
+                skipped_images = integer(0),
+                stringsAsFactors = FALSE
+              )
             ))
           }
           total_users <- length(user_dirs)
           total_images <- 0
           total_skipped <- 0
           unique_keys <- character(0)
+          per_user_rows <- list()
           for (user_dir in user_dirs) {
             user_annotations_file <- file.path(
               user_dir,
@@ -109,28 +118,127 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
 
             total_images <- total_images + user_voted_images
             total_skipped <- total_skipped + user_skipped_images
+
+            per_user_rows[[length(per_user_rows) + 1]] <- data.frame(
+              user_id = basename(user_dir),
+              images_voted = user_voted_images,
+              skipped_images = user_skipped_images,
+              stringsAsFactors = FALSE
+            )
           }
-          data.frame(
-            institute = institute,
-            users = total_users,
-            total_images_voted = total_images,
-            skipped_images = total_skipped,
-            unique_images_voted = length(unique_keys)
+          per_user_df <- if (length(per_user_rows) > 0) {
+            do.call(rbind, per_user_rows)
+          } else {
+            data.frame(
+              user_id = character(0),
+              images_voted = integer(0),
+              skipped_images = integer(0),
+              stringsAsFactors = FALSE
+            )
+          }
+
+          list(
+            summary = data.frame(
+              institute = institute,
+              users = total_users,
+              total_images_voted = total_images,
+              skipped_images = total_skipped,
+              unique_images_voted = length(unique_keys)
+            ),
+            per_user = per_user_df
           )
         })
-        counts_df <- do.call(rbind, counts_list)
+        counts_df <- do.call(
+          rbind,
+          lapply(counts_list, function(x) x$summary)
+        )
 
         counts_df <- counts_df %>%
           dplyr::mutate(
             institute = factor(institute, levels = institute_ids)
           ) %>%
           dplyr::arrange(dplyr::desc(total_images_voted))
-        counts_df
+
+        per_user_list <- lapply(counts_list, function(x) x$per_user)
+        names(per_user_list) <- institute_ids
+
+        list(
+          summary = counts_df,
+          per_user = per_user_list
+        )
       }
     )
 
-    output$institutes_voting_counts <- shiny::renderTable({
-      counts()
+    output$institutes_voting_counts <- shiny::renderUI({
+      counts_data <- counts()
+      is_admin <- isTRUE(login_trigger()$admin == 1)
+      ns <- session$ns
+
+      if (!is_admin) {
+        shiny::tableOutput(ns("institutes_voting_counts_table"))
+      } else {
+        summary_df <- counts_data$summary
+        per_user_list <- counts_data$per_user
+
+        build_user_table <- function(user_df) {
+          shiny::tags$table(
+            class = "table table-striped table-sm",
+            shiny::tags$thead(
+              shiny::tags$tr(
+                shiny::tags$th("User"),
+                shiny::tags$th("Images voted"),
+                shiny::tags$th("Skipped images")
+              )
+            ),
+            shiny::tags$tbody(
+              lapply(seq_len(nrow(user_df)), function(i) {
+                shiny::tags$tr(
+                  shiny::tags$td(user_df$user_id[i]),
+                  shiny::tags$td(user_df$images_voted[i]),
+                  shiny::tags$td(user_df$skipped_images[i])
+                )
+              })
+            )
+          )
+        }
+
+        shiny::tagList(
+          lapply(seq_len(nrow(summary_df)), function(i) {
+            institute <- as.character(summary_df$institute[i])
+            user_df <- per_user_list[[institute]]
+            if (is.null(user_df)) {
+              user_df <- data.frame(
+                user_id = character(0),
+                images_voted = integer(0),
+                skipped_images = integer(0),
+                stringsAsFactors = FALSE
+              )
+            }
+
+            shiny::tags$details(
+              shiny::tags$summary(
+                sprintf(
+                  "%s | Users: %s | Total: %s | Skipped: %s | Unique: %s",
+                  institute,
+                  summary_df$users[i],
+                  summary_df$total_images_voted[i],
+                  summary_df$skipped_images[i],
+                  summary_df$unique_images_voted[i]
+                )
+              ),
+              if (nrow(user_df) == 0) {
+                shiny::tags$div("No user data available.")
+              } else {
+                build_user_table(user_df)
+              }
+            )
+          })
+        )
+      }
+    })
+
+    output$institutes_voting_counts_table <- shiny::renderTable({
+      counts()$summary
     })
 
     return(counts)

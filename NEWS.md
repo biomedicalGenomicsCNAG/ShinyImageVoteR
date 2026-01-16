@@ -18,6 +18,10 @@ ShinyImgVoteR 0.1.1 (Development)
   - If maximum matching votes reached for a screenshot, it will be skipped for future users
   - Skipped screenshots are logged in user annotations file with reason "skipped - max matching votes (x) for option (y) reached" in the agreement column
 
+* Enhanced the leaderboard
+  - Added the columns "skipped images" and "unique_images_voted"
+  - Admins can expand institutes to see per-user voted/skipped image counts
+
 ShinyImgVoteR 0.1.0
 ================
 
