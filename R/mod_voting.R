@@ -29,7 +29,7 @@ votingUI <- function(id, cfg) {
     shinyjs::useShinyjs(),
     # Include required JavaScript files
     purrr::map(
-      c("panzoom.min.js", "init-panzoom.js", "hotkeys.js"),
+      c("panzoom.min.js", "init-panzoom.js", "hotkeys.js", "fullscreen-overlay.js"),
       ~ shiny::singleton(
         shiny::includeScript(
           file.path(get_app_dir(), "www/js/", .x)
