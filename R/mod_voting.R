@@ -697,30 +697,64 @@ votingServer <- function(
 
             if (nrow(df) == 1) {
               # Check if screenshot has already been voted max times
-              max_votes <- cfg$max_votes_per_screenshot
 
-              # Default to 3 if not configured
-              if (is.null(max_votes)) {
-                max_votes <- 3
+              vote_max_map <- cfg$voting_options_max_matching_votes
+              print("vote_max_map:")
+              print(vote_max_map)
+              if (is.null(vote_max_map) || length(vote_max_map) == 0) {
+                vote_max_map <- stats::setNames(
+                  rep(3, length(cfg$vote2dbcolumn_map)),
+                  names(cfg$vote2dbcolumn_map)
+                )
               }
 
-              if (
-                !is.null(df$vote_count_total) &&
-                  !is.na(df$vote_count_total) &&
-                  df$vote_count_total >= max_votes
-              ) {
+              matched_option <- NULL
+              matched_max <- NULL
+              matched_count <- NULL
+
+              for (option_key in names(cfg$vote2dbcolumn_map)) {
+                print(paste("option_key:", option_key))
+                vote_col <- cfg$vote2dbcolumn_map[[option_key]]
+                print(paste("vote_col:", vote_col))
+                max_votes <- vote_max_map[[option_key]]
+                print(paste("max_votes:", max_votes))
+                if (is.null(max_votes) || is.na(max_votes)) {
+                  max_votes <- 3
+                }
+                print(paste("max_votes after check:", max_votes))
+                max_votes <- as.numeric(max_votes)
+                vote_count <- df[[vote_col]]
+
+                if (
+                  !is.null(vote_count) &&
+                    !is.na(vote_count) &&
+                    !is.na(max_votes) &&
+                    vote_count >= max_votes
+                ) {
+                  matched_option <- option_key
+                  matched_max <- max_votes
+                  matched_count <- vote_count
+                  break
+                }
+              }
+
+              if (!is.null(matched_option)) {
                 print(paste(
                   "Skipping coordinate",
                   coord,
-                  "- already voted",
-                  df$vote_count_total,
-                  "times (max:",
-                  max_votes,
+                  "- option",
+                  matched_option,
+                  "already has",
+                  matched_count,
+                  "votes (max:",
+                  matched_max,
                   ")"
                 ))
                 skip_reason <- paste0(
-                  "skipped - max votes (",
-                  max_votes,
+                  "skipped - max matching votes (",
+                  matched_max,
+                  ") for option (",
+                  matched_option,
                   ") reached"
                 )
 
