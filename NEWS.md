@@ -8,7 +8,10 @@ ShinyImgVoteR 0.1.1 (Development)
   - Added configurable query keys via `db_query_keys` in config.yaml
   - Updated all database UPDATE queries to include REF and ALT in WHERE clauses
   - Added REF and ALT to user annotations file for proper variant identification
-* Updated test suite to verify querying with duplicate coordinates works correctly
+  - Updated test suite to verify querying with duplicate coordinates works correctly
+  
+* Fixed not working folder creation when new users are added via the user creation admin table
+  - Added a create_user_directory function inside a tryCatch block logging errors
 
 ## Features
 
@@ -21,6 +24,9 @@ ShinyImgVoteR 0.1.1 (Development)
 * Enhanced the leaderboard
   - Added the columns "skipped images" and "unique_images_voted"
   - Admins can expand institutes to see per-user voted/skipped image counts
+
+* Enhanced user creation admin table
+  - Table no longer only serves the purpose of showing the users which have not yet  accessed their password retrieval link but now shows all users
 
 ShinyImgVoteR 0.1.0
 ================
