@@ -57,6 +57,6 @@ user_annotations_colnames:
 - time_till_vote_casted_in_seconds
 voting_options_max_matching_votes:
   'yes': 1
-  diff_var : 5
-  germline: 5
+  diff_var : 1
+  germline: 1
 cookie_expiry: 1

@@ -66,11 +66,15 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
             return(data.frame(
               institute = institute,
               users = 0,
-              total_images_voted = 0
+              total_images_voted = 0,
+              skipped_images = 0,
+              unique_images_voted = 0
             ))
           }
           total_users <- length(user_dirs)
           total_images <- 0
+          total_skipped <- 0
+          unique_keys <- character(0)
           for (user_dir in user_dirs) {
             user_annotations_file <- file.path(
               user_dir,
@@ -85,15 +89,33 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
               sep = "\t",
               stringsAsFactors = FALSE
             )
-            user_voted_images <- sum(
-              !is.na(user_annotations_df$shinyauthr_session_id)
-            )
+            has_session <- !is.na(user_annotations_df$shinyauthr_session_id)
+            has_skip <- !is.na(user_annotations_df$agreement) &
+              grepl("^skipped -", user_annotations_df$agreement)
+
+            user_voted_images <- sum(has_session & !has_skip)
+            user_skipped_images <- sum(has_skip)
+
+            user_voted_df <- user_annotations_df[has_session & !has_skip, ]
+            if (nrow(user_voted_df) > 0) {
+              user_keys <- paste(
+                user_voted_df$coordinates,
+                user_voted_df$REF,
+                user_voted_df$ALT,
+                sep = "|"
+              )
+              unique_keys <- unique(c(unique_keys, user_keys))
+            }
+
             total_images <- total_images + user_voted_images
+            total_skipped <- total_skipped + user_skipped_images
           }
           data.frame(
             institute = institute,
             users = total_users,
-            total_images_voted = total_images
+            total_images_voted = total_images,
+            skipped_images = total_skipped,
+            unique_images_voted = length(unique_keys)
           )
         })
         counts_df <- do.call(rbind, counts_list)
