@@ -67,6 +67,13 @@ leaderboardServer <- function(
         }
 
         counts_list <- lapply(institute_ids, function(institute) {
+          users_df <- DBI::dbGetQuery(
+            db_conn,
+            "SELECT userid FROM passwords WHERE institute = ?",
+            params = list(institute)
+          )
+          institute_users <- as.character(users_df$userid)
+
           institutes_dir <- file.path(
             Sys.getenv("IMGVOTER_USER_DATA_DIR"),
             institute
@@ -76,65 +83,53 @@ leaderboardServer <- function(
             full.names = TRUE,
             recursive = FALSE
           )
-          if (length(user_dirs) == 0) {
-            return(list(
-              summary = data.frame(
-                institute = institute,
-                users = 0,
-                total_images_voted = 0,
-                skipped_images = 0,
-                unique_images_voted = 0
-              ),
-              per_user = data.frame(
-                user_id = character(0),
-                images_voted = integer(0),
-                skipped_images = integer(0),
-                stringsAsFactors = FALSE
-              )
-            ))
-          }
-          total_users <- length(user_dirs)
+          total_users <- length(unique(institute_users))
           total_images <- 0
           total_skipped <- 0
           unique_keys <- character(0)
           per_user_rows <- list()
-          for (user_dir in user_dirs) {
+          for (user_id in institute_users) {
             user_annotations_file <- file.path(
-              user_dir,
-              paste0(basename(user_dir), "_annotations.tsv")
+              Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+              institute,
+              user_id,
+              paste0(user_id, "_annotations.tsv")
             )
-            if (!file.exists(user_annotations_file)) {
-              next
-            }
-            user_annotations_df <- read.table(
-              user_annotations_file,
-              header = TRUE,
-              sep = "\t",
-              stringsAsFactors = FALSE
-            )
-            has_session <- !is.na(user_annotations_df$shinyauthr_session_id)
-            has_skip <- !is.na(user_annotations_df$agreement) &
-              grepl("^skipped -", user_annotations_df$agreement)
 
-            user_voted_images <- sum(has_session & !has_skip)
-            user_skipped_images <- sum(has_skip)
+            user_voted_images <- 0
+            user_skipped_images <- 0
 
-            user_voted_df <- user_annotations_df[has_session & !has_skip, ]
-            if (nrow(user_voted_df) > 0) {
-              user_keys <- paste(
-                user_voted_df$coordinates,
-                user_voted_df$REF,
-                user_voted_df$ALT,
-                sep = "|"
+            if (file.exists(user_annotations_file)) {
+              user_annotations_df <- read.table(
+                user_annotations_file,
+                header = TRUE,
+                sep = "\t",
+                stringsAsFactors = FALSE
               )
-              unique_keys <- unique(c(unique_keys, user_keys))
+              has_session <- !is.na(user_annotations_df$shinyauthr_session_id)
+              has_skip <- !is.na(user_annotations_df$agreement) &
+                grepl("^skipped -", user_annotations_df$agreement)
+
+              user_voted_images <- sum(has_session & !has_skip)
+              user_skipped_images <- sum(has_skip)
+
+              user_voted_df <- user_annotations_df[has_session & !has_skip, ]
+              if (nrow(user_voted_df) > 0) {
+                user_keys <- paste(
+                  user_voted_df$coordinates,
+                  user_voted_df$REF,
+                  user_voted_df$ALT,
+                  sep = "|"
+                )
+                unique_keys <- unique(c(unique_keys, user_keys))
+              }
             }
 
             total_images <- total_images + user_voted_images
             total_skipped <- total_skipped + user_skipped_images
 
             per_user_rows[[length(per_user_rows) + 1]] <- data.frame(
-              user_id = basename(user_dir),
+              user_id = user_id,
               images_voted = user_voted_images,
               skipped_images = user_skipped_images,
               stringsAsFactors = FALSE
@@ -240,11 +235,7 @@ leaderboardServer <- function(
                   summary_df$unique_images_voted[i]
                 )
               ),
-              if (nrow(user_df) == 0) {
-                shiny::tags$div("No user data available.")
-              } else {
-                build_user_table(user_df)
-              }
+              build_user_table(user_df)
             )
           })
         )
