@@ -5,7 +5,15 @@ library(ShinyImgVoteR)
 
 # locate the directory where inst/shiny-app was installed
 # app_dir <- system.file("shiny-app", package = "ShinyImgVoteR")
-cfg <- ShinyImgVoteR::load_config()
+cfg <- ShinyImgVoteR::load_config(
+  config_file_path = system.file(
+    "shiny-app",
+    "default_env",
+    "config",
+    "config.yaml",
+    package = "ShinyImgVoteR"
+  )
+)
 ui <- votingAppUI(cfg)
 
 # source necessary files
@@ -88,7 +96,15 @@ testthat::test_that("Navigation structure is present", {
 })
 
 testthat::test_that("Required CSS and JavaScript dependencies are included", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   ui_result <- ShinyImgVoteR::votingAppUI(cfg)
   ui_html <- as.character(ui_result)
   
@@ -101,7 +117,15 @@ testthat::test_that("Required CSS and JavaScript dependencies are included", {
 })
 
 testthat::test_that("Module UIs are properly namespaced", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   
   # Test individual module UIs if they're exported
   # This assumes you have separate UI functions for modules

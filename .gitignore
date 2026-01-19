@@ -10,4 +10,8 @@ db.sqlite
 inst/doc
 /doc/
 /Meta/
+
+app_env/images/*/*.png
 docs
+.env
+.Renviron

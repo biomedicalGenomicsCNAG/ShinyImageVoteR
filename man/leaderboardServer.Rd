@@ -4,12 +4,14 @@
 \alias{leaderboardServer}
 \title{Leaderboard Server Module}
 \usage{
-leaderboardServer(id, cfg, login_trigger, tab_trigger = NULL)
+leaderboardServer(id, cfg, login_trigger, db_conn, tab_trigger = NULL)
 }
 \arguments{
 \item{id}{Module namespace ID}
 
 \item{login_trigger}{Reactive that triggers when user logs in}
+
+\item{db_conn}{A database pool or connection used to fetch institutes}
 
 \item{tab_trigger}{Optional reactive that triggers when the leaderboard tab is selected
 This enables automatic refresh of counts when navigating to the page}

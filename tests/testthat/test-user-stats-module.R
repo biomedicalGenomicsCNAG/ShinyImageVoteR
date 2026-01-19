@@ -15,9 +15,17 @@ library(ShinyImgVoteR)
 # source(file.path(app_dir, "modules", "user_stats_module.R"))
 
 testthat::test_that("User stats module UI renders correctly", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
 
-  ui_result <- userStatsUI("test", cfg)
+  ui_result <- userstatsUI("test", cfg)
   expect_s3_class(ui_result, "shiny.tag.list")
   
   ui_html <- as.character(ui_result)
@@ -39,7 +47,15 @@ testthat::test_that("User stats server handles tab trigger parameter", {
       logout_time TEXT
     )
   ")
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   
   # Test that the function accepts the new tab_trigger parameter
   expect_silent({
@@ -84,7 +100,15 @@ testthat::test_that("User stats reactive triggers correctly", {
   login_trigger <- shiny::reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   tab_trigger <- shiny::reactiveVal(NULL)
   
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   testServer(userStatsServer, args = list(
     cfg,
     login_trigger = login_trigger,
@@ -101,7 +125,6 @@ session$userData$userAnnotationsFile <- tempfile(fileext = ".tsv")
       data.frame(
         coordinates = c("chr1:1000", "chr2:2000"),
         agreement = c("yes", "no"),
-        alternative_vartype = c("", ""),
         observation = c("", ""),
         comment = c("", ""),
         shinyauthr_session_id = c("session123", "session123"),
@@ -152,7 +175,15 @@ testthat::test_that("User stats server works without tab trigger (backward compa
   # Test that the module still works when tab_trigger is not provided
   login_trigger <- reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
   
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   testServer(userStatsServer, args = list(
     cfg,
     login_trigger = login_trigger,
@@ -169,7 +200,6 @@ testthat::test_that("User stats server works without tab trigger (backward compa
       data.frame(
         coordinates = "chr1:1000",
         agreement = "yes",
-        alternative_vartype = "",
         observation = "",
         comment = "",
         shinyauthr_session_id = "session123",

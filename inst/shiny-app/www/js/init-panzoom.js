@@ -62,7 +62,7 @@ function initPanzoom(containerId, imageId) {
   }
 
   function scan(root) {
-    console.log("panzoom scan in root:", root);
+    // console.log("panzoom scan in root:", root);
     (root || document)
       .querySelectorAll("[data-panzoom-container]")
       .forEach(tryInit);

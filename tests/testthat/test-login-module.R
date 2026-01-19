@@ -15,7 +15,13 @@ library(ShinyImgVoteR)
 # source(file.path(app_dir, "modules", "login_module.R"))
 
 testthat::test_that("Login UI renders correctly", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(config_file_path = system.file(
+    "shiny-app",
+    "default_env",
+    "config",
+    "config.yaml",
+    package = "ShinyImgVoteR"
+  ))
   ui <- loginUI("test", cfg)
   expect_s3_class(ui, "shiny.tag")
   
@@ -26,7 +32,15 @@ testthat::test_that("Login UI renders correctly", {
 })
 
 testthat::test_that("Database session management functions work", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   # Create test database
   test_db <- create_mock_db()
   conn <- test_db$pool
@@ -61,7 +75,15 @@ testthat::test_that("Database session management functions work", {
 })
 
 testthat::test_that("Logout time update works correctly", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   
   # Create test database
   test_db <- create_mock_db()
@@ -89,7 +111,15 @@ testthat::test_that("Logout time update works correctly", {
 })
 
 testthat::test_that("Session filtering works correctly", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
   # Create test database
   test_db <- create_mock_db()
   conn <- test_db$pool
@@ -129,7 +159,15 @@ testthat::test_that("Session filtering works correctly", {
 })
 
 testthat::test_that("Login data reactive works correctly", {
-  cfg <- ShinyImgVoteR::load_config()
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
 
   # Create test database
   test_db <- create_mock_db()

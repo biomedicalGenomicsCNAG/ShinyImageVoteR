@@ -17,6 +17,13 @@ user interface components.
 }
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/}
+}
+
+}
 \author{
 \strong{Maintainer}: Ivo Christopher Leist \email{ivo.leist@cnag.eu}
 

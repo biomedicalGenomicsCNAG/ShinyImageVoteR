@@ -103,7 +103,12 @@ votingUI <- function(id, cfg) {
                       )
                     }
                   ),
-                  choiceValues = c("yes", "no", "diff_var", "not_confident"),
+                  choiceValues = c(
+                    "yes",
+                    "diff_var",
+                    "germline",
+                    "none_of_above"
+                  ),
                   selected = character(0),
                 )
               ),
@@ -111,7 +116,7 @@ votingUI <- function(id, cfg) {
                 class = "conditional-section",
                 shiny::conditionalPanel(
                   condition = sprintf(
-                    "input['%s'] == 'not_confident'",
+                    "input['%s'] == 'none_of_above'",
                     ns("agreement")
                   ),
                   shinyWidgets::checkboxGroupButtons(
@@ -126,7 +131,7 @@ votingUI <- function(id, cfg) {
                 shiny::conditionalPanel(
                   condition = sprintf(
                     "input['%1$s'] == 'diff_var' ||
-                    input['%1$s'] == 'not_confident'",
+                    input['%1$s'] == 'none_of_above'",
                     ns("agreement")
                   ),
                   shiny::textInput(
@@ -194,12 +199,13 @@ votingUI <- function(id, cfg) {
 #' @return None. Side effect only: registers reactive observers and UI updates.
 #' @export
 votingServer <- function(
-    id,
-    cfg,
-    login_trigger,
-    db_pool,
-    get_mutation_trigger_source,
-    tab_trigger = NULL) {
+  id,
+  cfg,
+  login_trigger,
+  db_pool,
+  get_mutation_trigger_source,
+  tab_trigger = NULL
+) {
   shiny::moduleServer(id, function(input, output, session) {
     # validate cfg cols using "validate_cols" function from db_utils.R
     validate_cols(db_pool, "annotations", cfg$db_cols)
@@ -245,21 +251,28 @@ votingServer <- function(
         return()
       }
 
-      if (!is.null(mut_df$coordinates) && identical(as.character(mut_df$coordinates), "done")) {
+      if (
+        !is.null(mut_df$coordinates) &&
+          identical(as.character(mut_df$coordinates), "done")
+      ) {
         shinyjs::disable(session$ns("nextBtn"))
         return()
       }
 
-      if (!is.null(agreement) && length(agreement) > 0 && !identical(agreement, "")) {
-        print("Enabling nextBtn")
-        print(paste("agreement:", agreement))
+      if (
+        !is.null(agreement) &&
+          length(agreement) > 0 &&
+          !identical(agreement, "")
+      ) {
+        # print("Enabling nextBtn")
+        # print(paste("agreement:", agreement))
 
         session$onFlushed(function() {
           shinyjs::enable(session$ns("nextBtn"))
         })
       } else {
-        print("Disabling nextBtn")
-        print(paste("agreement:", agreement))
+        #print("Disabling nextBtn")
+        #print(paste("agreement:", agreement))
 
         session$onFlushed(function() {
           shinyjs::disable(session$ns("nextBtn"))
@@ -302,7 +315,11 @@ votingServer <- function(
         user_annotations_file,
         header = TRUE,
         sep = "\t",
-        stringsAsFactors = FALSE
+        stringsAsFactors = FALSE,
+        colClasses = c(
+          REF = "character",
+          ALT = "character"
+        )
       )
 
       print("Annotations DataFrame before update:")
@@ -310,14 +327,22 @@ votingServer <- function(
 
       # Update the annotations_df with the new agreement
       coord <- mut_df$coordinates
+      ref_val <- mut_df$REF
+      alt_val <- mut_df$ALT
 
       print(paste("Updating annotations for coordinates:", coord))
+      print(paste("REF:", ref_val, "ALT:", alt_val))
       print(paste("Agreement:", input$agreement))
       print(paste("Observation:", input$observation))
       print(paste("Comment:", input$comment))
 
       # use the row index to update the annotations_df
-      rowIdx <- which(annotations_df$coordinates == coord)
+      # Match by coordinates, REF, and ALT to handle duplicates
+      rowIdx <- which(
+        annotations_df$coordinates == coord &
+          annotations_df$REF == ref_val &
+          annotations_df$ALT == alt_val
+      )
       print(paste("Row index for coordinates:", coord, "is", rowIdx))
 
       if (length(rowIdx) == 0) {
@@ -371,18 +396,27 @@ votingServer <- function(
 
       if (!already_voted) {
         # depending on the agreement, update the vote counts in the database
+        print("input$agreement:")
+        print(input$agreement)
         vote_col <- cfg$vote2dbcolumn_map[[input$agreement]]
+        print("Updating database vote counts...")
+        print(paste("vote_col:", vote_col))
+
+        db_update_query <- paste0(
+          "UPDATE annotations SET ",
+          vote_col,
+          " = ",
+          vote_col,
+          " + 1 WHERE coordinates = ? AND REF = ? AND ALT = ?"
+        )
+
+        print("db_update_query:")
+        print(db_update_query)
 
         DBI::dbExecute(
           db_pool,
-          paste0(
-            "UPDATE annotations SET ",
-            vote_col,
-            " = ",
-            vote_col,
-            " + 1 WHERE coordinates = ?"
-          ),
-          params = list(coord)
+          db_update_query,
+          params = list(coord, ref_val, alt_val)
         )
       }
 
@@ -425,9 +459,9 @@ votingServer <- function(
                 new_vote_col,
                 " = ",
                 new_vote_col,
-                " + 1 WHERE coordinates = ?"
+                " + 1 WHERE coordinates = ? AND REF = ? AND ALT = ?"
               ),
-              params = list(coord)
+              params = list(coord, ref_val, alt_val)
             )
           }
         } else {
@@ -462,7 +496,12 @@ votingServer <- function(
           user_annotations_file,
           header = TRUE,
           sep = "\t",
-          stringsAsFactors = FALSE
+          stringsAsFactors = FALSE,
+          colClasses = c(
+            coordinates = "character",
+            REF = "character",
+            ALT = "character"
+          )
         )
 
         # actionButton "Back" or Go back one page in browser pressed
@@ -509,7 +548,39 @@ votingServer <- function(
           }
 
           # Query the database for the mutation with these coordinates
-          df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
+          # First, try to get REF and ALT from URL params
+          url_ref <- parseQueryString(session$clientData$url_search)$ref
+          url_alt <- parseQueryString(session$clientData$url_search)$alt
+
+          ref_val <- url_ref
+          alt_val <- url_alt
+
+          # If not in URL, try to get from annotations_df
+          if (is.null(ref_val) || is.null(alt_val)) {
+            rowIdx_annot <- which(annotations_df$coordinates == coord)
+            if (length(rowIdx_annot) > 0) {
+              if (is.null(ref_val)) {
+                ref_val <- annotations_df$REF[rowIdx_annot[1]]
+              }
+              if (is.null(alt_val)) {
+                alt_val <- annotations_df$ALT[rowIdx_annot[1]]
+              }
+            }
+          }
+
+          query_keys <- if (!is.null(cfg$db_query_keys)) {
+            cfg$db_query_keys
+          } else {
+            NULL
+          }
+          df <- query_annotations_db_by_coord(
+            db_pool,
+            coord,
+            cfg$db_cols,
+            ref = ref_val,
+            alt = alt_val,
+            query_keys = query_keys
+          )
 
           if (nrow(df) == 1) {
             current_mutation(df[1, ])
@@ -529,8 +600,22 @@ votingServer <- function(
             print(session_annotations_df)
 
             if (nrow(session_annotations_df) > 0) {
-              rowIdx <- which(session_annotations_df$coordinates == coord)
-              print(paste("Row index for coordinate:", coord, "is", rowIdx))
+              # Match by coordinate, REF, and ALT to handle duplicates
+              rowIdx <- which(
+                session_annotations_df$coordinates == coord &
+                  session_annotations_df$REF == ref_val &
+                  session_annotations_df$ALT == alt_val
+              )
+              print(paste(
+                "Row index for coordinate:",
+                coord,
+                "REF:",
+                ref_val,
+                "ALT:",
+                alt_val,
+                "is",
+                rowIdx
+              ))
               if (length(rowIdx) > 0) {
                 session$onFlushed(function() {
                   if (rowIdx == 1) {
@@ -543,7 +628,6 @@ votingServer <- function(
                 })
               }
             }
-            print("HERE")
             return(df[1, ])
           } else {
             print("No mutation found for the given coordinate")
@@ -581,7 +665,25 @@ votingServer <- function(
             print("cfg$db_cols:")
             print(cfg$db_cols)
 
-            df <- query_annotations_db_by_coord(db_pool, coord, cfg$db_cols)
+            # Get REF and ALT from annotations_df for this row
+            ref_val <- annotations_df$REF[i]
+            alt_val <- annotations_df$ALT[i]
+            print(paste("ref_val:", ref_val))
+            print(paste("alt_val:", alt_val))
+
+            query_keys <- if (!is.null(cfg$db_query_keys)) {
+              cfg$db_query_keys
+            } else {
+              NULL
+            }
+            df <- query_annotations_db_by_coord(
+              db_pool,
+              coord,
+              cfg$db_cols,
+              ref = ref_val,
+              alt = alt_val,
+              query_keys = query_keys
+            )
 
             # query <- paste0(
             #   "SELECT ",
@@ -594,21 +696,126 @@ votingServer <- function(
             # print(df)
 
             if (nrow(df) == 1) {
-              # TODO
-              # Filter logic for the actual voting
-              # Reasoning why this is commented out in the README
+              # Check if screenshot has already been voted max times
 
-              # inspiration for the filtering logic from legacy code:
-              # filter(!(yes >= 3 & yes / total_votes > 0.7)) %>%
-              # filter(!(no >= 3 & no / total_votes > 0.7))
+              vote_max_map <- cfg$voting_options_max_matching_votes
+              print("vote_max_map:")
+              print(vote_max_map)
+              if (is.null(vote_max_map) || length(vote_max_map) == 0) {
+                vote_max_map <- stats::setNames(
+                  rep(3, length(cfg$vote2dbcolumn_map)),
+                  names(cfg$vote2dbcolumn_map)
+                )
+              }
 
-              # If a mutation is found, return it
+              matched_option <- NULL
+              matched_max <- NULL
+              matched_count <- NULL
+
+              for (option_key in names(cfg$vote2dbcolumn_map)) {
+                print(paste("option_key:", option_key))
+                vote_col <- cfg$vote2dbcolumn_map[[option_key]]
+                print(paste("vote_col:", vote_col))
+                max_votes <- vote_max_map[[option_key]]
+                print(paste("max_votes:", max_votes))
+                if (is.null(max_votes) || is.na(max_votes)) {
+                  max_votes <- 3
+                }
+                print(paste("max_votes after check:", max_votes))
+                max_votes <- as.numeric(max_votes)
+                vote_count <- df[[vote_col]]
+
+                if (
+                  !is.null(vote_count) &&
+                    !is.na(vote_count) &&
+                    !is.na(max_votes) &&
+                    vote_count >= max_votes
+                ) {
+                  matched_option <- option_key
+                  matched_max <- max_votes
+                  matched_count <- vote_count
+                  break
+                }
+              }
+
+              if (!is.null(matched_option)) {
+                print(paste(
+                  "Skipping coordinate",
+                  coord,
+                  "- option",
+                  matched_option,
+                  "already has",
+                  matched_count,
+                  "votes (max:",
+                  matched_max,
+                  ")"
+                ))
+                skip_reason <- paste0(
+                  "skipped - max matching votes (",
+                  matched_max,
+                  ") for option (",
+                  matched_option,
+                  ") reached"
+                )
+
+                if ("agreement" %in% colnames(annotations_df)) {
+                  annotations_df[i, "agreement"] <- skip_reason
+                }
+
+                if ("observation" %in% colnames(annotations_df)) {
+                  annotations_df[i, "observation"] <- NA_character_
+                }
+
+                if ("comment" %in% colnames(annotations_df)) {
+                  annotations_df[i, "comment"] <- NA_character_
+                }
+
+                if ("shinyauthr_session_id" %in% colnames(annotations_df)) {
+                  session_id <- session$userData$shinyauthr_session_id
+                  if (is.null(session_id)) {
+                    session_id <- NA_character_
+                  }
+                  annotations_df[i, "shinyauthr_session_id"] <- session_id
+                }
+
+                if (
+                  "time_till_vote_casted_in_seconds" %in%
+                    colnames(annotations_df)
+                ) {
+                  annotations_df[
+                    i,
+                    "time_till_vote_casted_in_seconds"
+                  ] <- NA_real_
+                }
+
+                write.table(
+                  annotations_df,
+                  file = user_annotations_file,
+                  sep = "\t",
+                  row.names = FALSE,
+                  col.names = TRUE,
+                  quote = FALSE
+                )
+
+                next
+              }
+
+              # If a mutation is found and has fewer than max votes, return it
               coord <- df[1, ]$coordinates
+              ref_val <- df[1, ]$REF
+              alt_val <- df[1, ]$ALT
 
               current_mutation(df[1, ])
               vote_start_time(Sys.time())
               shiny::updateQueryString(
-                paste0("?coordinate=", coord),
+                paste0(
+                  "?coordinate=",
+                  coord,
+                  "&ref=",
+                  ref_val,
+                  "&alt=",
+                  alt_val
+                ),
                 mode = "push",
                 session = session
               )
@@ -616,6 +823,27 @@ votingServer <- function(
             }
           }
         }
+
+        # If we reach here, all remaining unvoted screenshots have max votes
+        # Show "done" to indicate no more screenshots are available
+        print(
+          "All remaining screenshots have been voted the maximum number of times."
+        )
+        res <- create_done_tibble()
+        shiny::updateQueryString(
+          "?coordinate=done",
+          mode = "push",
+          session = session
+        )
+
+        session$onFlushed(function() {
+          shinyjs::hideElement(session$ns("voting_questions_div"))
+          shinyjs::hideElement(session$ns("nextBtn"))
+          shinyjs::disable(session$ns("nextBtn"))
+        })
+        current_mutation(res)
+        vote_start_time(Sys.time())
+        return(res)
       }
     )
     output$voting_image_div <- shiny::renderUI({
@@ -672,12 +900,22 @@ votingServer <- function(
         user_annotations_file,
         header = TRUE,
         sep = "\t",
-        stringsAsFactors = FALSE
+        stringsAsFactors = FALSE,
+        colClasses = c(
+          REF = "character",
+          ALT = "character"
+        )
       )
 
-      # Find the row for the current coordinate
+      # Find the row for the current coordinate, REF, and ALT
       coord <- mut_df$coordinates
-      rowIdx <- which(annotations_df$coordinates == coord)
+      ref_val <- mut_df$REF
+      alt_val <- mut_df$ALT
+      rowIdx <- which(
+        annotations_df$coordinates == coord &
+          annotations_df$REF == ref_val &
+          annotations_df$ALT == alt_val
+      )
 
       if (length(rowIdx) > 0) {
         saved_agreement <- annotations_df[rowIdx, "agreement"]

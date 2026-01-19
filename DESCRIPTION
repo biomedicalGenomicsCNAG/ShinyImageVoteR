@@ -21,11 +21,13 @@ Imports:
     yaml,
     digest,
     later,
+    shinyauthr,
     shinyjs,
     shinyWidgets,
     tibble,
     data.table,
     markdown,
+    R.utils
 Suggests:
     testthat (>= 3.0.0),
     covr,
@@ -33,8 +35,8 @@ Suggests:
     pak,
     DT,
     devtools,
-    vscDebugger,
     knitr,
     rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+URL: https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/
