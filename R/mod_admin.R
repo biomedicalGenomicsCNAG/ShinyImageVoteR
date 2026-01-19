@@ -535,7 +535,9 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
       # Perform the reset
       success <- reset_user_annotations(
         annotation_path, 
-        cfg$user_annotations_colnames
+        cfg$user_annotations_colnames,
+        db_pool,
+        cfg
       )
       
       if (success) {
