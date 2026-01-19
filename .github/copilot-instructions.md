@@ -1,38 +1,78 @@
 # Copilot Instructions
 
-## Project Snapshot
+This file provides guidance for GitHub Copilot when working with the B1MG Variant Voting Shiny application.
 
-- `ShinyImgVoteR` is an R package that ships a Shiny app from `inst/shiny-app`; `R/main_ui.R` plus `R/main_server.R` wire modules around an SQLite annotations DB and per-user TSV logs.
-- Launch locally with `renv::restore()` followed by `devtools::load_all(".")` and `ShinyImgVoteR::run_voting_app()` (or `dev_scripts/run_shinyimgvoter.R`); hosted deployments use the same entrypoint (see `app.R`).
+## Project Overview
+
+This is a sophisticated voting system designed for collaborative annotation of genetic mutations. It's packaged as an R package (`ShinyImgVoteR`) that contains a Shiny application.
+
+## Project Structure
+
+- `/R/`: R package source code
+  - `mod_*.R`: Shiny modules for different functionalities (voting, leaderboard, login, user stats, about, FAQ, admin)
+  - `main_ui.R`, `main_server.R`: Main Shiny app UI and server logic
+  - `run_app.R`: Entry point to run the application
+  - `db_utils.R`: Database operations utilities
+  - `init_env.R`, `init_env_utils.R`: Environment initialization
+  - `load_config.R`: Configuration loading
+  - `voting_utils.R`, `logout_utils.R`, `admin_utils.R`: Utility functions
+- `/inst/shiny-app/`: Shiny app resources bundled with the package
+  - `/default_env/`: Default environment configuration, images, and user data templates
+  - `/www/`: Static web resources (JavaScript, CSS)
+- `/tests/testthat/`: Unit tests
+- `/man/`: Package documentation (auto-generated)
+- `app_env/`: External environment for development (config, user_data, images, server_data)
+
+## Coding Conventions
+
+- Use Shiny modules consistently: both UI and server in one file
+  - UI function: `<module>UI` (e.g., `votingUI`)
+  - Server function: `<module>Server` (e.g., `votingServer`)
+- Module files named `mod_<module>.R` (e.g., `mod_voting.R`)
+- Indent code with 2 spaces
+- Use roxygen2 comments for function documentation
+- Follow R package development best practices
 
 ## Architecture & Flow
 
-- `init_environment()` (R/init*env.R) prepares `app_env/` by copying templates from `inst/shiny-app/default_env`, normalising relative paths with `IMGVOTER_BASE_DIR`, and exporting `IMGVOTER*\*` env vars consumed throughout the app—always let this run before filesystem touches.
-- `load_config()` (R/load_config.R) ingests `config/config.yaml`, merges env overrides, expands derived fields (`cfg$db_cols`, `cfg$vote2dbcolumn_map`, `cfg$observations2val_map`); pass the resulting `cfg` into every module.
-- `makeVotingAppServer()` orchestrates authentication via `mod_login.R`/`shinyauthr`, tab triggers, logout cleanup, and registers modules; when extending functionality keep UI (`main_ui.R`) and server tab triggers in sync.
-- Voting flow (`mod_voting.R`): reads the next coordinate from per-user TSVs, saves votes, and updates SQLite counts using `cfg$vote2dbcolumn_map`; `validate_cols()` guards SQL identifiers so new config columns must exist in the DB schema defined in `create_database()`.
-- Dynamic tabs (Admin, etc.) are inserted at runtime—if you add tabs, update `make_tab_trigger()` and the navbar in `main_ui.R` so query-string syncing keeps working.
+- Use `testthat` for unit tests
+- Use `testServer` for testing Shiny modules
+- To run all tests: `devtools::test()`
+- Ensure tests are placed in `tests/testthat/`
+- To get test coverage: `covr::package_coverage()`
+- Helper files in `tests/testthat/` start with `helper-` (e.g., `helper-db.R`)
 
-## Conventions
+## Build and Development
 
-- Modules live in `R/mod_<name>.R` with paired `<name>UI()`/`<name>Server()` exports; UI functions accept `cfg` whenever styling or labels differ from defaults.
-- Indent R code with 2 spaces; prefer `session$ns()` for dynamic IDs and keep module state in `session$userData` when persisting per-user context.
-- Reuse helpers in `R/init_env_utils.R` (`safe_dir_create`, `copy_dir_from_app`, `ensure_gitignore`) instead of rolling bespoke filesystem logic—tests rely on their validation behaviour.
+- Build the package: `make build` or `R CMD build .`
+- Install the package: `make install` or `R CMD INSTALL ShinyImgVoteR_*.tar.gz`
+- Run the app: `make run` or `R -e "ShinyImgVoteR::run_app()"`
+- Check package: `make check` or `R CMD check ShinyImgVoteR_*.tar.gz`
+- Generate documentation: `devtools::document()`
+- Setup development environment: `make setup-dev`
 
-## Config, Data & Assets
+## Configuration
 
-- Runtime assets live in `app_env/` (config, images, server_data, user_data); defaults reside under `inst/shiny-app/default_env`. Tests mirror this structure in `tests/testthat/app_env/`—keep both copies updated when templates change.
-- User progress persists in TSVs (`user_data/<institute>/<userid>`); columns must match `cfg$user_annotations_colnames` so `mod_voting.R` can restore prior choices and compute timing stats.
-- Front-end behaviour (zoom, keyboard shortcuts) loads from `inst/shiny-app/www/js`; include new scripts via the `purrr::map` block in `votingUI()` to ensure singleton injection.
+- Configuration file: `app_env/config/config.yaml` (or specified via `IMGVOTER_CONFIG_FILE_PATH`)
+- Environment variables:
+  - `IMGVOTER_BASE_DIR`: Base directory for the application
+  - `IMGVOTER_CONFIG_FILE_PATH`: Path to config file
+  - `IMGVOTER_IMAGES_DIR`: Directory containing mutation images
 
-## Testing & Tooling
+## Key Workflows
 
-- Run `devtools::test()` (after `renv::restore()`) for the full suite; module tests use `testServer()` (`tests/testthat/test-*-module.R`) and helpers such as `tests/testthat/helper-db.R::create_mock_db()`.
-- Coverage via `covr::package_coverage()` or `dev_scripts/coverage.R`; outputs land in `tests/coverage/`.
-- When altering module signatures or config loading, update the fixtures in `tests/testthat/setup.R` and `tests/testthat/helper-*.R` so login, DB, and environment mocks stay aligned.
+1. **Development**: `make dev` - document, build, install, test
+2. **CI/CD simulation**: `make ci` - deps, document, build, check, test, coverage
+3. **Run application**: First `make setup-userdata`, then `make run`
 
-## Common Pitfalls
+## Database
 
-- Skipping `init_environment()` leaves relative paths unresolved and prevents `IMGVOTER_*` env vars from being set—most file IO and DB calls will fail.
-- `load_config()` decorates observation labels with hotkey hints; hard-coding labels elsewhere breaks keyboard shortcut expectations.
-- Schema tweaks go through `R/db_utils.R::create_database()`; adjust the SQLite template in `tests/testthat/app_env/db.sqlite` and regenerate user fixtures when you add or rename columns.
+- Uses SQLite for storing annotations and vote counts
+- Database utilities in `R/db_utils.R`
+- Database schema includes: coordinates, vote counts (yes/no/diff_var/not_confident), vartype, etc.
+
+## Important Notes
+
+- The app is designed as an R package for better testing and deployment
+- External data (user_data, images, config) lives outside the package in `app_env/`
+- Always use `get_app_dir()` to reference bundled resources in `inst/shiny-app/`
