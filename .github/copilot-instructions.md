@@ -75,4 +75,3 @@ This is a sophisticated voting system designed for collaborative annotation of g
 
 - The app is designed as an R package for better testing and deployment
 - External data (user_data, images, config) lives outside the package in `app_env/`
-- Always use `get_app_dir()` to reference bundled resources in `inst/shiny-app/`
