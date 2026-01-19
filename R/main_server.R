@@ -156,7 +156,6 @@ makeVotingAppServer <- function(db_pool, cfg) {
         user_id
       )
 
-
       if (file.exists(session$userData$userInfoFile)) {
         get_mutation_trigger_source("login")
         return()
@@ -292,7 +291,13 @@ makeVotingAppServer <- function(db_pool, cfg) {
       get_mutation_trigger_source,
       voting_tab_trigger
     )
-    leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
+    leaderboardServer(
+      "leaderboard",
+      cfg,
+      login_data,
+      db_pool,
+      leaderboard_tab_trigger
+    )
     userStatsServer(
       "userstats",
       cfg,

@@ -27,11 +27,18 @@ leaderboardUI <- function(id, cfg) {
 #'
 #' @param id Module namespace ID
 #' @param login_trigger Reactive that triggers when user logs in
+#' @param db_conn A database pool or connection used to fetch institutes
 #' @param tab_trigger Optional reactive that triggers when the leaderboard tab is selected
 #'                   This enables automatic refresh of counts when navigating to the page
 #' @return Reactive containing leaderboard data frame
 #' @export
-leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
+leaderboardServer <- function(
+  id,
+  cfg,
+  login_trigger,
+  db_conn,
+  tab_trigger = NULL
+) {
   shiny::moduleServer(id, function(input, output, session) {
     # Create a reactive that triggers when the leaderboard tab is selected
     # This allows automatic refresh when navigating to the leaderboard page
@@ -47,10 +54,17 @@ leaderboardServer <- function(id, cfg, login_trigger, tab_trigger = NULL) {
       c(login_trigger(), input$refresh_counts, tab_change_trigger()),
       {
         shiny::req(login_trigger())
-        institute_ids <- unlist(strsplit(
-          Sys.getenv("IMGVOTER_USER_GROUPS_COMMA_SEPARATED"),
-          ","
-        ))
+        institutes_df <- DBI::dbGetQuery(
+          db_conn,
+          "SELECT DISTINCT institute FROM passwords WHERE institute IS NOT NULL AND institute != ''"
+        )
+        institute_ids <- as.character(institutes_df$institute)
+        if (length(institute_ids) == 0) {
+          institute_ids <- unlist(strsplit(
+            Sys.getenv("IMGVOTER_USER_GROUPS_COMMA_SEPARATED"),
+            ","
+          ))
+        }
 
         counts_list <- lapply(institute_ids, function(institute) {
           institutes_dir <- file.path(

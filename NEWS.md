@@ -13,6 +13,10 @@ ShinyImgVoteR 0.1.1 (Development)
 * Fixed not working folder creation when new users are added via the user creation admin table
   - Added a create_user_directory function inside a tryCatch block logging errors
 
+* Fixed leaderboard not showing all groups
+  - Before the leaderboard was populated based on the institutes2userids2passwords file,
+    now the institutes are fetched from the database
+
 ## Features
 
 * Added configurable maximum matching votes per screenshot across all users 
