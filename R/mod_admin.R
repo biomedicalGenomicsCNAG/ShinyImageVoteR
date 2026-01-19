@@ -79,17 +79,33 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         "?pwd_retrieval_token=",
         tbl$pwd_retrieval_token
       )
-      tbl$email_btn <- sprintf(
-        '<button
-            class="btn btn-primary btn-sm"
-            onclick="Shiny.setInputValue(
-              \'%s\', \'%s\',
-              {priority: \'event\'});"
-        >
-          Email Template
-        </button>',
+      tbl$action_btns <- sprintf(
+        '<div class="d-flex gap-1">
+          <button
+              class="btn btn-primary btn-sm"
+              title="View email template"
+              onclick="Shiny.setInputValue(
+                \'%s\', \'%s\',
+                {priority: \'event\'});"
+          >
+            Email Template
+          </button>
+          <button
+              class="btn btn-warning btn-sm"
+              title="Reset user annotations"
+              onclick="Shiny.setInputValue(
+                \'%s\', 
+                {userid: \'%s\', institute: \'%s\', nonce: Math.random()},
+                {priority: \'event\'});"
+          >
+            Reset Annotations
+          </button>
+        </div>',
         session$ns("email_template_btn"),
-        tbl$userid
+        tbl$userid,
+        session$ns("reset_annotations_btn"),
+        tbl$userid,
+        tbl$institute
       )
       # Remove the password retrieval token column
       tbl$pwd_retrieval_token <- NULL
@@ -429,6 +445,121 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
 
       # Trigger table refresh
       table_refresh_trigger(table_refresh_trigger() + 1)
+    })
+
+    # Handle reset annotations button clicks
+    shiny::observeEvent(input$reset_annotations_btn, {
+      print("Reset annotations button clicked")
+      
+      shiny::req(login_trigger()$admin == 1)
+      user_id <- trimws(input$reset_annotations_btn$userid)
+      institute <- trimws(input$reset_annotations_btn$institute %||% "")
+      
+      if (user_id == "" || institute == "") {
+        shiny::showModal(shiny::modalDialog(
+          title = "Missing information",
+          "Unable to identify user. Please try again.",
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+      
+      # Show confirmation dialog
+      shiny::showModal(shiny::modalDialog(
+        title = paste("Reset Annotations for", user_id),
+        shiny::div(
+          shiny::p(paste0(
+            "Are you sure you want to reset all annotations for user '", user_id, 
+            "' from institute '", institute, "'?"
+          )),
+          shiny::p("This will:"),
+          shiny::tags$ul(
+            shiny::tags$li("Keep the header row"),
+            shiny::tags$li("Keep the first column (coordinates, REF, ALT)"),
+            shiny::tags$li("Clear all other annotation data (votes, observations, comments, etc.)")
+          ),
+          shiny::p(style = "color: red; font-weight: bold;", 
+                   "This action cannot be undone!")
+        ),
+        footer = shiny::div(
+          shiny::modalButton("Cancel"),
+          shiny::actionButton(
+            session$ns("confirm_reset"),
+            "Yes, Reset Annotations",
+            class = "btn-danger",
+            onclick = sprintf(
+              "Shiny.setInputValue('%s', {userid: '%s', institute: '%s', nonce: Math.random()}, {priority: 'event'}); $('#%s').modal('hide');",
+              session$ns("confirm_reset_action"),
+              user_id,
+              institute,
+              session$ns("shiny-modal")
+            )
+          )
+        ),
+        easyClose = FALSE
+      ))
+    })
+    
+    # Handle confirmed reset action
+    shiny::observeEvent(input$confirm_reset_action, {
+      print("Confirmed reset action")
+      
+      shiny::req(login_trigger()$admin == 1)
+      user_id <- trimws(input$confirm_reset_action$userid)
+      institute <- trimws(input$confirm_reset_action$institute %||% "")
+      
+      if (user_id == "" || institute == "") {
+        return()
+      }
+      
+      # Find the annotation file
+      user_info <- list(userid = user_id, institute = institute)
+      annotation_path <- find_annotation_file(user_info)
+      
+      if (is.null(annotation_path)) {
+        shiny::showModal(shiny::modalDialog(
+          title = "Annotations not found",
+          paste0(
+            "No annotations file was found for ",
+            user_id,
+            " at institute ",
+            institute,
+            "."
+          ),
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+        return()
+      }
+      
+      # Perform the reset
+      success <- reset_user_annotations(
+        annotation_path, 
+        cfg$user_annotations_colnames
+      )
+      
+      if (success) {
+        shiny::showModal(shiny::modalDialog(
+          title = "Success",
+          paste0(
+            "Annotations for user '", user_id, 
+            "' have been successfully reset."
+          ),
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+      } else {
+        shiny::showModal(shiny::modalDialog(
+          title = "Error",
+          paste0(
+            "Failed to reset annotations for user '", user_id, 
+            "'. Please check the server logs for details."
+          ),
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+      }
     })
   })
 }
