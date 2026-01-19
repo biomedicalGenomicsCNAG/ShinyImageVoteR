@@ -177,6 +177,16 @@
   transform: scale(1.1);
 }
 
+/* Voting image container and image */
+.voting-image-container {
+  position: relative;
+}
+
+.voting-image {
+  position: relative;
+  z-index: 1;
+}
+
 /* Fullscreen button on image */
 .fullscreen-btn {
   position: absolute;
