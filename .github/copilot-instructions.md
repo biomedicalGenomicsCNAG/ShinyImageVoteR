@@ -33,7 +33,7 @@ This is a sophisticated voting system designed for collaborative annotation of g
 - Use roxygen2 comments for function documentation
 - Follow R package development best practices
 
-## Testing
+## Architecture & Flow
 
 - Use `testthat` for unit tests
 - Use `testServer` for testing Shiny modules

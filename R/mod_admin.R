@@ -1,7 +1,7 @@
 #' Admin module UI
 #'
-#' Displays password retrieval tokens for users who have not retrieved their password yet and
-#' allows admins to add new users.
+#' Displays password retrieval tokens for users and allows admins to add new users
+#' and download user annotations.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration object
@@ -29,8 +29,8 @@ adminUI <- function(id, cfg) {
 
 #' Admin module server
 #'
-#' Shows password retrieval tokens for users who have not accessed their retrieval link and
-#' allows admins to add new users.
+#' Shows password retrieval tokens for users, allows admins to add new users,
+#' and enables downloading user annotations.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration
@@ -64,7 +64,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           db_pool,
           paste(
             "SELECT userid, institute, pwd_retrieval_token FROM passwords",
-            "WHERE pwd_retrieval_token IS NOT NULL AND pwd_retrieved_timestamp IS NULL"
+            "WHERE pwd_retrieval_token IS NOT NULL"
           )
         )
       }
@@ -394,6 +394,17 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         db_pool,
         "INSERT INTO passwords (userid, institute, password, admin, pwd_retrieval_token, pwd_retrieved_timestamp) VALUES (?, ?, ?, 0, ?, NULL)",
         params = list(user_id, institute, password, token)
+      )
+
+      # Create user directory structure
+      tryCatch(
+        {
+          create_user_directory(cfg$user_data_dir, institute, user_id)
+          message(paste("Created directory for user:", user_id, "at institute:", institute))
+        },
+        error = function(e) {
+          warning(paste("Failed to create directory for user:", user_id, "-", e$message))
+        }
       )
 
       base_url <- build_base_url(session)

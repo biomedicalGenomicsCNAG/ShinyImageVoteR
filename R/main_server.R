@@ -149,12 +149,12 @@ makeVotingAppServer <- function(db_pool, cfg) {
         session$userData$userAnnotationsFile
       ))
 
-      safe_dir_create(user_dir)
-
-      # if (!dir.exists(user_dir)) {
-      #   cat(sprintf("Creating directory for user: %s at %s\n", user_id, user_dir))
-      #   dir.create(user_dir, recursive = TRUE)
-      # }
+      # Create user directory structure (institute and user folders)
+      create_user_directory(
+        Sys.getenv("IMGVOTER_USER_DATA_DIR"),
+        voting_institute,
+        user_id
+      )
 
       if (file.exists(session$userData$userInfoFile)) {
         get_mutation_trigger_source("login")
@@ -169,7 +169,7 @@ makeVotingAppServer <- function(db_pool, cfg) {
         substr(digest::digest(combined, algo = "crc32"), 1, 7),
         base = 16
       )
-      print("Seed for randomization:")
+      print("Seed for randomisation:")
       print(seed)
       "********"
 
@@ -199,25 +199,30 @@ makeVotingAppServer <- function(db_pool, cfg) {
       )
 
       # create user annotations file
-      # query the database for all coordinates
-      query <- "SELECT coordinates FROM annotations"
-      coords <- DBI::dbGetQuery(db_pool, query)
+      # query the database for all coordinates, REF, and ALT
+      query <- "SELECT coordinates, REF, ALT FROM annotations"
+      variants <- DBI::dbGetQuery(db_pool, query)
 
-      coords_vec <- as.character(coords[[1]])
-      randomised_coords <- sample(
-        coords_vec,
-        length(coords_vec),
+      # Randomize the order of variants
+      randomised_indices <- sample(
+        seq_len(nrow(variants)),
+        nrow(variants),
         replace = FALSE
       )
+      variants <- variants[randomised_indices, ]
 
-      # Initialize with empty strings except for coordinates
+      # Initialize with empty strings except for coordinates, REF, ALT
       annotations_df <- setNames(
         as.data.frame(
           lapply(cfg$user_annotations_colnames, function(col) {
             if (col == "coordinates") {
-              randomised_coords
+              variants$coordinates
+            } else if (col == "REF") {
+              variants$REF
+            } else if (col == "ALT") {
+              variants$ALT
             } else {
-              rep("", length(randomised_coords))
+              rep("", nrow(variants))
             }
           }),
           stringsAsFactors = FALSE
@@ -286,7 +291,13 @@ makeVotingAppServer <- function(db_pool, cfg) {
       get_mutation_trigger_source,
       voting_tab_trigger
     )
-    leaderboardServer("leaderboard", cfg, login_data, leaderboard_tab_trigger)
+    leaderboardServer(
+      "leaderboard",
+      cfg,
+      login_data,
+      db_pool,
+      leaderboard_tab_trigger
+    )
     userStatsServer(
       "userstats",
       cfg,
