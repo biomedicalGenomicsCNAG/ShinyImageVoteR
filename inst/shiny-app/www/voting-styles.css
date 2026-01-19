@@ -190,7 +190,7 @@
   cursor: pointer;
   color: #333;
   transition: all 0.2s ease;
-  z-index: 10;
+  z-index: 100;
   line-height: 1;
 }
 
