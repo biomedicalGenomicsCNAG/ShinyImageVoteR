@@ -476,7 +476,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           shiny::p("This will:"),
           shiny::tags$ul(
             shiny::tags$li("Keep the header row"),
-            shiny::tags$li("Keep the first column (coordinates, REF, ALT)"),
+            shiny::tags$li("Keep the first three columns (coordinates, REF, ALT)"),
             shiny::tags$li("Clear all other annotation data (votes, observations, comments, etc.)")
           ),
           shiny::p(style = "color: red; font-weight: bold;", 
@@ -489,11 +489,10 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
             "Yes, Reset Annotations",
             class = "btn-danger",
             onclick = sprintf(
-              "Shiny.setInputValue('%s', {userid: '%s', institute: '%s', nonce: Math.random()}, {priority: 'event'}); $('#%s').modal('hide');",
+              "Shiny.setInputValue('%s', {userid: '%s', institute: '%s', nonce: Math.random()}, {priority: 'event'});",
               session$ns("confirm_reset_action"),
               user_id,
-              institute,
-              session$ns("shiny-modal")
+              institute
             )
           )
         ),
