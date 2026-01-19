@@ -29,7 +29,7 @@ votingUI <- function(id, cfg) {
     shinyjs::useShinyjs(),
     # Include required JavaScript files
     purrr::map(
-      c("panzoom.min.js", "init-panzoom.js", "hotkeys.js"),
+      c("panzoom.min.js", "init-panzoom.js", "hotkeys.js", "image-overlay.js"),
       ~ shiny::singleton(
         shiny::includeScript(
           file.path(get_app_dir(), "www/js/", .x)
@@ -853,6 +853,8 @@ votingServer <- function(
       }
       container_id <- session$ns("voting_image_container")
       image_id <- session$ns("voting_image")
+      overlay_id <- session$ns("voting_image_overlay")
+      overlay_image_id <- session$ns("voting_image_overlay_image")
 
       shiny::tagList(
         shiny::div(
@@ -860,13 +862,46 @@ votingServer <- function(
           class = "voting-image-container",
           `data-panzoom-container` = "true",
           style = paste0("width: ", input$image_width, "%"),
+          shiny::tags$button(
+            type = "button",
+            class = "image-overlay-toggle",
+            title = "View fullscreen image",
+            `aria-label` = "View fullscreen image",
+            `data-overlay-target` = overlay_id,
+            `data-overlay-image` = image_id,
+            shiny::icon("expand")
+          ),
           shiny::img(
             id = image_id,
             `data-panzoom-image` = "true",
+            `data-overlay-target` = overlay_id,
+            `data-image-overlay-image` = "true",
             src = glue::glue("images/{mut_df$path}"),
             class = "voting-image",
             style = "width: 100%;",
             alt = sprintf("Mutation image for %s", mut_df$coordinates)
+          )
+        ),
+        shiny::div(
+          id = overlay_id,
+          class = "image-overlay",
+          `data-image-overlay` = "true",
+          `aria-hidden` = "true",
+          shiny::tags$button(
+            type = "button",
+            class = "image-overlay-close",
+            `aria-label` = "Close fullscreen image",
+            shiny::HTML("&times;")
+          ),
+          shiny::img(
+            id = overlay_image_id,
+            class = "image-overlay-img",
+            `data-overlay-image` = "true",
+            src = glue::glue("images/{mut_df$path}"),
+            alt = sprintf(
+              "Fullscreen mutation image for %s",
+              mut_df$coordinates
+            )
           )
         )
       )
