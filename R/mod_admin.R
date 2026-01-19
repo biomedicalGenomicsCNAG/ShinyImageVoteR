@@ -1,7 +1,7 @@
 #' Admin module UI
 #'
-#' Displays password retrieval tokens for users and allows admins to add new users
-#' and download user annotations.
+#' Displays password retrieval tokens for users and allows admins to add new users,
+#' download user annotations, and reset user annotations.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration object
@@ -30,7 +30,7 @@ adminUI <- function(id, cfg) {
 #' Admin module server
 #'
 #' Shows password retrieval tokens for users, allows admins to add new users,
-#' and enables downloading user annotations.
+#' enables downloading user annotations, and provides functionality to reset user annotations.
 #'
 #' @param id Module namespace
 #' @param cfg App configuration
