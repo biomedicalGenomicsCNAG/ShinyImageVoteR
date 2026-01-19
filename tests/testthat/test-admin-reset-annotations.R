@@ -105,16 +105,21 @@ testthat::test_that("reset_user_annotations keeps headers and coordinates", {
   testthat::expect_equal(reset_data$time_till_vote_casted_in_seconds, c("", "", ""))
   
   # Verify database vote counts were decremented
-  db_data <- DBI::dbGetQuery(
-    db_pool,
-    "SELECT coordinates, REF, ALT, vote_count_correct, vote_count_different_variant, vote_count_germline FROM annotations WHERE coordinates IN (?, ?, ?)",
-    params = list("chr1:100", "chr2:200", "chr3:300")
-  )
-  
-  # All vote counts should be 0 after reset
-  testthat::expect_equal(sum(db_data$vote_count_correct), 0)
-  testthat::expect_equal(sum(db_data$vote_count_different_variant), 0)
-  testthat::expect_equal(sum(db_data$vote_count_germline), 0)
+  # Query each coordinate individually to avoid IN clause parameter issues
+  for (coord in c("chr1:100", "chr2:200", "chr3:300")) {
+    db_row <- DBI::dbGetQuery(
+      db_pool,
+      "SELECT coordinates, REF, ALT, vote_count_correct, vote_count_different_variant, vote_count_germline FROM annotations WHERE coordinates = ?",
+      params = list(coord)
+    )
+    
+    if (nrow(db_row) > 0) {
+      # All vote counts should be 0 after reset
+      testthat::expect_equal(db_row$vote_count_correct, 0)
+      testthat::expect_equal(db_row$vote_count_different_variant, 0)
+      testthat::expect_equal(db_row$vote_count_germline, 0)
+    }
+  }
   
   # Clean up
   pool::poolClose(db_pool)
@@ -270,24 +275,36 @@ testthat::test_that("reset_user_annotations correctly decrements vote counts", {
   }
   
   # Get initial vote counts
-  initial_counts <- DBI::dbGetQuery(
-    db_pool,
-    "SELECT coordinates, vote_count_correct FROM annotations WHERE coordinates IN (?, ?)",
-    params = list("chr1:100", "chr2:200")
-  )
-  testthat::expect_equal(sum(initial_counts$vote_count_correct), 10)
+  initial_total <- 0
+  for (coord in c("chr1:100", "chr2:200")) {
+    row <- DBI::dbGetQuery(
+      db_pool,
+      "SELECT coordinates, vote_count_correct FROM annotations WHERE coordinates = ?",
+      params = list(coord)
+    )
+    if (nrow(row) > 0) {
+      initial_total <- initial_total + row$vote_count_correct
+    }
+  }
+  testthat::expect_equal(initial_total, 10)
   
   # Reset the annotations
   result <- reset_user_annotations(temp_file, user_annotations_colnames, db_pool, create_mock_config())
   testthat::expect_true(result)
   
   # Verify vote counts were decremented by 1 for each vote
-  final_counts <- DBI::dbGetQuery(
-    db_pool,
-    "SELECT coordinates, vote_count_correct FROM annotations WHERE coordinates IN (?, ?)",
-    params = list("chr1:100", "chr2:200")
-  )
-  testthat::expect_equal(sum(final_counts$vote_count_correct), 8) # 10 - 2 = 8
+  final_total <- 0
+  for (coord in c("chr1:100", "chr2:200")) {
+    row <- DBI::dbGetQuery(
+      db_pool,
+      "SELECT coordinates, vote_count_correct FROM annotations WHERE coordinates = ?",
+      params = list(coord)
+    )
+    if (nrow(row) > 0) {
+      final_total <- final_total + row$vote_count_correct
+    }
+  }
+  testthat::expect_equal(final_total, 8) # 10 - 2 = 8
   
   # Clean up
   pool::poolClose(db_pool)

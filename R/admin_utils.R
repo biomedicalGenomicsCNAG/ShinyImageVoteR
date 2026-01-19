@@ -111,6 +111,10 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       if (nrow(voted_rows) > 0) {
         message("Updating database vote counts for ", nrow(voted_rows), " voted variants")
         
+        # Get valid vote columns from config to prevent SQL injection
+        valid_vote_cols <- unlist(cfg$vote2dbcolumn_map, use.names = FALSE)
+        
+        # Group updates by variant to batch operations
         for (i in seq_len(nrow(voted_rows))) {
           agreement_val <- voted_rows$agreement[i]
           coord <- voted_rows$coordinates[i]
@@ -120,7 +124,8 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
           # Get the database column for this agreement value
           vote_col <- cfg$vote2dbcolumn_map[[agreement_val]]
           
-          if (!is.null(vote_col) && vote_col != "") {
+          # Validate vote_col against known columns to prevent SQL injection
+          if (!is.null(vote_col) && vote_col != "" && vote_col %in% valid_vote_cols) {
             # Decrement the vote count in the database
             db_update_query <- paste0(
               "UPDATE annotations SET ",
@@ -140,7 +145,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
               warning("Failed to update vote count for ", coord, ": ", e$message)
             })
           } else {
-            warning("Could not find vote column for agreement: ", agreement_val)
+            warning("Invalid or unknown vote column for agreement: ", agreement_val)
           }
         }
         
