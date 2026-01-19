@@ -19,6 +19,14 @@ ShinyImgVoteR 0.1.1 (Development)
 
 ## Features
 
+* Added fullscreen overlay 
+  - Can be toggled via the ⛶ button in the top-left corner of the screenshot area or via double-clicking the screenshot
+  - In fullscreen mode, the screenshot area expands to fill the entire browser window 
+    it can be closed by clicking the "Exit Fullscreen" button in the top-right corner or
+    via the "Esc" key on the keyboard
+  - Note, in the fullscreen overlay pan/zoom functionalities and
+    the voting/navigation hotkeys are disabled
+
 * Added configurable maximum matching votes per screenshot across all users 
   - It can be set via `voting_options_max_matching_votes` in config.yaml
   - Default is 3 votes for each option if not specified
