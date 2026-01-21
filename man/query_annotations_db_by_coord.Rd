@@ -2,11 +2,19 @@
 % Please edit documentation in R/db_utils.R
 \name{query_annotations_db_by_coord}
 \alias{query_annotations_db_by_coord}
-\title{Query annotations table by coordinates
+\title{Query annotations table by coordinates and optionally REF/ALT
 This function queries the annotations table for a given set of coordinates,
-returning only the specified columns.}
+returning only the specified columns. Optionally filters by REF and ALT
+to handle cases where coordinates alone are not unique.}
 \usage{
-query_annotations_db_by_coord(conn, coord, cols)
+query_annotations_db_by_coord(
+  conn,
+  coord,
+  cols,
+  ref = NULL,
+  alt = NULL,
+  query_keys = NULL
+)
 }
 \arguments{
 \item{conn}{Database connection object}
@@ -14,12 +22,21 @@ query_annotations_db_by_coord(conn, coord, cols)
 \item{coord}{Character. The coordinates to query (exact match)}
 
 \item{cols}{Character vector. The columns to retrieve}
+
+\item{ref}{Character. Optional REF allele to query (exact match)}
+
+\item{alt}{Character. Optional ALT allele to query (exact match)}
+
+\item{query_keys}{Character vector. Optional query keys to use for filtering.
+If not provided, defaults to c("coordinates", "REF", "ALT") if ref and alt
+are provided, otherwise just "coordinates".}
 }
 \value{
 A data frame with the query results
 }
 \description{
-Query annotations table by coordinates
+Query annotations table by coordinates and optionally REF/ALT
 This function queries the annotations table for a given set of coordinates,
-returning only the specified columns.
+returning only the specified columns. Optionally filters by REF and ALT
+to handle cases where coordinates alone are not unique.
 }

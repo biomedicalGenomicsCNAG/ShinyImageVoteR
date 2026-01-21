@@ -18,6 +18,6 @@ adminServer(id, cfg, login_trigger, db_pool, tab_trigger = NULL)
 \item{tab_trigger}{Optional reactive triggered when admin tab is selected}
 }
 \description{
-Shows password retrieval tokens for users who have not accessed their retrieval link and
-allows admins to add new users.
+Shows password retrieval tokens for users, allows admins to add new users,
+enables downloading user annotations, and provides functionality to reset user annotations.
 }
