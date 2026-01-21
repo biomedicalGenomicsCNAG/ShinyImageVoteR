@@ -39,6 +39,7 @@ ShinyImgVoteR 0.1.1 (Development)
 
 * Enhanced user creation admin table
   - Table no longer only serves the purpose of showing the users which have not yet  accessed their password retrieval link but now shows all users
+  - Added action button to reset all the annotations of a user
 
 ShinyImgVoteR 0.1.0
 ================
