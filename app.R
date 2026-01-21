@@ -1,5 +1,5 @@
 # script to run the app with shiny-server
-renv::install("ShinyImgVoteR_0.1.0.tar.gz")
+renv::install("ShinyImgVoteR_0.1.1.tar.gz")
 library(ShinyImgVoteR)
 
 # for shiny server deployment
