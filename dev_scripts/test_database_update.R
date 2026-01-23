@@ -57,11 +57,18 @@ print(DBI::dbGetQuery(conn, "SELECT * FROM annotations"))
 cat("\n")
 
 # Create test TSV file with one existing and one new entry
+img_dir <- tempfile("images")
+dir.create(img_dir, recursive = TRUE, showWarnings = FALSE)
+path1 <- file.path(img_dir, "test1.png")
+path2 <- file.path(img_dir, "test2.png")
+file.create(path1)
+file.create(path2)
+
 test_data <- data.frame(
   coordinates = c("chr1:1000", "chr2:2000"),
   REF = c("A", "G"),
   ALT = c("T", "C"),
-  path = c("./test/images/test1.png", "./test/images/test2.png"),
+  path = c(path1, path2),
   stringsAsFactors = FALSE
 )
 

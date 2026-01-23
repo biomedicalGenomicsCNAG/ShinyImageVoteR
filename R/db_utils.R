@@ -184,6 +184,7 @@ update_annotations_table <- function(
   )
 
   # Normalize paths like in populate_annotations_table
+  parent_dir <- NULL
   if ("path" %in% names(annotations_df) && nrow(annotations_df) > 0) {
     first_path <- annotations_df$path[1]
     if (!is.na(first_path) && nzchar(first_path)) {
@@ -247,6 +248,56 @@ update_annotations_table <- function(
         logical(1)
       )
       updated_entries <- ann_common[rows_differ, , drop = FALSE]
+    }
+  }
+
+  # Validate image paths for new or updated rows
+  if ("path" %in% names(annotations_df)) {
+    check_df <- rbind(
+      new_entries,
+      updated_entries,
+      stringsAsFactors = FALSE
+    )
+
+    if (nrow(check_df) > 0) {
+      images_dir <- Sys.getenv("IMGVOTER_IMAGES_DIR", unset = "")
+      fallback_dir <- if (!is.null(parent_dir) && nzchar(parent_dir)) {
+        parent_dir
+      } else {
+        ""
+      }
+      tsv_dir <- dirname(to_be_voted_images_file)
+
+      is_abs <- grepl("^(/|[A-Za-z]:)", check_df$path)
+
+      exists_any <- logical(nrow(check_df))
+      if (any(is_abs)) {
+        exists_any[is_abs] <- file.exists(check_df$path[is_abs])
+      }
+
+      if (any(!is_abs)) {
+        rel_paths <- check_df$path[!is_abs]
+        candidates <- list()
+        if (nzchar(images_dir)) {
+          candidates[[length(candidates) + 1]] <- file.path(images_dir, rel_paths)
+        }
+        if (nzchar(fallback_dir)) {
+          candidates[[length(candidates) + 1]] <- file.path(fallback_dir, rel_paths)
+        }
+        candidates[[length(candidates) + 1]] <- file.path(tsv_dir, rel_paths)
+
+        exists_rel <- Reduce(`|`, lapply(candidates, file.exists))
+        exists_any[!is_abs] <- exists_rel
+      }
+
+      missing <- check_df$path[!exists_any]
+      if (length(missing) > 0) {
+        missing <- unique(missing)
+        stop(
+          "Missing image paths for new/updated rows: ",
+          paste(missing, collapse = ", ")
+        )
+      }
     }
   }
 

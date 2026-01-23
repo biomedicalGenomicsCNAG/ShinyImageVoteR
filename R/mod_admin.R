@@ -596,7 +596,7 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           0
         }
         total_changes <- added_count + updated_count + removed_count
-        
+
         if (total_changes > 0) {
           shiny::showModal(shiny::modalDialog(
             title = "Database Updated",

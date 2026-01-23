@@ -5,21 +5,34 @@ library(RSQLite)
 library(pool)
 library(ShinyImgVoteR)
 
+create_dummy_files <- function(paths) {
+  dirs <- unique(dirname(paths))
+  for (d in dirs) {
+    if (!dir.exists(d)) {
+      dir.create(d, recursive = TRUE, showWarnings = FALSE)
+    }
+  }
+  for (p in paths) {
+    if (!file.exists(p)) {
+      file.create(p)
+    }
+  }
+}
+
 testthat::test_that("update_annotations_table adds only new entries", {
   # Create mock database
   mock_db <- create_mock_db()
   test_pool <- mock_db$pool
   
   # Create a temporary file with initial data
+  img_dir <- tempfile("images")
+  initial_paths <- file.path(img_dir, c("path1.png", "path2.png", "path3.png"))
+  create_dummy_files(initial_paths)
   initial_data <- data.frame(
     coordinates = c("chr1:1000", "chr2:2000", "chr3:3000"),
     REF = c("A", "G", "AT"),
     ALT = c("T", "C", "A"),
-    path = c(
-      "/test/images/path1.png",
-      "/test/images/path2.png",
-      "/test/images/path3.png"
-    ),
+    path = initial_paths,
     stringsAsFactors = FALSE
   )
   
@@ -46,13 +59,15 @@ testthat::test_that("update_annotations_table adds only new entries", {
   testthat::expect_equal(update_summary$removed, 0)
   
   # Add a new entry to the file
+  new_path <- file.path(img_dir, "path4.png")
+  create_dummy_files(new_path)
   updated_data <- rbind(
     initial_data,
     data.frame(
       coordinates = "chr4:4000",
       REF = "C",
       ALT = "G",
-      path = "/test/images/path4.png",
+      path = new_path,
       stringsAsFactors = FALSE
     )
   )
@@ -98,15 +113,14 @@ testthat::test_that("update_annotations_table handles duplicate coordinates with
   test_pool <- mock_db$pool
   
   # Create a file with entries that have the same coordinates but different REF/ALT
+  img_dir <- tempfile("images")
+  dup_paths <- file.path(img_dir, c("path2c.png", "path2d.png", "path5.png"))
+  create_dummy_files(dup_paths)
   data_with_duplicates <- data.frame(
     coordinates = c("chr2:2000", "chr2:2000", "chr5:5000"),
     REF = c("T", "A", "G"),
     ALT = c("C", "G", "T"),
-    path = c(
-      "/test/images/path2c.png",
-      "/test/images/path2d.png",
-      "/test/images/path5.png"
-    ),
+    path = dup_paths,
     stringsAsFactors = FALSE
   )
   
@@ -168,11 +182,15 @@ testthat::test_that("update_annotations_table processes paths correctly", {
   test_pool <- mock_db$pool
   
   # Create a file with full paths
+  img_dir <- tempfile("images")
+  nested_dir <- file.path(img_dir, "pngs")
+  path6 <- file.path(nested_dir, "test6.png")
+  create_dummy_files(path6)
   data_with_paths <- data.frame(
     coordinates = "chr6:6000",
     REF = "A",
     ALT = "C",
-    path = "/full/path/to/images/test6.png",
+    path = path6,
     stringsAsFactors = FALSE
   )
   
@@ -202,7 +220,7 @@ testthat::test_that("update_annotations_table processes paths correctly", {
   )
   testthat::expect_equal(nrow(result), 1)
   # The path should have the parent directory removed
-  testthat::expect_true(grepl("images/test6.png", result$path))
+  testthat::expect_true(grepl("pngs/test6.png", result$path))
   
   # Clean up
   poolClose(test_pool)
@@ -215,15 +233,14 @@ testthat::test_that("update_annotations_table detects updates and removals", {
   test_pool <- mock_db$pool
 
   # Modify path for existing entry and remove one entry
+  img_dir <- tempfile("images")
+  updated_paths <- file.path(img_dir, c("updated_path1.png", "path2.png", "path2b.png"))
+  create_dummy_files(updated_paths)
   updated_data <- data.frame(
     coordinates = c("chr1:1000", "chr2:2000", "chr2:2000"),
     REF = c("A", "G", "C"),
     ALT = c("T", "C", "A"),
-    path = c(
-      "/test/images/updated_path1.png",
-      "/test/images/path2.png",
-      "/test/images/path2b.png"
-    ),
+    path = updated_paths,
     stringsAsFactors = FALSE
   )
 
