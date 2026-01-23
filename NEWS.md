@@ -1,4 +1,16 @@
-ShinyImgVoteR 0.1.1 (Development)
+ShinyImgVoteR 0.1.2 (Development)
+================
+
+## Features
+
+* Added on-demand database update (of the annotations table) for admin users
+  - Admin users can update the database by clicking the "Update Database" button in the admin panel
+  - When clicked, the system reads the to_be_voted_images_file (configured in config.yaml)
+    and updates the database annotations table accordingly
+  - Admin users receive immediate feedback via a modal dialog showing counts for added/updated/removed rows
+  - Missing image paths in newly added or updated rows show a error message in the modal dialog
+
+ShinyImgVoteR 0.1.1
 ================
 
 ## Bug Fixes
@@ -18,14 +30,6 @@ ShinyImgVoteR 0.1.1 (Development)
     now the institutes are fetched from the database
 
 ## Features
-
-* Added manual database update button in admin panel
-  - Admin users can now update the database by clicking the "Update Database" button in the Admin panel
-  - When clicked, the system reads the to_be_voted_images_file (configured in config.yaml)
-  - New entries are automatically added to the database without requiring an app restart
-  - Only new entries (based on unique combination of coordinates, REF, and ALT) are added to prevent duplicates
-  - Admin users receive immediate feedback via a modal dialog showing the number of entries added
-  - This feature allows for on-demand addition of new images to vote on while the application is running
 
 * Added fullscreen overlay 
   - Can be toggled via the ⛶ button in the top-left corner of the screenshot area or via double-clicking the screenshot
