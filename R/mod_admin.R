@@ -16,6 +16,7 @@ adminUI <- function(id, cfg) {
     shiny::div(
       class = "d-flex gap-2 mb-3",
       shiny::actionButton(ns("refresh_tokens"), "Refresh"),
+      shiny::actionButton(ns("update_database_btn"), "Update Database"),
       shiny::actionButton(ns("download_annotations_btn"), "Download annotations"),
       shiny::downloadButton(
         ns("download_annotations"),
@@ -561,6 +562,73 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           footer = shiny::modalButton("Close")
         ))
       }
+    })
+    
+    # Handle update database button clicks
+    shiny::observeEvent(input$update_database_btn, {
+      print("Update database button clicked")
+      
+      shiny::req(login_trigger()$admin == 1)
+      
+      # Update the database with new entries
+      tryCatch({
+        conn <- pool::poolCheckout(db_pool)
+        on.exit(pool::poolReturn(conn))
+        
+        update_summary <- update_annotations_table(
+          conn,
+          cfg$to_be_voted_images_file
+        )
+
+        added_count <- if (is.list(update_summary)) {
+          update_summary$added %||% 0
+        } else {
+          update_summary
+        }
+        updated_count <- if (is.list(update_summary)) {
+          update_summary$updated %||% 0
+        } else {
+          0
+        }
+        removed_count <- if (is.list(update_summary)) {
+          update_summary$removed %||% 0
+        } else {
+          0
+        }
+        total_changes <- added_count + updated_count + removed_count
+
+        if (total_changes > 0) {
+          shiny::showModal(shiny::modalDialog(
+            title = "Database Updated",
+            paste0(
+              "Update summary: ",
+              added_count, " added, ",
+              updated_count, " updated, ",
+              removed_count, " removed."
+            ),
+            easyClose = TRUE,
+            footer = shiny::modalButton("Close")
+          ))
+        } else {
+          shiny::showModal(shiny::modalDialog(
+            title = "No Updates",
+            "No new entries found in the to_be_voted_images_file.",
+            easyClose = TRUE,
+            footer = shiny::modalButton("Close")
+          ))
+        }
+      }, error = function(e) {
+        cat("Error updating annotations table:", conditionMessage(e), "\n")
+        shiny::showModal(shiny::modalDialog(
+          title = "Error",
+          paste0(
+            "Failed to update database: ",
+            conditionMessage(e)
+          ),
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+      })
     })
   })
 }

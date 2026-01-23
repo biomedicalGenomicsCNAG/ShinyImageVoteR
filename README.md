@@ -42,6 +42,32 @@ R -e "ShinyImgVoteR::run_app()"
 
 2. Navigate to http://localhost:8000
 
+## Features
+
+### Dynamic Database Updates
+
+The application provides an admin button to manually update the database with new entries from the `to_be_voted_images_file` (configured in `config.yaml`). When the "Update Database" button is clicked in the Admin panel:
+- The system reads the to_be_voted_images_file
+- New entries are identified and added to the database without duplicates
+- New images become available for voting immediately
+- Admin users receive feedback on the number of entries added
+
+This allows administrators to add new images for voting without requiring users to restart their sessions.
+
+**Example:**
+1. Start the application
+2. Add new entries to `./app_env/images/to_be_voted_images.tsv`:
+   ```tsv
+   coordinates	REF	ALT	path
+   chr7:7000	A	G	./app_env/images/pngs/new_image.png
+   ```
+3. Login as an admin user
+4. Navigate to the Admin panel
+5. Click the "Update Database" button
+6. See confirmation: "Successfully added 1 new entries to the database"
+
+For more details, see [dev_scripts/README.md](dev_scripts/README.md).
+
 ### AUTHOR
 
 Written by Ivo Christopher Leist, PhD Candidate at CNAG [https://www.cnag.eu](https://www.cnag.eu).

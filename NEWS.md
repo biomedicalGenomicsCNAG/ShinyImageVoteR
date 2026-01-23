@@ -1,4 +1,16 @@
-ShinyImgVoteR 0.1.1 (Development)
+ShinyImgVoteR 0.1.2 (Development)
+================
+
+## Features
+
+* Added on-demand database update (of the annotations table) for admin users
+  - Admin users can update the database by clicking the "Update Database" button in the admin panel
+  - When clicked, the system reads the to_be_voted_images_file (configured in config.yaml)
+    and updates the database annotations table accordingly
+  - Admin users receive immediate feedback via a modal dialog showing counts for added/updated/removed rows
+  - Missing image paths in newly added or updated rows show a error message in the modal dialog
+
+ShinyImgVoteR 0.1.1
 ================
 
 ## Bug Fixes

@@ -157,6 +157,208 @@ populate_annotations_table <- function(
   cat("Populated annotations table with", nrow(annotations_df), "rows\n")
 }
 
+#' Update the annotations table with new entries from the file
+#'
+#' This function checks for new entries in the to_be_voted_images_file
+#' and adds only the ones that don't already exist in the database.
+#'
+#' @keywords internal
+#' @param conn Database connection object
+#' @param to_be_voted_images_file Character. Path to the file containing image annotations
+#' @return List with counts: added, updated, removed
+update_annotations_table <- function(
+  conn,
+  to_be_voted_images_file
+) {
+  # Read the to_be_voted_images_file
+  if (!file.exists(to_be_voted_images_file)) {
+    stop("File not found: ", to_be_voted_images_file)
+  }
+  
+  # Read the file and create a data frame
+  annotations_df <- read.table(
+    to_be_voted_images_file,
+    header = TRUE,
+    stringsAsFactors = FALSE,
+    colClasses = "character" # Otherwise the nucleotide T ends up as TRUE
+  )
+
+  # Normalize paths like in populate_annotations_table
+  parent_dir <- NULL
+  if ("path" %in% names(annotations_df) && nrow(annotations_df) > 0) {
+    first_path <- annotations_df$path[1]
+    if (!is.na(first_path) && nzchar(first_path)) {
+      png_dir <- dirname(first_path)
+      parent_dir <- dirname(png_dir)
+      annotations_df$path <- gsub(
+        glue::glue("{parent_dir}/"),
+        "",
+        annotations_df$path
+      )
+    }
+  }
+
+  # Get existing entries from the database
+  existing_entries <- DBI::dbGetQuery(
+    conn,
+    "SELECT rowid, coordinates, REF, ALT, path FROM annotations"
+  )
+
+  # Create a unique key for comparison
+  annotations_df$key <- paste(
+    annotations_df$coordinates,
+    annotations_df$REF,
+    annotations_df$ALT,
+    sep = "|"
+  )
+  existing_entries$key <- paste(
+    existing_entries$coordinates,
+    existing_entries$REF,
+    existing_entries$ALT,
+    sep = "|"
+  )
+
+  # Find new entries
+  new_entries <- annotations_df[!annotations_df$key %in% existing_entries$key, , drop = FALSE]
+
+  # Find removed entries
+  removed_entries <- existing_entries[!existing_entries$key %in% annotations_df$key, , drop = FALSE]
+
+  # Find updated entries (compare common columns for matching keys)
+  common_keys <- intersect(annotations_df$key, existing_entries$key)
+  updated_entries <- annotations_df[0, , drop = FALSE]
+  update_cols <- character(0)
+
+  if (length(common_keys) > 0) {
+    ann_common <- annotations_df[match(common_keys, annotations_df$key), , drop = FALSE]
+    db_common <- existing_entries[match(common_keys, existing_entries$key), , drop = FALSE]
+
+    compare_cols <- intersect(names(ann_common), names(db_common))
+    compare_cols <- setdiff(compare_cols, c("rowid", "key"))
+    update_cols <- setdiff(compare_cols, c("coordinates", "REF", "ALT"))
+
+    if (length(compare_cols) > 0) {
+      rows_differ <- vapply(
+        seq_along(common_keys),
+        function(i) {
+          a <- ann_common[i, compare_cols, drop = FALSE]
+          b <- db_common[i, compare_cols, drop = FALSE]
+          any((is.na(a) != is.na(b)) | (!is.na(a) & !is.na(b) & as.character(a) != as.character(b)))
+        },
+        logical(1)
+      )
+      updated_entries <- ann_common[rows_differ, , drop = FALSE]
+    }
+  }
+
+  # Validate image paths for new or updated rows
+  if ("path" %in% names(annotations_df)) {
+    check_df <- rbind(
+      new_entries,
+      updated_entries,
+      stringsAsFactors = FALSE
+    )
+
+    if (nrow(check_df) > 0) {
+      images_dir <- Sys.getenv("IMGVOTER_IMAGES_DIR", unset = "")
+      fallback_dir <- if (!is.null(parent_dir) && nzchar(parent_dir)) {
+        parent_dir
+      } else {
+        ""
+      }
+      tsv_dir <- dirname(to_be_voted_images_file)
+
+      is_abs <- grepl("^(/|[A-Za-z]:)", check_df$path)
+
+      exists_any <- logical(nrow(check_df))
+      if (any(is_abs)) {
+        exists_any[is_abs] <- file.exists(check_df$path[is_abs])
+      }
+
+      if (any(!is_abs)) {
+        rel_paths <- check_df$path[!is_abs]
+        candidates <- list()
+        if (nzchar(images_dir)) {
+          candidates[[length(candidates) + 1]] <- file.path(images_dir, rel_paths)
+        }
+        if (nzchar(fallback_dir)) {
+          candidates[[length(candidates) + 1]] <- file.path(fallback_dir, rel_paths)
+        }
+        candidates[[length(candidates) + 1]] <- file.path(tsv_dir, rel_paths)
+
+        exists_rel <- Reduce(`|`, lapply(candidates, file.exists))
+        exists_any[!is_abs] <- exists_rel
+      }
+
+      missing <- check_df$path[!exists_any]
+      if (length(missing) > 0) {
+        missing <- unique(missing)
+        stop(
+          "Missing image paths for new/updated rows: ",
+          paste(missing, collapse = ", ")
+        )
+      }
+    }
+  }
+
+  # Insert new data into the annotations table
+  if (nrow(new_entries) > 0) {
+    new_entries$key <- NULL
+    DBI::dbWriteTable(
+      conn,
+      "annotations",
+      new_entries,
+      append = TRUE,
+      row.names = FALSE
+    )
+  }
+
+  # Update existing rows when values change (only non-key columns)
+  if (nrow(updated_entries) > 0 && length(update_cols) > 0) {
+    db_common <- existing_entries[match(updated_entries$key, existing_entries$key), , drop = FALSE]
+
+    for (i in seq_len(nrow(updated_entries))) {
+      set_clause <- paste(
+        paste0(DBI::dbQuoteIdentifier(conn, update_cols), " = ?"),
+        collapse = ", "
+      )
+      sql <- paste0("UPDATE annotations SET ", set_clause, " WHERE rowid = ?")
+      update_values <- as.list(updated_entries[i, update_cols, drop = FALSE])
+      update_values <- unname(update_values)
+      params <- c(update_values, list(db_common$rowid[i]))
+      DBI::dbExecute(conn, sql, params = params)
+    }
+  }
+
+  # Delete rows removed from the file
+  if (nrow(removed_entries) > 0) {
+    for (i in seq_len(nrow(removed_entries))) {
+      DBI::dbExecute(
+        conn,
+        "DELETE FROM annotations WHERE rowid = ?",
+        params = list(removed_entries$rowid[i])
+      )
+    }
+  }
+
+  added_count <- nrow(new_entries)
+  updated_count <- if (length(update_cols) > 0) nrow(updated_entries) else 0
+  removed_count <- nrow(removed_entries)
+
+  if (added_count == 0 && updated_count == 0 && removed_count == 0) {
+    cat("No changes found in to_be_voted_images_file\n")
+  } else {
+    cat(
+      "Annotations updated:",
+      added_count, "added,",
+      updated_count, "updated,",
+      removed_count, "removed\n"
+    )
+  }
+
+  return(list(added = added_count, updated = updated_count, removed = removed_count))
+}
+
 #' Populate the users table with data from grouped credentials (per-institute lists)
 #'
 #' Expected YAML shape:
