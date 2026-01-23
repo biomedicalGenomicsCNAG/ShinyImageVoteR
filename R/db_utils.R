@@ -157,6 +157,87 @@ populate_annotations_table <- function(
   cat("Populated annotations table with", nrow(annotations_df), "rows\n")
 }
 
+#' Update the annotations table with new entries from the file
+#'
+#' This function checks for new entries in the to_be_voted_images_file
+#' and adds only the ones that don't already exist in the database.
+#'
+#' @keywords internal
+#' @param conn Database connection object
+#' @param to_be_voted_images_file Character. Path to the file containing image annotations
+#' @return Integer. Number of new rows added
+update_annotations_table <- function(
+  conn,
+  to_be_voted_images_file
+) {
+  # Read the to_be_voted_images_file
+  if (!file.exists(to_be_voted_images_file)) {
+    stop("File not found: ", to_be_voted_images_file)
+  }
+  
+  # Read the file and create a data frame
+  annotations_df <- read.table(
+    to_be_voted_images_file,
+    header = TRUE,
+    stringsAsFactors = FALSE,
+    colClasses = "character" # Otherwise the nucleotide T ends up as TRUE
+  )
+  
+  # Get existing entries from the database
+  existing_entries <- DBI::dbGetQuery(
+    conn,
+    "SELECT coordinates, REF, ALT FROM annotations"
+  )
+  
+  # Create a unique key for comparison
+  annotations_df$key <- paste(
+    annotations_df$coordinates,
+    annotations_df$REF,
+    annotations_df$ALT,
+    sep = "|"
+  )
+  existing_entries$key <- paste(
+    existing_entries$coordinates,
+    existing_entries$REF,
+    existing_entries$ALT,
+    sep = "|"
+  )
+  
+  # Find new entries
+  new_entries <- annotations_df[!annotations_df$key %in% existing_entries$key, ]
+  
+  if (nrow(new_entries) == 0) {
+    cat("No new entries found in to_be_voted_images_file\n")
+    return(0)
+  }
+  
+  # Remove the temporary key column
+  new_entries$key <- NULL
+  
+  # Process paths like in populate_annotations_table
+  first_path <- new_entries$path[1]
+  png_dir <- dirname(first_path)
+  parent_dir <- dirname(png_dir)
+  
+  new_entries$path <- gsub(
+    glue::glue("{parent_dir}/"),
+    "",
+    new_entries$path
+  )
+  
+  # Insert new data into the annotations table
+  DBI::dbWriteTable(
+    conn,
+    "annotations",
+    new_entries,
+    append = TRUE,
+    row.names = FALSE
+  )
+  
+  cat("Added", nrow(new_entries), "new entries to annotations table\n")
+  return(nrow(new_entries))
+}
+
 #' Populate the users table with data from grouped credentials (per-institute lists)
 #'
 #' Expected YAML shape:
