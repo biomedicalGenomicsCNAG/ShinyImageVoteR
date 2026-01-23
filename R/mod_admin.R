@@ -16,6 +16,7 @@ adminUI <- function(id, cfg) {
     shiny::div(
       class = "d-flex gap-2 mb-3",
       shiny::actionButton(ns("refresh_tokens"), "Refresh"),
+      shiny::actionButton(ns("update_database_btn"), "Update Database"),
       shiny::actionButton(ns("download_annotations_btn"), "Download annotations"),
       shiny::downloadButton(
         ns("download_annotations"),
@@ -561,6 +562,54 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
           footer = shiny::modalButton("Close")
         ))
       }
+    })
+    
+    # Handle update database button clicks
+    shiny::observeEvent(input$update_database_btn, {
+      print("Update database button clicked")
+      
+      shiny::req(login_trigger()$admin == 1)
+      
+      # Update the database with new entries
+      tryCatch({
+        conn <- pool::poolCheckout(db_pool)
+        on.exit(pool::poolReturn(conn))
+        
+        new_entries_count <- update_annotations_table(
+          conn,
+          cfg$to_be_voted_images_file
+        )
+        
+        if (new_entries_count > 0) {
+          shiny::showModal(shiny::modalDialog(
+            title = "Database Updated",
+            paste0(
+              "Successfully added ", new_entries_count, 
+              " new entries to the database."
+            ),
+            easyClose = TRUE,
+            footer = shiny::modalButton("Close")
+          ))
+        } else {
+          shiny::showModal(shiny::modalDialog(
+            title = "No Updates",
+            "No new entries found in the to_be_voted_images_file.",
+            easyClose = TRUE,
+            footer = shiny::modalButton("Close")
+          ))
+        }
+      }, error = function(e) {
+        cat("Error updating annotations table:", conditionMessage(e), "\n")
+        shiny::showModal(shiny::modalDialog(
+          title = "Error",
+          paste0(
+            "Failed to update database: ",
+            conditionMessage(e)
+          ),
+          easyClose = TRUE,
+          footer = shiny::modalButton("Close")
+        ))
+      })
     })
   })
 }

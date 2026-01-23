@@ -46,11 +46,11 @@ R -e "ShinyImgVoteR::run_app()"
 
 ### Dynamic Database Updates
 
-The application monitors the `to_be_voted_images_file` (configured in `config.yaml`) for changes while running. When new entries are added to this file, they are automatically:
-- Detected within 5 seconds
-- Added to the database without duplicates
-- Made available for voting immediately
-- Announced to admin users via a notification
+The application provides an admin button to manually update the database with new entries from the `to_be_voted_images_file` (configured in `config.yaml`). When the "Update Database" button is clicked in the Admin panel:
+- The system reads the to_be_voted_images_file
+- New entries are identified and added to the database without duplicates
+- New images become available for voting immediately
+- Admin users receive feedback on the number of entries added
 
 This allows administrators to add new images for voting without requiring users to restart their sessions.
 
@@ -61,8 +61,10 @@ This allows administrators to add new images for voting without requiring users 
    coordinates	REF	ALT	path
    chr7:7000	A	G	./app_env/images/pngs/new_image.png
    ```
-3. Wait ~5 seconds
-4. Admin users will see notification: "Database updated: 1 new entries added"
+3. Login as an admin user
+4. Navigate to the Admin panel
+5. Click the "Update Database" button
+6. See confirmation: "Successfully added 1 new entries to the database"
 
 For more details, see [dev_scripts/README.md](dev_scripts/README.md).
 

@@ -1,16 +1,16 @@
 # Implementation Summary: Dynamic Database Updates
 
 ## Issue
-The database of the shiny application was only populated when the app was started for the first time. The goal was to allow the app to listen for changes in the "to_be_voted_images_file" and update the database accordingly without restarting the application.
+The database of the shiny application was only populated when the app was started for the first time. The goal was to allow admins to update the database with new entries from the "to_be_voted_images_file" without restarting the application.
 
 ## Solution Overview
 
-The implementation adds a file monitoring system that:
-1. Watches the `to_be_voted_images_file` (configured in `config.yaml`) every 5 seconds
-2. Detects when the file has been modified
-3. Automatically updates the database with new entries
+The implementation adds a manual update button in the admin panel that:
+1. Allows admin users to trigger database updates on demand
+2. Reads the `to_be_voted_images_file` (configured in `config.yaml`)
+3. Updates the database with new entries
 4. Prevents duplicate entries based on the unique combination of coordinates, REF, and ALT
-5. Notifies users when new entries are added
+5. Provides immediate feedback via modal dialog
 
 ## Technical Implementation
 
@@ -30,31 +30,29 @@ Added `update_annotations_table()` function that:
 - Error handling for missing files
 - Consistent path processing with initial database population
 
-### 2. File Watcher (`R/main_server.R`)
+### 2. Admin Panel Button (`R/mod_admin.R`)
 
-Added reactive observer pattern that:
-- Stores the last modification time of the file
-- Checks for file changes every 5 seconds using `shiny::invalidateLater(5000)`
-- Calls `update_annotations_table()` when changes are detected
-- Shows notifications to users about new entries
-- Updates the total_images count
-- Handles errors gracefully with error notifications
+Added "Update Database" button that:
+- Appears in the admin panel alongside other admin functions
+- Is only accessible to admin users
+- Triggers the database update when clicked
+- Shows a modal dialog with the results (success, no updates, or error)
 
 **Implementation Details:**
 ```r
-# Track last modification time
-last_modified_time <- shiny::reactiveVal(NULL)
-
-# Check every 5 seconds
-shiny::observe({
-  shiny::invalidateLater(5000, session)
+# In mod_admin.R - Button click handler
+shiny::observeEvent(input$update_database_btn, {
+  shiny::req(login_trigger()$admin == 1)
   
-  # Compare current mtime with last known mtime
-  if (file_modified) {
-    # Update database
-    # Show notification
-    # Update total_images count
-  }
+  conn <- pool::poolCheckout(db_pool)
+  on.exit(pool::poolReturn(conn))
+  
+  new_entries_count <- update_annotations_table(
+    conn,
+    cfg$to_be_voted_images_file
+  )
+  
+  # Show modal dialog with results
 })
 ```
 
@@ -82,24 +80,24 @@ Comprehensive test suite covering:
    make run
    ```
 
-2. While the app is running, add new entries to `./app_env/images/to_be_voted_images.tsv`:
+2. Add new entries to `./app_env/images/to_be_voted_images.tsv`:
    ```tsv
    coordinates	REF	ALT	path
    chr7:7000	A	G	./app_env/images/pngs/new_image.png
    chr8:8000	C	T	./app_env/images/pngs/another_image.png
    ```
 
-3. Within ~5 seconds:
+3. Login as an admin user, navigate to the Admin panel, and click "Update Database"
    - Console shows: "Added 2 new entries to annotations table"
-   - Admin users see notification: "Database updated: 2 new entries added"
+   - Modal dialog shows: "Successfully added 2 new entries to the database"
    - New images are available for voting
 
 ## Benefits
 
 1. **No Downtime**: Users can continue voting while new images are added
-2. **Automatic**: No manual intervention needed after file update
+2. **On-Demand**: Admin controls when database is updated
 3. **Safe**: Duplicate prevention ensures data integrity
-4. **User-Friendly**: Notifications keep users informed
+4. **User-Friendly**: Clear feedback via modal dialogs
 5. **Efficient**: Only new entries are processed and added
 
 ## Edge Cases Handled

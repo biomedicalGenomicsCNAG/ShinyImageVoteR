@@ -23,7 +23,7 @@ Rscript dev_scripts/test_database_update.R
    make run
    ```
 
-2. While the app is running, modify the `to_be_voted_images_file` (default: `./app_env/images/to_be_voted_images.tsv`)
+2. Add new entries to the `to_be_voted_images_file` (default: `./app_env/images/to_be_voted_images.tsv`)
 
 3. Add new entries to the file. For example:
    ```tsv
@@ -31,10 +31,12 @@ Rscript dev_scripts/test_database_update.R
    chr7:7000	A	G	./app_env/images/pngs/example_new.png
    ```
 
-4. Wait approximately 5 seconds (the file watcher checks every 5 seconds)
+4. Login as an admin user and navigate to the Admin panel
 
-5. You should see:
-   - A notification in the app (for admin users): "Database updated: X new entries added"
+5. Click the "Update Database" button
+
+6. You should see:
+   - A modal dialog showing: "Successfully added X new entries to the database"
    - A console message: "Added X new entries to annotations table"
    - The new entries will be available for voting
 
