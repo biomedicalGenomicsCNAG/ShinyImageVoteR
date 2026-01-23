@@ -575,17 +575,36 @@ adminServer <- function(id, cfg, login_trigger, db_pool, tab_trigger = NULL) {
         conn <- pool::poolCheckout(db_pool)
         on.exit(pool::poolReturn(conn))
         
-        new_entries_count <- update_annotations_table(
+        update_summary <- update_annotations_table(
           conn,
           cfg$to_be_voted_images_file
         )
+
+        added_count <- if (is.list(update_summary)) {
+          update_summary$added %||% 0
+        } else {
+          update_summary
+        }
+        updated_count <- if (is.list(update_summary)) {
+          update_summary$updated %||% 0
+        } else {
+          0
+        }
+        removed_count <- if (is.list(update_summary)) {
+          update_summary$removed %||% 0
+        } else {
+          0
+        }
+        total_changes <- added_count + updated_count + removed_count
         
-        if (new_entries_count > 0) {
+        if (total_changes > 0) {
           shiny::showModal(shiny::modalDialog(
             title = "Database Updated",
             paste0(
-              "Successfully added ", new_entries_count, 
-              " new entries to the database."
+              "Update summary: ",
+              added_count, " added, ",
+              updated_count, " updated, ",
+              removed_count, " removed."
             ),
             easyClose = TRUE,
             footer = shiny::modalButton("Close")

@@ -165,7 +165,7 @@ populate_annotations_table <- function(
 #' @keywords internal
 #' @param conn Database connection object
 #' @param to_be_voted_images_file Character. Path to the file containing image annotations
-#' @return Integer. Number of new rows added
+#' @return List with counts: added, updated, removed
 update_annotations_table <- function(
   conn,
   to_be_voted_images_file
@@ -182,13 +182,27 @@ update_annotations_table <- function(
     stringsAsFactors = FALSE,
     colClasses = "character" # Otherwise the nucleotide T ends up as TRUE
   )
-  
+
+  # Normalize paths like in populate_annotations_table
+  if ("path" %in% names(annotations_df) && nrow(annotations_df) > 0) {
+    first_path <- annotations_df$path[1]
+    if (!is.na(first_path) && nzchar(first_path)) {
+      png_dir <- dirname(first_path)
+      parent_dir <- dirname(png_dir)
+      annotations_df$path <- gsub(
+        glue::glue("{parent_dir}/"),
+        "",
+        annotations_df$path
+      )
+    }
+  }
+
   # Get existing entries from the database
   existing_entries <- DBI::dbGetQuery(
     conn,
-    "SELECT coordinates, REF, ALT FROM annotations"
+    "SELECT rowid, coordinates, REF, ALT, path FROM annotations"
   )
-  
+
   # Create a unique key for comparison
   annotations_df$key <- paste(
     annotations_df$coordinates,
@@ -202,40 +216,96 @@ update_annotations_table <- function(
     existing_entries$ALT,
     sep = "|"
   )
-  
+
   # Find new entries
-  new_entries <- annotations_df[!annotations_df$key %in% existing_entries$key, ]
-  
-  if (nrow(new_entries) == 0) {
-    cat("No new entries found in to_be_voted_images_file\n")
-    return(0)
+  new_entries <- annotations_df[!annotations_df$key %in% existing_entries$key, , drop = FALSE]
+
+  # Find removed entries
+  removed_entries <- existing_entries[!existing_entries$key %in% annotations_df$key, , drop = FALSE]
+
+  # Find updated entries (compare common columns for matching keys)
+  common_keys <- intersect(annotations_df$key, existing_entries$key)
+  updated_entries <- annotations_df[0, , drop = FALSE]
+  update_cols <- character(0)
+
+  if (length(common_keys) > 0) {
+    ann_common <- annotations_df[match(common_keys, annotations_df$key), , drop = FALSE]
+    db_common <- existing_entries[match(common_keys, existing_entries$key), , drop = FALSE]
+
+    compare_cols <- intersect(names(ann_common), names(db_common))
+    compare_cols <- setdiff(compare_cols, c("rowid", "key"))
+    update_cols <- setdiff(compare_cols, c("coordinates", "REF", "ALT"))
+
+    if (length(compare_cols) > 0) {
+      rows_differ <- vapply(
+        seq_along(common_keys),
+        function(i) {
+          a <- ann_common[i, compare_cols, drop = FALSE]
+          b <- db_common[i, compare_cols, drop = FALSE]
+          any((is.na(a) != is.na(b)) | (!is.na(a) & !is.na(b) & as.character(a) != as.character(b)))
+        },
+        logical(1)
+      )
+      updated_entries <- ann_common[rows_differ, , drop = FALSE]
+    }
   }
-  
-  # Remove the temporary key column
-  new_entries$key <- NULL
-  
-  # Process paths like in populate_annotations_table
-  first_path <- new_entries$path[1]
-  png_dir <- dirname(first_path)
-  parent_dir <- dirname(png_dir)
-  
-  new_entries$path <- gsub(
-    glue::glue("{parent_dir}/"),
-    "",
-    new_entries$path
-  )
-  
+
   # Insert new data into the annotations table
-  DBI::dbWriteTable(
-    conn,
-    "annotations",
-    new_entries,
-    append = TRUE,
-    row.names = FALSE
-  )
-  
-  cat("Added", nrow(new_entries), "new entries to annotations table\n")
-  return(nrow(new_entries))
+  if (nrow(new_entries) > 0) {
+    new_entries$key <- NULL
+    DBI::dbWriteTable(
+      conn,
+      "annotations",
+      new_entries,
+      append = TRUE,
+      row.names = FALSE
+    )
+  }
+
+  # Update existing rows when values change (only non-key columns)
+  if (nrow(updated_entries) > 0 && length(update_cols) > 0) {
+    db_common <- existing_entries[match(updated_entries$key, existing_entries$key), , drop = FALSE]
+
+    for (i in seq_len(nrow(updated_entries))) {
+      set_clause <- paste(
+        paste0(DBI::dbQuoteIdentifier(conn, update_cols), " = ?"),
+        collapse = ", "
+      )
+      sql <- paste0("UPDATE annotations SET ", set_clause, " WHERE rowid = ?")
+      update_values <- as.list(updated_entries[i, update_cols, drop = FALSE])
+      update_values <- unname(update_values)
+      params <- c(update_values, list(db_common$rowid[i]))
+      DBI::dbExecute(conn, sql, params = params)
+    }
+  }
+
+  # Delete rows removed from the file
+  if (nrow(removed_entries) > 0) {
+    for (i in seq_len(nrow(removed_entries))) {
+      DBI::dbExecute(
+        conn,
+        "DELETE FROM annotations WHERE rowid = ?",
+        params = list(removed_entries$rowid[i])
+      )
+    }
+  }
+
+  added_count <- nrow(new_entries)
+  updated_count <- if (length(update_cols) > 0) nrow(updated_entries) else 0
+  removed_count <- nrow(removed_entries)
+
+  if (added_count == 0 && updated_count == 0 && removed_count == 0) {
+    cat("No changes found in to_be_voted_images_file\n")
+  } else {
+    cat(
+      "Annotations updated:",
+      added_count, "added,",
+      updated_count, "updated,",
+      removed_count, "removed\n"
+    )
+  }
+
+  return(list(added = added_count, updated = updated_count, removed = removed_count))
 }
 
 #' Populate the users table with data from grouped credentials (per-institute lists)

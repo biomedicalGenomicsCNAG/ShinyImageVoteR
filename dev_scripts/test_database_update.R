@@ -83,8 +83,13 @@ tryCatch({
   # Source the function if running outside of package
   source(system.file("shiny-app", "../R/db_utils.R", package = "ShinyImgVoteR"))
   
-  new_count <- update_annotations_table(conn, temp_file)
-  cat("Number of new entries added:", new_count, "\n\n")
+  update_summary <- update_annotations_table(conn, temp_file)
+  cat(
+    "Update summary:",
+    update_summary$added, "added,",
+    update_summary$updated, "updated,",
+    update_summary$removed, "removed\n\n"
+  )
   
   cat("Database state after update:\n")
   print(DBI::dbGetQuery(conn, "SELECT * FROM annotations"))

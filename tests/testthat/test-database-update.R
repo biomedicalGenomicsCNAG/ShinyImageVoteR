@@ -37,11 +37,13 @@ testthat::test_that("update_annotations_table adds only new entries", {
   on.exit(pool::poolReturn(conn), add = TRUE)
   
   # Test: No new entries when file contains same data as DB
-  new_count <- update_annotations_table(conn, temp_file)
+  update_summary <- update_annotations_table(conn, temp_file)
   
   # chr1:1000 and chr3:3000 already exist, chr2:2000 has different REF/ALT
   # So we should have 1 new entry (chr2:2000 with G->C)
-  testthat::expect_equal(new_count, 1)
+  testthat::expect_equal(update_summary$added, 1)
+  testthat::expect_equal(update_summary$updated, 0)
+  testthat::expect_equal(update_summary$removed, 0)
   
   # Add a new entry to the file
   updated_data <- rbind(
@@ -64,8 +66,10 @@ testthat::test_that("update_annotations_table adds only new entries", {
   )
   
   # Test: One new entry should be added
-  new_count <- update_annotations_table(conn, temp_file)
-  testthat::expect_equal(new_count, 1)
+  update_summary <- update_annotations_table(conn, temp_file)
+  testthat::expect_equal(update_summary$added, 1)
+  testthat::expect_equal(update_summary$updated, 0)
+  testthat::expect_equal(update_summary$removed, 0)
   
   # Verify the new entry was added
   result <- DBI::dbGetQuery(
@@ -77,8 +81,10 @@ testthat::test_that("update_annotations_table adds only new entries", {
   testthat::expect_equal(result$ALT, "G")
   
   # Test: No new entries when called again with the same file
-  new_count <- update_annotations_table(conn, temp_file)
-  testthat::expect_equal(new_count, 0)
+  update_summary <- update_annotations_table(conn, temp_file)
+  testthat::expect_equal(update_summary$added, 0)
+  testthat::expect_equal(update_summary$updated, 0)
+  testthat::expect_equal(update_summary$removed, 0)
   
   # Clean up
   poolClose(test_pool)
@@ -119,8 +125,10 @@ testthat::test_that("update_annotations_table handles duplicate coordinates with
   
   # The database already has chr2:2000 with (G->C) and (C->A)
   # So the new entries should be chr2:2000 with (T->C) and (A->G), plus chr5:5000
-  new_count <- update_annotations_table(conn, temp_file)
-  testthat::expect_equal(new_count, 3)
+  update_summary <- update_annotations_table(conn, temp_file)
+  testthat::expect_equal(update_summary$added, 3)
+  testthat::expect_equal(update_summary$updated, 0)
+  testthat::expect_equal(update_summary$removed, 0)
   
   # Verify all entries with chr2:2000
   result <- DBI::dbGetQuery(
@@ -182,8 +190,10 @@ testthat::test_that("update_annotations_table processes paths correctly", {
   on.exit(pool::poolReturn(conn), add = TRUE)
   
   # Add the entry
-  new_count <- update_annotations_table(conn, temp_file)
-  testthat::expect_equal(new_count, 1)
+  update_summary <- update_annotations_table(conn, temp_file)
+  testthat::expect_equal(update_summary$added, 1)
+  testthat::expect_equal(update_summary$updated, 0)
+  testthat::expect_equal(update_summary$removed, 0)
   
   # Verify the path was processed (parent directory removed)
   result <- DBI::dbGetQuery(
@@ -195,6 +205,59 @@ testthat::test_that("update_annotations_table processes paths correctly", {
   testthat::expect_true(grepl("images/test6.png", result$path))
   
   # Clean up
+  poolClose(test_pool)
+  unlink(mock_db$file)
+  unlink(temp_file)
+})
+
+testthat::test_that("update_annotations_table detects updates and removals", {
+  mock_db <- create_mock_db()
+  test_pool <- mock_db$pool
+
+  # Modify path for existing entry and remove one entry
+  updated_data <- data.frame(
+    coordinates = c("chr1:1000", "chr2:2000", "chr2:2000"),
+    REF = c("A", "G", "C"),
+    ALT = c("T", "C", "A"),
+    path = c(
+      "/test/images/updated_path1.png",
+      "/test/images/path2.png",
+      "/test/images/path2b.png"
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  temp_file <- tempfile(fileext = ".tsv")
+  write.table(
+    updated_data,
+    temp_file,
+    sep = "\t",
+    row.names = FALSE,
+    quote = FALSE
+  )
+
+  conn <- pool::poolCheckout(test_pool)
+  on.exit(pool::poolReturn(conn), add = TRUE)
+
+  update_summary <- update_annotations_table(conn, temp_file)
+
+  # One path updated (chr1:1000) and one row removed (chr3:3000)
+  testthat::expect_equal(update_summary$added, 0)
+  testthat::expect_equal(update_summary$updated, 1)
+  testthat::expect_equal(update_summary$removed, 1)
+
+  updated_row <- DBI::dbGetQuery(
+    test_pool,
+    "SELECT path FROM annotations WHERE coordinates = 'chr1:1000' AND REF = 'A' AND ALT = 'T'"
+  )
+  testthat::expect_true(grepl("updated_path1.png", updated_row$path))
+
+  removed_row <- DBI::dbGetQuery(
+    test_pool,
+    "SELECT * FROM annotations WHERE coordinates = 'chr3:3000' AND REF = 'AT' AND ALT = 'A'"
+  )
+  testthat::expect_equal(nrow(removed_row), 0)
+
   poolClose(test_pool)
   unlink(mock_db$file)
   unlink(temp_file)
