@@ -34,7 +34,7 @@ Rscript dev_scripts/test_database_update.R
 4. Wait approximately 5 seconds (the file watcher checks every 5 seconds)
 
 5. You should see:
-   - A notification in the app: "Database updated: X new entries added"
+   - A notification in the app (for admin users): "Database updated: X new entries added"
    - A console message: "Added X new entries to annotations table"
    - The new entries will be available for voting
 

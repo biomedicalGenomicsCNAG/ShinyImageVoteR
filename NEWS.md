@@ -23,7 +23,7 @@ ShinyImgVoteR 0.1.1 (Development)
   - The application now monitors changes to the to_be_voted_images_file (configured in config.yaml) every 5 seconds
   - When new entries are detected, they are automatically added to the database without requiring an app restart
   - Only new entries (based on unique combination of coordinates, REF, and ALT) are added to prevent duplicates
-  - Users are notified via a message when new entries are added
+  - Admin users are notified via a message when new entries are added
   - This feature allows for dynamic addition of new images to vote on while the application is running
 
 * Added fullscreen overlay 

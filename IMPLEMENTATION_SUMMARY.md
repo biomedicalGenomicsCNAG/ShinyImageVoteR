@@ -91,7 +91,7 @@ Comprehensive test suite covering:
 
 3. Within ~5 seconds:
    - Console shows: "Added 2 new entries to annotations table"
-   - Users see notification: "Database updated: 2 new entries added"
+   - Admin users see notification: "Database updated: 2 new entries added"
    - New images are available for voting
 
 ## Benefits

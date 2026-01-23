@@ -100,8 +100,8 @@
 - **Return**: Integer count of new entries added
 
 ### 3. User Notification (main_server.R)
-- **Success**: Shows message notification with count
-- **Error**: Shows error notification with error message
+- **Success**: Shows message notification with count (admin users only)
+- **Error**: Shows error notification with error message (admin users only)
 - **Duration**: 5 seconds for success, 10 seconds for errors
 
 ## Duplicate Prevention Strategy
@@ -122,12 +122,12 @@ Comparison: NO MATCH → Add (different mutation at same position)
 Try:
   ├─ Checkout DB connection from pool
   ├─ Call update_annotations_table()
-  ├─ Show success notification (if new entries)
+  ├─ Show success notification to admin users (if new entries)
   └─ Update total_images count
 
 Catch:
   ├─ Log error to console
-  ├─ Show error notification to users
+  ├─ Show error notification to admin users
   └─ Continue monitoring (don't crash)
 
 Finally:
@@ -148,7 +148,7 @@ Time    Action
 00:20   Check #3: mtime changed → trigger update
 00:20   Read file, compare with DB, find 3 new entries
 00:20   Insert 3 entries into DB
-00:20   Show notification: "Database updated: 3 new entries added"
+00:20   Show notification to admin users: "Database updated: 3 new entries added"
 00:20   Update total_images: 100 → 103
 00:25   Check #4: mtime unchanged → continue
 ...

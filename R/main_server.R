@@ -361,11 +361,14 @@ makeVotingAppServer <- function(db_pool, cfg) {
           )
 
           if (new_entries_count > 0) {
-            shiny::showNotification(
-              paste("Database updated:", new_entries_count, "new entries added"),
-              type = "message",
-              duration = 5
-            )
+            # Show notification only to admin users
+            if (!is.null(login_data()) && isTRUE(login_data()$admin == 1)) {
+              shiny::showNotification(
+                paste("Database updated:", new_entries_count, "new entries added"),
+                type = "message",
+                duration = 5
+              )
+            }
 
             # Update total_images count
             total_images <<- DBI::dbGetQuery(
@@ -376,11 +379,14 @@ makeVotingAppServer <- function(db_pool, cfg) {
           }
         }, error = function(e) {
           cat("Error updating annotations table:", conditionMessage(e), "\n")
-          shiny::showNotification(
-            paste("Error updating database:", conditionMessage(e)),
-            type = "error",
-            duration = 10
-          )
+          # Show error notification only to admin users
+          if (!is.null(login_data()) && isTRUE(login_data()$admin == 1)) {
+            shiny::showNotification(
+              paste("Error updating database:", conditionMessage(e)),
+              type = "error",
+              duration = 10
+            )
+          }
         })
       }
 

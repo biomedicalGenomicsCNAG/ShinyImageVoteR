@@ -50,7 +50,7 @@ The application monitors the `to_be_voted_images_file` (configured in `config.ya
 - Detected within 5 seconds
 - Added to the database without duplicates
 - Made available for voting immediately
-- Announced to users via a notification
+- Announced to admin users via a notification
 
 This allows administrators to add new images for voting without requiring users to restart their sessions.
 
@@ -62,7 +62,7 @@ This allows administrators to add new images for voting without requiring users 
    chr7:7000	A	G	./app_env/images/pngs/new_image.png
    ```
 3. Wait ~5 seconds
-4. See notification: "Database updated: 1 new entries added"
+4. Admin users will see notification: "Database updated: 1 new entries added"
 
 For more details, see [dev_scripts/README.md](dev_scripts/README.md).
 
