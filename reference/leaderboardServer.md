@@ -6,7 +6,7 @@ when navigating to the leaderboard tab.
 ## Usage
 
 ``` r
-leaderboardServer(id, cfg, login_trigger, tab_trigger = NULL)
+leaderboardServer(id, cfg, login_trigger, db_conn, tab_trigger = NULL)
 ```
 
 ## Arguments
@@ -18,6 +18,10 @@ leaderboardServer(id, cfg, login_trigger, tab_trigger = NULL)
 - login_trigger:
 
   Reactive that triggers when user logs in
+
+- db_conn:
+
+  A database pool or connection used to fetch institutes
 
 - tab_trigger:
 

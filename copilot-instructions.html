@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">ShinyImgVoteR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,22 +34,116 @@
 
 <div id="copilot-instructions" class="section level1">
 
+<p>This file provides guidance for GitHub Copilot when working with the B1MG Variant Voting Shiny application.</p>
 <div class="section level2">
-<h2 id="coding-conventions">Coding Conventions<a class="anchor" aria-label="anchor" href="#coding-conventions"></a></h2>
-<ul><li>Use Shiny modules consistently: both in one file UI (<code>&lt;module&gt;UI</code>) + server (<code>&lt;module&gt;Server</code>)</li>
-<li>Modules files named <code>mod_&lt;module&gt;.R</code>
-</li>
-<li>Indent code with 2 spaces</li>
+<h2 id="project-overview">Project Overview<a class="anchor" aria-label="anchor" href="#project-overview"></a></h2>
+<p>This is a sophisticated voting system designed for collaborative annotation of genetic mutations. It’s packaged as an R package (<code>ShinyImgVoteR</code>) that contains a Shiny application.</p>
+</div>
+<div class="section level2">
+<h2 id="project-structure">Project Structure<a class="anchor" aria-label="anchor" href="#project-structure"></a></h2>
+<ul><li>
+<code>/R/</code>: R package source code
+<ul><li>
+<code>mod_*.R</code>: Shiny modules for different functionalities (voting, leaderboard, login, user stats, about, FAQ, admin)</li>
+<li>
+<code>main_ui.R</code>, <code>main_server.R</code>: Main Shiny app UI and server logic</li>
+<li>
+<code>run_app.R</code>: Entry point to run the application</li>
+<li>
+<code>db_utils.R</code>: Database operations utilities</li>
+<li>
+<code>init_env.R</code>, <code>init_env_utils.R</code>: Environment initialization</li>
+<li>
+<code>load_config.R</code>: Configuration loading</li>
+<li>
+<code>voting_utils.R</code>, <code>logout_utils.R</code>, <code>admin_utils.R</code>: Utility functions</li>
+</ul></li>
+<li>
+<code>/inst/shiny-app/</code>: Shiny app resources bundled with the package
+<ul><li>
+<code>/default_env/</code>: Default environment configuration, images, and user data templates</li>
+<li>
+<code>/www/</code>: Static web resources (JavaScript, CSS)</li>
+</ul></li>
+<li>
+<code>/tests/testthat/</code>: Unit tests</li>
+<li>
+<code>/man/</code>: Package documentation (auto-generated)</li>
+<li>
+<code>app_env/</code>: External environment for development (config, user_data, images, server_data)</li>
 </ul></div>
 <div class="section level2">
-<h2 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h2>
+<h2 id="coding-conventions">Coding Conventions<a class="anchor" aria-label="anchor" href="#coding-conventions"></a></h2>
+<ul><li>Use Shiny modules consistently: both UI and server in one file
+<ul><li>UI function: <code>&lt;module&gt;UI</code> (e.g., <code>votingUI</code>)</li>
+<li>Server function: <code>&lt;module&gt;Server</code> (e.g., <code>votingServer</code>)</li>
+</ul></li>
+<li>Module files named <code>mod_&lt;module&gt;.R</code> (e.g., <code>mod_voting.R</code>)</li>
+<li>Indent code with 2 spaces</li>
+<li>Use roxygen2 comments for function documentation</li>
+<li>Follow R package development best practices</li>
+</ul></div>
+<div class="section level2">
+<h2 id="architecture--flow">Architecture &amp; Flow<a class="anchor" aria-label="anchor" href="#architecture--flow"></a></h2>
 <ul><li>Use <code>testthat</code> for unit tests</li>
 <li>Use <code>testServer</code> for testing Shiny modules</li>
-<li>To run all tests, use <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code>
+<li>To run all tests: <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code>
 </li>
 <li>Ensure tests are placed in <code>tests/testthat/</code>
 </li>
-<li>To get test coverage, use `covr::package_coverage()</li>
+<li>To get test coverage: <code><a href="http://covr.r-lib.org/reference/package_coverage.html" class="external-link">covr::package_coverage()</a></code>
+</li>
+<li>Helper files in <code>tests/testthat/</code> start with <code>helper-</code> (e.g., <code>helper-db.R</code>)</li>
+</ul></div>
+<div class="section level2">
+<h2 id="build-and-development">Build and Development<a class="anchor" aria-label="anchor" href="#build-and-development"></a></h2>
+<ul><li>Build the package: <code>make build</code> or <code>R CMD build .</code>
+</li>
+<li>Install the package: <code>make install</code> or <code>R CMD INSTALL ShinyImgVoteR_*.tar.gz</code>
+</li>
+<li>Run the app: <code>make run</code> or <code>R -e "ShinyImgVoteR::run_app()"</code>
+</li>
+<li>Check package: <code>make check</code> or <code>R CMD check ShinyImgVoteR_*.tar.gz</code>
+</li>
+<li>Generate documentation: <code><a href="https://devtools.r-lib.org/reference/document.html" class="external-link">devtools::document()</a></code>
+</li>
+<li>Setup development environment: <code>make setup-dev</code>
+</li>
+</ul></div>
+<div class="section level2">
+<h2 id="configuration">Configuration<a class="anchor" aria-label="anchor" href="#configuration"></a></h2>
+<ul><li>Configuration file: <code>app_env/config/config.yaml</code> (or specified via <code>IMGVOTER_CONFIG_FILE_PATH</code>)</li>
+<li>Environment variables:
+<ul><li>
+<code>IMGVOTER_BASE_DIR</code>: Base directory for the application</li>
+<li>
+<code>IMGVOTER_CONFIG_FILE_PATH</code>: Path to config file</li>
+<li>
+<code>IMGVOTER_IMAGES_DIR</code>: Directory containing mutation images</li>
+</ul></li>
+</ul></div>
+<div class="section level2">
+<h2 id="key-workflows">Key Workflows<a class="anchor" aria-label="anchor" href="#key-workflows"></a></h2>
+<ol style="list-style-type: decimal"><li>
+<strong>Development</strong>: <code>make dev</code> - document, build, install, test</li>
+<li>
+<strong>CI/CD simulation</strong>: <code>make ci</code> - deps, document, build, check, test, coverage</li>
+<li>
+<strong>Run application</strong>: First <code>make setup-userdata</code>, then <code>make run</code>
+</li>
+</ol></div>
+<div class="section level2">
+<h2 id="database">Database<a class="anchor" aria-label="anchor" href="#database"></a></h2>
+<ul><li>Uses SQLite for storing annotations and vote counts</li>
+<li>Database utilities in <code>R/db_utils.R</code>
+</li>
+<li>Database schema includes: coordinates, vote counts (yes/no/diff_var/not_confident), vartype, etc.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="important-notes">Important Notes<a class="anchor" aria-label="anchor" href="#important-notes"></a></h2>
+<ul><li>The app is designed as an R package for better testing and deployment</li>
+<li>External data (user_data, images, config) lives outside the package in <code>app_env/</code>
+</li>
 </ul></div>
 </div>
 

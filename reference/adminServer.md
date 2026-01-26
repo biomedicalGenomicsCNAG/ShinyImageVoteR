@@ -1,7 +1,8 @@
 # Admin module server
 
-Shows password retrieval tokens for users who have not accessed their
-retrieval link and allows admins to add new users.
+Shows password retrieval tokens for users, allows admins to add new
+users, enables downloading user annotations, and provides functionality
+to reset user annotations.
 
 ## Usage
 

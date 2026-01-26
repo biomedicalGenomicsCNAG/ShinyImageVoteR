@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ShinyImgVoteR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,10 +33,64 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.2" id="shinyimgvoter-012-development">ShinyImgVoteR 0.1.2 (Development)<a class="anchor" aria-label="anchor" href="#shinyimgvoter-012-development"></a></h2>
+<div class="section level3">
+<h3 id="features-0-1-2">Features<a class="anchor" aria-label="anchor" href="#features-0-1-2"></a></h3>
+<ul><li>Added on-demand database update (of the annotations table) for admin users
+<ul><li>Admin users can update the database by clicking the “Update Database” button in the admin panel</li>
+<li>When clicked, the system reads the to_be_voted_images_file (configured in config.yaml) and updates the database annotations table accordingly</li>
+<li>Admin users receive immediate feedback via a modal dialog showing counts for added/updated/removed rows</li>
+<li>Missing image paths in newly added or updated rows show a error message in the modal dialog</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.1" id="shinyimgvoter-011">ShinyImgVoteR 0.1.1<a class="anchor" aria-label="anchor" href="#shinyimgvoter-011"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-1-1">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-1"></a></h3>
+<ul><li>Fixed database query logic to handle duplicate coordinates with different REF/ALT alleles
+<ul><li>Updated <code><a href="../reference/query_annotations_db_by_coord.html">query_annotations_db_by_coord()</a></code> to accept REF and ALT parameters</li>
+<li>Added configurable query keys via <code>db_query_keys</code> in config.yaml</li>
+<li>Updated all database UPDATE queries to include REF and ALT in WHERE clauses</li>
+<li>Added REF and ALT to user annotations file for proper variant identification</li>
+<li>Updated test suite to verify querying with duplicate coordinates works correctly</li>
+</ul></li>
+<li>Fixed not working folder creation when new users are added via the user creation admin table
+<ul><li>Added a create_user_directory function inside a tryCatch block logging errors</li>
+</ul></li>
+<li>Fixed leaderboard not showing all groups
+<ul><li>Before the leaderboard was populated based on the institutes2userids2passwords file, now the institutes are fetched from the database</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="features-0-1-1">Features<a class="anchor" aria-label="anchor" href="#features-0-1-1"></a></h3>
+<ul><li>Added fullscreen overlay
+<ul><li>Can be toggled via the ⛶ button in the top-left corner of the screenshot area or via double-clicking the screenshot</li>
+<li>In fullscreen mode, the screenshot area expands to fill the entire browser window it can be closed by clicking the “Exit Fullscreen” button in the top-right corner or via the “Esc” key on the keyboard</li>
+<li>Note, in the fullscreen overlay pan/zoom functionalities and the voting/navigation hotkeys are disabled</li>
+</ul></li>
+<li>Added configurable maximum matching votes per screenshot across all users
+<ul><li>It can be set via <code>voting_options_max_matching_votes</code> in config.yaml</li>
+<li>Default is 3 votes for each option if not specified</li>
+<li>If maximum matching votes reached for a screenshot, it will be skipped for future users</li>
+<li>Skipped screenshots are logged in user annotations file with reason “skipped - max matching votes (x) for option (y) reached” in the agreement column</li>
+</ul></li>
+<li>Enhanced the leaderboard
+<ul><li>Added the columns “skipped images” and “unique_images_voted”</li>
+<li>Admins can expand institutes to see per-user voted/skipped image counts</li>
+</ul></li>
+<li>Enhanced user creation admin table
+<ul><li>Table no longer only serves the purpose of showing the users which have not yet accessed their password retrieval link but now shows all users</li>
+<li>Added action button to reset all the annotations of a user</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="shinyimgvoter-010">ShinyImgVoteR 0.1.0<a class="anchor" aria-label="anchor" href="#shinyimgvoter-010"></a></h2>
 <p>Initial version.</p>
 </div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

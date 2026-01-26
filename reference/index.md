@@ -15,6 +15,8 @@
   subpaths
 - [`create_database()`](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/create_database.md)
   : Initialize SQLite database
+- [`create_user_directory()`](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/create_user_directory.md)
+  : Create user directory structure
 - [`faqServer()`](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/faqServer.md)
   : FAQ module server logic
 - [`faqUI()`](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/faqUI.md)
@@ -39,9 +41,12 @@
   : Factory function to create the Shiny server for the voting
   application
 - [`query_annotations_db_by_coord()`](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/query_annotations_db_by_coord.md)
-  : Query annotations table by coordinates This function queries the
-  annotations table for a given set of coordinates, returning only the
-  specified columns.
+  : Query annotations table by coordinates and optionally REF/ALT This
+  function queries the annotations table for a given set of coordinates,
+  returning only the specified columns. Optionally filters by REF and
+  ALT to handle cases where coordinates alone are not unique.
+- [`reset_user_annotations()`](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/reset_user_annotations.md)
+  : Reset user annotation file and update database vote counts
 - [`run_voting_app()`](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/run_voting_app.md)
   : Run B1MG Variant Voting Shiny Application
 - [`safe_dir_create()`](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/safe_dir_create.md)

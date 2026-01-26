@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ShinyImgVoteR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,6 +82,13 @@
 
         </dt>
         <dd>Initialize SQLite database</dd>
+
+        <dt>
+
+          <code><a href="create_user_directory.html">create_user_directory()</a></code>
+
+        </dt>
+        <dd>Create user directory structure</dd>
 
         <dt>
 
@@ -165,7 +172,14 @@
           <code><a href="query_annotations_db_by_coord.html">query_annotations_db_by_coord()</a></code>
 
         </dt>
-        <dd>Query annotations table by coordinates This function queries the annotations table for a given set of coordinates, returning only the specified columns.</dd>
+        <dd>Query annotations table by coordinates and optionally REF/ALT This function queries the annotations table for a given set of coordinates, returning only the specified columns. Optionally filters by REF and ALT to handle cases where coordinates alone are not unique.</dd>
+
+        <dt>
+
+          <code><a href="reset_user_annotations.html">reset_user_annotations()</a></code>
+
+        </dt>
+        <dd>Reset user annotation file and update database vote counts</dd>
 
         <dt>
 

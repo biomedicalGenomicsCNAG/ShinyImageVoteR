@@ -1,7 +1,10 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/404.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/AGENTS.html</loc></url>
+<url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/FEATURE_FLOW.html</loc></url>
+<url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/IMPLEMENTATION_SUMMARY.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/LICENSE-text.html</loc></url>
+<url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/TESTING_CHECKLIST.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/articles/00-vignettes.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/articles/01-introduction.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/articles/02-setup.html</loc></url>
@@ -21,6 +24,7 @@
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/color_seq.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/copy_dir_from_app.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/create_database.html</loc></url>
+<url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/create_user_directory.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/ensure_gitignore.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/faqServer.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/faqUI.html</loc></url>
@@ -39,9 +43,11 @@
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/populate_annotations_table.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/populate_users_table.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/query_annotations_db_by_coord.html</loc></url>
+<url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/reset_user_annotations.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/retrieve_password_from_link.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/run_voting_app.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/safe_dir_create.html</loc></url>
+<url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/update_annotations_table.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/userStatsServer.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/userstatsUI.html</loc></url>
 <url><loc>https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/reference/validate_cols.html</loc></url>

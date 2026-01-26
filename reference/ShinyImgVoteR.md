@@ -10,6 +10,12 @@ user interface components.
 
   Launch the main Shiny application
 
+## See also
+
+Useful links:
+
+- <https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/>
+
 ## Author
 
 **Maintainer**: Ivo Christopher Leist <ivo.leist@cnag.eu>

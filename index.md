@@ -1,12 +1,29 @@
-# Shiny IMGVOTER (B1MG Voting App)
+# ShinyImgVoteR
 
-Sophisticated voting system designed for collaborative annotation of
-genetic mutations, with features for tracking user behavior, handling
-vote changes, and maintaining data integrity across multiple users.
+Is an open-source R Shiny image voting application initially developed
+for collaborative reviewing of mutation calls from sequencing data in
+the course of the [Beyond 1 Million Genomes (B1MG)
+project](https://b1mg-project.eu). Refer to [ShinyImgVoteR’s role in the
+B1MG
+project](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/doc/01-introduction.md)
+for more context.
 
-Voting application that allows users to vote on different B1MG
-mutations. Users get presented a randomly picked image of a B1MG
-mutation and can vote for it.
+## Overview
+
+The application enables users to vote on any set of images with features
+for tracking user behavior (e.g. average time before casting a vote),
+handling vote changes by allowing users to update their previous votes,
+and supporting keyboard shortcuts for efficient voting.
+
+Users get presented a randomly picked image, as for instance an IGV
+(Integrative Genomics Viewer) screenshot displaying a genetic mutation,
+and can express their opinion on the shown mutation using predefined
+categories, confirming or rejecting its validity, proposing that there
+is a different mutation at the same location.
+
+such as “True Positive”, “False Positive”, or “Uncertain”. Votes are
+stored in a TSV file per user, and an SQLite database maintains
+aggregated vote counts for each mutation.
 
 FLOW:
 
@@ -32,9 +49,34 @@ R -e "ShinyImgVoteR::run_app()"
 
 2.  Navigate to <http://localhost:8000>
 
+## Features
+
+### Dynamic Database Updates
+
+The application provides an admin button to manually update the database
+with new entries from the `to_be_voted_images_file` (configured in
+`config.yaml`). When the “Update Database” button is clicked in the
+Admin panel: - The system reads the to_be_voted_images_file - New
+entries are identified and added to the database without duplicates -
+New images become available for voting immediately - Admin users receive
+feedback on the number of entries added
+
+This allows administrators to add new images for voting without
+requiring users to restart their sessions.
+
+**Example:** 1. Start the application 2. Add new entries to
+`./app_env/images/to_be_voted_images.tsv`:
+`tsv coordinates REF ALT path chr7:7000 A G ./app_env/images/pngs/new_image.png`
+3. Login as an admin user 4. Navigate to the Admin panel 5. Click the
+“Update Database” button 6. See confirmation: “Successfully added 1 new
+entries to the database”
+
+For more details, see
+[dev_scripts/README.md](https://biomedicalgenomicscnag.github.io/ShinyImageVoteR/dev_scripts/README.md).
+
 ### AUTHOR
 
-Written by Ivo Christopher Leist, PhD student at CNAG
+Written by Ivo Christopher Leist, PhD Candidate at CNAG
 <https://www.cnag.eu>.
 
 ### COPYRIGHT AND LICENSE

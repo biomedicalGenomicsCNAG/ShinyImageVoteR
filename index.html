@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">ShinyImgVoteR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,10 +47,15 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="shiny-imgvoter-b1mg-voting-app">Shiny IMGVOTER (B1MG Voting App)<a class="anchor" aria-label="anchor" href="#shiny-imgvoter-b1mg-voting-app"></a>
+<div class="page-header"><h1 id="shinyimgvoter">ShinyImgVoteR<a class="anchor" aria-label="anchor" href="#shinyimgvoter"></a>
 </h1></div>
-<p>Sophisticated voting system designed for collaborative annotation of genetic mutations, with features for tracking user behavior, handling vote changes, and maintaining data integrity across multiple users.</p>
-<p>Voting application that allows users to vote on different B1MG mutations. Users get presented a randomly picked image of a B1MG mutation and can vote for it.</p>
+<p>Is an open-source R Shiny image voting application initially developed for collaborative reviewing of mutation calls from sequencing data in the course of the <a href="https://b1mg-project.eu" class="external-link">Beyond 1 Million Genomes (B1MG) project</a>. Refer to <a href="doc/01-introduction.html">ShinyImgVoteR’s role in the B1MG project</a> for more context.</p>
+<div class="section level2">
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h2>
+<p>The application enables users to vote on any set of images with features for tracking user behavior (e.g. average time before casting a vote), handling vote changes by allowing users to update their previous votes, and supporting keyboard shortcuts for efficient voting.</p>
+<p>Users get presented a randomly picked image, as for instance an IGV (Integrative Genomics Viewer) screenshot displaying a genetic mutation, and can express their opinion on the shown mutation using predefined categories, confirming or rejecting its validity, proposing that there is a different mutation at the same location.</p>
+<p>such as “True Positive”, “False Positive”, or “Uncertain”. Votes are stored in a TSV file per user, and an SQLite database maintains aggregated vote counts for each mutation.</p>
 <p>FLOW:</p>
 <ul>
 <li>User logs in → triggers mutation loading</li>
@@ -60,7 +65,9 @@
 <li>Next mutation loaded automatically</li>
 <li>Process repeats until all mutations voted on</li>
 </ul>
-<!-- [![](docs/ui.gif)](docs/ui.gif) --><div class="section level2">
+<!-- [![](docs/ui.gif)](docs/ui.gif) -->
+</div>
+<div class="section level2">
 <h2 id="development-prerequisites">Development Prerequisites<a class="anchor" aria-label="anchor" href="#development-prerequisites"></a>
 </h2>
 <ul>
@@ -79,10 +86,22 @@
 <li>Navigate to <a href="http://localhost:8000" class="external-link uri">http://localhost:8000</a>
 </li>
 </ol>
+</div>
+<div class="section level2">
+<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+</h2>
+<div class="section level3">
+<h3 id="dynamic-database-updates">Dynamic Database Updates<a class="anchor" aria-label="anchor" href="#dynamic-database-updates"></a>
+</h3>
+<p>The application provides an admin button to manually update the database with new entries from the <code>to_be_voted_images_file</code> (configured in <code>config.yaml</code>). When the “Update Database” button is clicked in the Admin panel: - The system reads the to_be_voted_images_file - New entries are identified and added to the database without duplicates - New images become available for voting immediately - Admin users receive feedback on the number of entries added</p>
+<p>This allows administrators to add new images for voting without requiring users to restart their sessions.</p>
+<p><strong>Example:</strong> 1. Start the application 2. Add new entries to <code>./app_env/images/to_be_voted_images.tsv</code>: <code>tsv    coordinates  REF ALT path    chr7:7000    A   G   ./app_env/images/pngs/new_image.png</code> 3. Login as an admin user 4. Navigate to the Admin panel 5. Click the “Update Database” button 6. See confirmation: “Successfully added 1 new entries to the database”</p>
+<p>For more details, see <a href="dev_scripts/README.html">dev_scripts/README.md</a>.</p>
+</div>
 <div class="section level3">
 <h3 id="author">AUTHOR<a class="anchor" aria-label="anchor" href="#author"></a>
 </h3>
-<p>Written by Ivo Christopher Leist, PhD student at CNAG <a href="https://www.cnag.eu" class="external-link">https://www.cnag.eu</a>.</p>
+<p>Written by Ivo Christopher Leist, PhD Candidate at CNAG <a href="https://www.cnag.eu" class="external-link">https://www.cnag.eu</a>.</p>
 </div>
 <div class="section level3">
 <h3 id="copyright-and-license">COPYRIGHT AND LICENSE<a class="anchor" aria-label="anchor" href="#copyright-and-license"></a>

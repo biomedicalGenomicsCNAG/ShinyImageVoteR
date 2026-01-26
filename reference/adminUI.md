@@ -1,7 +1,7 @@
 # Admin module UI
 
-Displays password retrieval tokens for users who have not retrieved
-their password yet and allows admins to add new users.
+Displays password retrieval tokens for users and allows admins to add
+new users, download user annotations, and reset user annotations.
 
 ## Usage
 

@@ -1,3 +1,31 @@
 # 02. Setup
 
 ## Setup
+
+To install the package and its dependencies, use the reproducible
+environment provided by **renv**:
+
+``` r
+# Install renv if not already installed
+install.packages("renv")
+
+# Restore the package library as specified in renv.lock
+renv::restore()
+```
+
+After restoring, configure the application by editing the `config.yaml`
+file located in `app_env/config/`. Typical settings include paths to the
+images directory and the SQLite database. Set the base directory
+environment variable before launching:
+
+``` r
+Sys.setenv(IMGVOTER_BASE_DIR = getwd())
+```
+
+Then load the configuration:
+
+``` r
+config_file_path <- file.path(get_app_dir(), "default_env", "config", "config.yaml")
+cfg <- load_config(config_file_path)
+init_environment(config_file_path)
+```
