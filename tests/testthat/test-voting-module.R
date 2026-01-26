@@ -919,7 +919,8 @@ testthat::test_that("options in voting_options_max_matching_votes ARE skipped wh
   # Set vote_count_correct to the max limit
   DBI::dbExecute(
     args$db_pool,
-    paste0("UPDATE annotations SET vote_count_correct = ", max_yes_votes, " WHERE coordinates = 'chr1:1000'")
+    "UPDATE annotations SET vote_count_correct = ? WHERE coordinates = ?",
+    params = list(max_yes_votes, "chr1:1000")
   )
 
   # Verify the vote count was set correctly
@@ -956,6 +957,7 @@ testthat::test_that("options in voting_options_max_matching_votes ARE skipped wh
         stringsAsFactors = FALSE
       )
       chr1_row <- annotations[annotations$coordinates == "chr1:1000", ]
+      # Expected format matches the skip_reason in mod_voting.R lines 755-760
       expected_skip_reason <- paste0(
         "skipped - max matching votes (",
         max_yes_votes,
