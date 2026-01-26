@@ -833,13 +833,15 @@ testthat::test_that("options not in voting_options_max_matching_votes are never 
   # it should NOT be skipped regardless of vote count
   DBI::dbExecute(
     args$db_pool,
-    "UPDATE annotations SET vote_count_none_of_above = 10 WHERE coordinates = 'chr1:1000'"
+    "UPDATE annotations SET vote_count_none_of_above = ? WHERE coordinates = ?",
+    params = list(10, "chr1:1000")
   )
 
   # Verify the vote count was set correctly
   chr1_votes <- DBI::dbGetQuery(
     args$db_pool, 
-    "SELECT vote_count_none_of_above FROM annotations WHERE coordinates = 'chr1:1000'"
+    "SELECT vote_count_none_of_above FROM annotations WHERE coordinates = ?",
+    params = list("chr1:1000")
   )
   testthat::expect_equal(chr1_votes$vote_count_none_of_above, 10)
 
@@ -926,7 +928,8 @@ testthat::test_that("options in voting_options_max_matching_votes ARE skipped wh
   # Verify the vote count was set correctly
   chr1_votes <- DBI::dbGetQuery(
     args$db_pool, 
-    "SELECT vote_count_correct FROM annotations WHERE coordinates = 'chr1:1000'"
+    "SELECT vote_count_correct FROM annotations WHERE coordinates = ?",
+    params = list("chr1:1000")
   )
   testthat::expect_equal(chr1_votes$vote_count_correct, max_yes_votes)
 
