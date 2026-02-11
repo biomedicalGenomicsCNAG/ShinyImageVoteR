@@ -89,7 +89,7 @@ Setup
 - Create a .ssh directory for the backup user
    sudo mkdir -p /home/backup_ro/.ssh
 - Copy the template file backup_source/_authorized_keys to /home/backup_ro/.ssh/authorized_keys and replace <BACKUP_TARGET_IP> with the IP address of the backup target (HPC login node) and <BACKUP_SOURCE_PATH> with the path you want to back up (e.g. /srv/shiny-server/b1mg-mutation-voter-beta/app_env/).
-  > [!TIP]
+> [!TIP]
   > To get the IP address of the backup target, put a random IP after `from=`,
   > then try to SSH from the backup target to the backup source using the `denbi` host entry.
   > Check the `auth.log` on the backup source. You should see a message like:
