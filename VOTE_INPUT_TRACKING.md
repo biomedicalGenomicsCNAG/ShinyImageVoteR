@@ -17,8 +17,11 @@ When a user presses a hotkey (1, 2, 3, 4 for radio buttons or a, s, d, f for che
 
 #### Mouse Click Detection
 When a user clicks on a radio button or checkbox:
+- The click is verified to be within the voting questions div (same validation as hotkeys)
 - The input element is marked with `dataset.inputMethod = "mouse"`
 - `Shiny.setInputValue("voting-last_input_method", "mouse")` sends this information to R
+
+**Note**: This validation prevents accidental tracking of clicks on other inputs with the same names elsewhere in the application.
 
 ### 2. R Server Changes
 
@@ -31,20 +34,25 @@ When a user logs in, their `user_info.json` file is initialized with:
   "images_randomisation_seed": 12345,
   "vote_input_methods": {
     "hotkey_count": 0,
-    "mouse_count": 0
+    "mouse_count": 0,
+    "unknown_count": 0
   }
 }
 ```
 
+**Note**: The `unknown_count` field tracks cases where the input method couldn't be determined, which helps identify potential issues with the tracking mechanism.
+
 #### Vote Tracking (mod_voting.R)
 When a user casts a **new vote** (not a vote change):
 1. The input method is read from `input$last_input_method`
-2. If not set, defaults to "mouse"
+2. If not set, it's marked as "unknown" (with a warning logged)
 3. The `user_info.json` file is read
-4. The appropriate counter (`hotkey_count` or `mouse_count`) is incremented
+4. The appropriate counter (`hotkey_count`, `mouse_count`, or `unknown_count`) is incremented
 5. The updated info is written back to `user_info.json`
 
-**Note**: Vote changes are not tracked to avoid skewing the data. We only track initial votes.
+**Note**: 
+- Vote changes are not tracked to avoid skewing the data. We only track initial votes.
+- Using "unknown" instead of defaulting to "mouse" ensures accurate data and helps identify tracking issues.
 
 ## Data Analysis
 
@@ -86,10 +94,13 @@ Example:
   "images_randomisation_seed": 67890,
   "vote_input_methods": {
     "hotkey_count": 12,
-    "mouse_count": 5
+    "mouse_count": 5,
+    "unknown_count": 0
   }
 }
 ```
+
+**Note**: If `unknown_count` is greater than 0, it indicates potential issues with the tracking mechanism that should be investigated.
 
 ## Future Enhancements
 

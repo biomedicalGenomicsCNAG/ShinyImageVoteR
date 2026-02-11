@@ -182,7 +182,8 @@ makeVotingAppServer <- function(db_pool, cfg) {
         images_randomisation_seed = seed,
         vote_input_methods = list(
           hotkey_count = 0,
-          mouse_count = 0
+          mouse_count = 0,
+          unknown_count = 0
         )
       )
 

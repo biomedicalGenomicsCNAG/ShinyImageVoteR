@@ -439,17 +439,19 @@ votingServer <- function(
         if (file.exists(user_info_file)) {
           user_info <- jsonlite::read_json(user_info_file)
           
-          # Get the input method (default to "mouse" if not set)
+          # Get the input method (default to "unknown" if not set to avoid misattribution)
           input_method <- input$last_input_method
           if (is.null(input_method) || input_method == "") {
-            input_method <- "mouse"
+            input_method <- "unknown"
+            print("Warning: Input method not captured, using 'unknown'")
           }
           
           # Initialize vote_input_methods if it doesn't exist
           if (is.null(user_info$vote_input_methods)) {
             user_info$vote_input_methods <- list(
               hotkey_count = 0,
-              mouse_count = 0
+              mouse_count = 0,
+              unknown_count = 0
             )
           }
           
@@ -457,9 +459,16 @@ votingServer <- function(
           if (input_method == "hotkey") {
             user_info$vote_input_methods$hotkey_count <- 
               user_info$vote_input_methods$hotkey_count + 1
-          } else {
+          } else if (input_method == "mouse") {
             user_info$vote_input_methods$mouse_count <- 
               user_info$vote_input_methods$mouse_count + 1
+          } else {
+            # Track unknown cases for debugging
+            if (is.null(user_info$vote_input_methods$unknown_count)) {
+              user_info$vote_input_methods$unknown_count <- 0
+            }
+            user_info$vote_input_methods$unknown_count <- 
+              user_info$vote_input_methods$unknown_count + 1
           }
           
           # Write updated user_info back to file
