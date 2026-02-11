@@ -5,6 +5,15 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  // disable hotkeys when fullscreen overlay is shown
+  const fullscreenOverlay = document.getElementById("fullscreen-overlay");
+  if (fullscreenOverlay) {
+    const overlayDisplay = window.getComputedStyle(fullscreenOverlay).display;
+    if (overlayDisplay !== "none") {
+      return;
+    }
+  }
+
   console.log("Key pressed:", e.key);
   // ——— special buttons ———
   if (e.key === "Enter") {
@@ -83,7 +92,29 @@ document.addEventListener("keydown", (e) => {
     if (!input) return;
 
     input.checked = toggle ? !input.checked : true;
+    // Mark this input as triggered via hotkey
+    input.dataset.inputMethod = "hotkey";
+    // Send to Shiny for tracking
+    if (window.Shiny) {
+      Shiny.setInputValue("voting-last_input_method", "hotkey", { priority: "event" });
+    }
     input.dispatchEvent(new Event("change", { bubbles: true }));
     return;
+  }
+});
+
+// Mark mouse clicks on voting inputs
+document.addEventListener("click", (e) => {
+  const target = e.target;
+  // Check if click is on a radio button or checkbox in voting groups
+  if (target.type === "radio" || target.type === "checkbox") {
+    if (target.name === "voting-agreement" || target.name === "voting-observation") {
+      // Mark this input as triggered via mouse
+      target.dataset.inputMethod = "mouse";
+      // Send to Shiny for tracking
+      if (window.Shiny) {
+        Shiny.setInputValue("voting-last_input_method", "mouse", { priority: "event" });
+      }
+    }
   }
 });
