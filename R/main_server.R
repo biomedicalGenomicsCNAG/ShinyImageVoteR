@@ -179,7 +179,11 @@ makeVotingAppServer <- function(db_pool, cfg) {
       user_info <- list(
         user_id = user_id,
         voting_institute = voting_institute,
-        images_randomisation_seed = seed
+        images_randomisation_seed = seed,
+        vote_input_methods = list(
+          hotkey_count = 0,
+          mouse_count = 0
+        )
       )
 
       session$userData$sessionInfo <- list(

@@ -433,6 +433,45 @@ votingServer <- function(
         quote = FALSE
       )
 
+      # Update user_info.json with input method tracking
+      if (!already_voted) {
+        user_info_file <- session$userData$userInfoFile
+        if (file.exists(user_info_file)) {
+          user_info <- jsonlite::read_json(user_info_file)
+          
+          # Get the input method (default to "mouse" if not set)
+          input_method <- input$last_input_method
+          if (is.null(input_method) || input_method == "") {
+            input_method <- "mouse"
+          }
+          
+          # Initialize vote_input_methods if it doesn't exist
+          if (is.null(user_info$vote_input_methods)) {
+            user_info$vote_input_methods <- list(
+              hotkey_count = 0,
+              mouse_count = 0
+            )
+          }
+          
+          # Update the count based on input method
+          if (input_method == "hotkey") {
+            user_info$vote_input_methods$hotkey_count <- 
+              user_info$vote_input_methods$hotkey_count + 1
+          } else {
+            user_info$vote_input_methods$mouse_count <- 
+              user_info$vote_input_methods$mouse_count + 1
+          }
+          
+          # Write updated user_info back to file
+          jsonlite::write_json(
+            user_info,
+            user_info_file,
+            auto_unbox = TRUE,
+            pretty = TRUE
+          )
+        }
+      }
+
       if (
         already_voted &&
           previous_agreement != input$agreement
