@@ -443,7 +443,7 @@ votingServer <- function(
           input_method <- input$last_input_method
           if (is.null(input_method) || input_method == "") {
             input_method <- "unknown"
-            print("Warning: Input method not captured, using 'unknown'")
+            warning("Input method not captured for vote, using 'unknown'")
           }
           
           # Initialize vote_input_methods if it doesn't exist

@@ -5,7 +5,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // disable hotkeys when fullscreen overlay is shown
+  // Disable hotkeys when fullscreen overlay is shown
   const fullscreenOverlay = document.getElementById("fullscreen-overlay");
   if (fullscreenOverlay) {
     const overlayDisplay = window.getComputedStyle(fullscreenOverlay).display;
