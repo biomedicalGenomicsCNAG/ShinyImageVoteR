@@ -85,9 +85,9 @@ Setup
 ### Setup on the backup source (the denbi VM)
 - Install rsync
 - Create the read-only backup user:
-   sudo useradd --system --shell /usr/sbin/nologin backup_ro
+   `sudo useradd --system --shell /usr/sbin/nologin backup_ro`
 - Create a .ssh directory for the backup user
-   sudo mkdir -p /home/backup_ro/.ssh
+   `sudo mkdir -p /home/backup_ro/.ssh`
 - Copy the template file backup_source/_authorized_keys to /home/backup_ro/.ssh/authorized_keys and replace <BACKUP_TARGET_IP> with the IP address of the backup target (HPC login node) and <BACKUP_SOURCE_PATH> with the path you want to back up (e.g. /srv/shiny-server/b1mg-mutation-voter-beta/app_env/).
 > [!TIP]
   > To get the IP address of the backup target, put a random IP after `from=`,
