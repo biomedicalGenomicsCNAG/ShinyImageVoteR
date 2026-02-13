@@ -31,7 +31,7 @@ What gets backed up
 -------------------
 The rsync source is the remote host alias "denbi" with a source path of "/".
 On the server side, rrsync is locked to the app environment folder, so the
-effective backup scope is the app_env data (users, server_data, config, images).
+effective backup scope is the app_env data (user_data, server_data, config, images).
 
 In this folder
 --------------------
