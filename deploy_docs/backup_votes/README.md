@@ -31,7 +31,7 @@ What gets backed up
 -------------------
 The rsync source is the remote host alias "denbi" with a source path of "/".
 On the server side, rrsync is locked to the app environment folder, so the
-effective backup scope is the app_env data (users, server_data, config, images).
+effective backup scope is the app_env data (user_data, server_data, config, images).
 
 In this folder
 --------------------
@@ -85,11 +85,11 @@ Setup
 ### Setup on the backup source (the denbi VM)
 - Install rsync
 - Create the read-only backup user:
-   sudo useradd --system --shell /usr/sbin/nologin backup_ro
+   `sudo useradd --system --shell /usr/sbin/nologin backup_ro`
 - Create a .ssh directory for the backup user
-   sudo mkdir -p /home/backup_ro/.ssh
+   `sudo mkdir -p /home/backup_ro/.ssh`
 - Copy the template file backup_source/_authorized_keys to /home/backup_ro/.ssh/authorized_keys and replace <BACKUP_TARGET_IP> with the IP address of the backup target (HPC login node) and <BACKUP_SOURCE_PATH> with the path you want to back up (e.g. /srv/shiny-server/b1mg-mutation-voter-beta/app_env/).
-  > [!TIP]
+> [!TIP]
   > To get the IP address of the backup target, put a random IP after `from=`,
   > then try to SSH from the backup target to the backup source using the `denbi` host entry.
   > Check the `auth.log` on the backup source. You should see a message like:
