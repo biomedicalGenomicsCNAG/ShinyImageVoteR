@@ -104,7 +104,8 @@ leaderboardServer <- function(
                 user_annotations_file,
                 header = TRUE,
                 sep = "\t",
-                stringsAsFactors = FALSE
+                stringsAsFactors = FALSE,
+                quote = ""
               )
               has_session <- !is.na(user_annotations_df$shinyauthr_session_id)
               has_skip <- !is.na(user_annotations_df$agreement) &
