@@ -725,8 +725,10 @@ votingServer <- function(
                 print(paste("vote_col:", vote_col))
                 max_votes <- vote_max_map[[option_key]]
                 print(paste("max_votes:", max_votes))
+                # Skip limit check if option is not in voting_options_max_matching_votes
                 if (is.null(max_votes) || is.na(max_votes)) {
-                  max_votes <- 3
+                  print(paste("Skipping limit check for option:", option_key))
+                  next
                 }
                 print(paste("max_votes after check:", max_votes))
                 max_votes <- as.numeric(max_votes)
