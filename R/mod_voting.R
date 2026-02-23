@@ -319,7 +319,8 @@ votingServer <- function(
         colClasses = c(
           REF = "character",
           ALT = "character"
-        )
+        ),
+        quote = ""
       )
 
       print("Annotations DataFrame before update:")
@@ -506,7 +507,8 @@ votingServer <- function(
             coordinates = "character",
             REF = "character",
             ALT = "character"
-          )
+          ),
+          quote = ""
         )
 
         # actionButton "Back" or Go back one page in browser pressed
@@ -909,7 +911,8 @@ votingServer <- function(
         colClasses = c(
           REF = "character",
           ALT = "character"
-        )
+        ),
+        quote = ""
       )
 
       # Find the row for the current coordinate, REF, and ALT
