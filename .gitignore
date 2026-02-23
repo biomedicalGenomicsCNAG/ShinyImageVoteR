@@ -15,3 +15,6 @@ app_env/images/*/*.png
 docs
 .env
 .Renviron
+
+# ignore build artifacts
+*.tar.gz
