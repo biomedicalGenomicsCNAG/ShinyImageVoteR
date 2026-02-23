@@ -434,6 +434,54 @@ votingServer <- function(
         quote = FALSE
       )
 
+      # Update user_info.json with input method tracking
+      if (!already_voted) {
+        user_info_file <- session$userData$userInfoFile
+        if (file.exists(user_info_file)) {
+          user_info <- jsonlite::read_json(user_info_file)
+          
+          # Get the input method (default to "unknown" if not set to avoid misattribution)
+          input_method <- input$last_input_method
+          if (is.null(input_method) || input_method == "") {
+            input_method <- "unknown"
+            warning("Input method not captured for vote, using 'unknown'")
+          }
+          
+          # Initialize vote_input_methods if it doesn't exist
+          if (is.null(user_info$vote_input_methods)) {
+            user_info$vote_input_methods <- list(
+              hotkey_count = 0,
+              mouse_count = 0,
+              unknown_count = 0
+            )
+          }
+          
+          # Update the count based on input method
+          if (input_method == "hotkey") {
+            user_info$vote_input_methods$hotkey_count <- 
+              user_info$vote_input_methods$hotkey_count + 1
+          } else if (input_method == "mouse") {
+            user_info$vote_input_methods$mouse_count <- 
+              user_info$vote_input_methods$mouse_count + 1
+          } else {
+            # Track unknown cases for debugging
+            if (is.null(user_info$vote_input_methods$unknown_count)) {
+              user_info$vote_input_methods$unknown_count <- 0
+            }
+            user_info$vote_input_methods$unknown_count <- 
+              user_info$vote_input_methods$unknown_count + 1
+          }
+          
+          # Write updated user_info back to file
+          jsonlite::write_json(
+            user_info,
+            user_info_file,
+            auto_unbox = TRUE,
+            pretty = TRUE
+          )
+        }
+      }
+
       if (
         already_voted &&
           previous_agreement != input$agreement
