@@ -319,7 +319,8 @@ votingServer <- function(
         colClasses = c(
           REF = "character",
           ALT = "character"
-        )
+        ),
+        quote = ""
       )
 
       print("Annotations DataFrame before update:")
@@ -368,16 +369,21 @@ votingServer <- function(
       print("Annotations DataFrame after updating agreement:")
       print(annotations_df)
 
-      # only update if provided
-      if (!is.null(input$observation)) {
+      # only update observation if agreement is "none_of_above"
+      if (new_agreement == "none_of_above" && !is.null(input$observation)) {
         annotations_df[rowIdx, "observation"] <- paste(
           input$observation,
           collapse = ";"
         )
+      } else {
+        # Clear observation for other vote types
+        annotations_df[rowIdx, "observation"] <- NA
       }
 
+      # only update comment if agreement is "diff_var" or "none_of_above"
       comment <- NA
-      if (!is.null(input$comment) && input$comment != "") {
+      if ((new_agreement == "diff_var" || new_agreement == "none_of_above") &&
+          !is.null(input$comment) && input$comment != "") {
         comment <- input$comment
       }
       annotations_df[rowIdx, "comment"] <- comment
@@ -501,7 +507,8 @@ votingServer <- function(
             coordinates = "character",
             REF = "character",
             ALT = "character"
-          )
+          ),
+          quote = ""
         )
 
         # actionButton "Back" or Go back one page in browser pressed
@@ -906,7 +913,8 @@ votingServer <- function(
         colClasses = c(
           REF = "character",
           ALT = "character"
-        )
+        ),
+        quote = ""
       )
 
       # Find the row for the current coordinate, REF, and ALT

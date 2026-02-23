@@ -1,4 +1,18 @@
-ShinyImgVoteR 0.1.2 (Development)
+
+ShinyImgVoteR 0.1.3 (Development)
+================
+
+## Bug Fixes
+
+* Fixed state persistence bug where observations and comments were wronly recorded when switching vote types
+  -  Previously, when users changed their vote type (for example, from “None of the above” to “Yes”), 
+  any selected sub-options or text entered in the comment field remained stored 
+  and were written to the annotations file under the new vote type. This resulted in inconsistent records 
+  confusion when analyzing the annotations data.
+  
+  -  Now, sub-options are cleared when the vote type changes. Similarly, the comment field value is not recorded when the vote type has no comment field (for example, when the vote type is “Yes”).
+
+ShinyImgVoteR 0.1.2
 ================
 
 ## Features

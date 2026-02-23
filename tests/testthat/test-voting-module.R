@@ -824,6 +824,10 @@ testthat::test_that("options not in voting_options_max_matching_votes are never 
   
   # Set up environment with 2 coordinates
   env <- setup_voting_env(c("chr1:1000", "chr2:2000"))
+
+testthat::test_that("observations and comments are cleared when switching vote type from none_of_above to yes", {
+  # Set up test environment
+  env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
@@ -848,6 +852,9 @@ testthat::test_that("options not in voting_options_max_matching_votes are never 
   my_session <- MockShinySession$new()
   my_session$clientData <- shiny::reactiveValues(
     url_search = ""
+  my_session <- MockShinySession$new()
+  my_session$clientData <- shiny::reactiveValues(
+    url_search = "?coordinate=chr1:1000"
   )
 
   args$cfg <- ShinyImgVoteR::load_config(
@@ -900,9 +907,72 @@ testthat::test_that("options in voting_options_max_matching_votes ARE skipped wh
   
   # Set up environment with 2 coordinates
   env <- setup_voting_env(c("chr1:1000", "chr2:2000"))
+      # Set up session userData needed by the observer
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$shinyauthr_session_id <- "session_state_persistence"
+      session$userData$votingInstitute <- cfg$test_institute
+
+      # Manually set current_mutation to simulate a loaded variant
+      current_mutation <- shiny::reactiveVal(list(
+        coordinates = "chr1:1000",
+        REF = "A",
+        ALT = "T",
+        variant = "A>T",
+        path = "dummy.png"
+      ))
+
+      # Replace the module's current_mutation with our test version
+      assign("current_mutation", current_mutation, envir = parent.frame())
+
+      # Simulate the user selecting "none_of_above" with observation and comment
+      session$setInputs(agreement = "none_of_above")
+      session$setInputs(observation = c("coverage"))
+      session$setInputs(comment = "Test observation comment")
+
+      # Simulate clicking the "Next" button (first vote)
+      session$setInputs(nextBtn = 1)
+
+      # Read annotations and verify observation and comment were saved
+      annotations <- read.delim(
+        env$annotations_file,
+        header = TRUE,
+        stringsAsFactors = FALSE
+      )
+      testthat::expect_equal(annotations$agreement[1], "none_of_above")
+      testthat::expect_equal(annotations$observation[1], "coverage")
+      testthat::expect_equal(annotations$comment[1], "Test observation comment")
+
+      # Now simulate the user changing their vote to "yes"
+      # (observation and comment fields would be hidden in UI but values persist in input)
+      session$setInputs(agreement = "yes")
+
+      # Simulate clicking "Next" again (changing vote)
+      session$setInputs(nextBtn = 2)
+
+      # Read annotations again and verify observation and comment are cleared
+      annotations <- read.delim(
+        env$annotations_file,
+        header = TRUE,
+        stringsAsFactors = FALSE
+      )
+      testthat::expect_equal(annotations$agreement[1], "yes")
+      testthat::expect_true(is.na(annotations$observation[1]))
+      testthat::expect_true(is.na(annotations$comment[1]))
+    }
+  )
+})
+
+testthat::test_that("comment is preserved for diff_var but cleared for yes", {
+  # Set up test environment
+  env <- setup_voting_env(c("chr1:1000"))
   args <- make_args(env$annotations_file)
   cleanup_db <- setup_test_db(args)
   on.exit(cleanup_db())
+
+  my_session <- MockShinySession$new()
+  my_session$clientData <- shiny::reactiveValues(
+    url_search = "?coordinate=chr1:1000"
+  )
 
   args$cfg <- ShinyImgVoteR::load_config(
     config_file_path = system.file(
@@ -967,6 +1037,56 @@ testthat::test_that("options in voting_options_max_matching_votes ARE skipped wh
         ") for option (yes) reached"
       )
       testthat::expect_equal(chr1_row$agreement, expected_skip_reason)
+    }
+  )
+})
+      # Set up session userData needed by the observer
+      session$userData$userAnnotationsFile <- env$annotations_file
+      session$userData$shinyauthr_session_id <- "session_comment_test"
+      session$userData$votingInstitute <- cfg$test_institute
+
+      # Manually set current_mutation to simulate a loaded variant
+      current_mutation <- shiny::reactiveVal(list(
+        coordinates = "chr1:1000",
+        REF = "A",
+        ALT = "T",
+        variant = "A>T",
+        path = "dummy.png"
+      ))
+
+      # Replace the module's current_mutation with our test version
+      assign("current_mutation", current_mutation, envir = parent.frame())
+
+      # Simulate the user selecting "diff_var" with a comment
+      session$setInputs(agreement = "diff_var")
+      session$setInputs(comment = "Different variant comment")
+
+      # Simulate clicking the "Next" button
+      session$setInputs(nextBtn = 1)
+
+      # Read annotations and verify comment was saved for diff_var
+      annotations <- read.delim(
+        env$annotations_file,
+        header = TRUE,
+        stringsAsFactors = FALSE
+      )
+      testthat::expect_equal(annotations$agreement[1], "diff_var")
+      testthat::expect_equal(annotations$comment[1], "Different variant comment")
+
+      # Now simulate changing vote to "yes" (comment field still has value in input)
+      session$setInputs(agreement = "yes")
+
+      # Simulate clicking "Next" again
+      session$setInputs(nextBtn = 2)
+
+      # Read annotations and verify comment is cleared for "yes"
+      annotations <- read.delim(
+        env$annotations_file,
+        header = TRUE,
+        stringsAsFactors = FALSE
+      )
+      testthat::expect_equal(annotations$agreement[1], "yes")
+      testthat::expect_true(is.na(annotations$comment[1]))
     }
   )
 })
