@@ -55,5 +55,5 @@ date -Is > "$BASE_DST/LAST_SUCCESS"
 log "Finished rsync OK"
 
 # Send Success Notification
-size=$(du -sh "$DST_PATH" | awk '{print $1}')
+size=$(du -sh --apparent-size "$DST_PATH" | awk '{print $1}')
 notify_slack "success" "Run ID: \`${RUN_ID}\` Size: \`${size}\`"
