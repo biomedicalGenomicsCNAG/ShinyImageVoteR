@@ -53,8 +53,9 @@ build_base_url <- function(session) {
 #' Resets a user's annotation file by keeping the header row and the first
 #' three columns (coordinates, REF, ALT) but clearing all other data columns.
 #' Also updates the database by decrementing vote counts for all votes that
-#' the user had cast. This allows a user to start voting from scratch while
-#' preserving the randomized order of variants.
+#' the user had cast. Additionally, resets the vote_input_methods counts in the
+#' user's info.json file to 0. This allows a user to start voting from scratch 
+#' while preserving the randomized order of variants.
 #'
 #' @param annotation_file_path Character. Full path to the user's annotation TSV file
 #' @param user_annotations_colnames Character vector. Column names for the annotation file
@@ -182,6 +183,48 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
     )
     
     message("Successfully reset annotations for file: ", annotation_file_path)
+    
+    # Reset vote_input_methods counts in the user info JSON file
+    # The info.json file is in the same directory as the annotations file,
+    # with a similar naming pattern (replacing _annotations.tsv with _info.json)
+    user_dir <- dirname(annotation_file_path)
+    base_name <- sub("_annotations\\.tsv$", "", basename(annotation_file_path))
+    user_info_file <- file.path(user_dir, paste0(base_name, "_info.json"))
+
+    message("Resetting vote_input_methods in user info file: ", user_info_file)
+    
+    if (file.exists(user_info_file)) {
+      tryCatch({
+        # Read the existing user info JSON file
+        user_info <- jsonlite::read_json(user_info_file)
+        
+        # Reset vote_input_methods counts to 0
+        if (!is.null(user_info$vote_input_methods)) {
+          user_info$vote_input_methods <- list(
+            hotkey_count = 0,
+            mouse_count = 0,
+            unknown_count = 0
+          )
+          
+          # Write the updated user info back to the file
+          jsonlite::write_json(
+            user_info,
+            user_info_file,
+            auto_unbox = TRUE,
+            pretty = TRUE
+          )
+          
+          message("Successfully reset vote_input_methods for file: ", user_info_file)
+        } else {
+          message("No vote_input_methods found in user info file: ", user_info_file)
+        }
+      }, error = function(e) {
+        warning("Failed to reset vote_input_methods in user info file: ", e$message)
+      })
+    } else {
+      message("User info file does not exist: ", user_info_file)
+    }
+    
     return(TRUE)
   }, error = function(e) {
     warning("Failed to reset annotations: ", e$message)
