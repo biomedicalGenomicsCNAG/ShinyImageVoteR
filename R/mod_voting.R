@@ -14,6 +14,7 @@
 #' - `cfg$radio_options2val_map`
 #' - `cfg$checkboxes_label`
 #' - `cfg$observations2val_map`
+#' - `cfg$comment_trigger_options`
 #'
 #' These should be defined in a sourced configuration file (config.yaml).
 #'
@@ -23,6 +24,17 @@
 #' @export
 votingUI <- function(id, cfg) {
   ns <- shiny::NS(id)
+
+  comment_condition <- if (length(cfg$comment_trigger_options) == 0) {
+    "false"
+  } else {
+    paste(
+      sapply(cfg$comment_trigger_options, function(opt) {
+        sprintf("input['%s'] == '%s'", ns("agreement"), opt)
+      }),
+      collapse = " || "
+    )
+  }
 
   shiny::fluidPage(
     theme = cfg$theme,
@@ -129,11 +141,7 @@ votingUI <- function(id, cfg) {
                   ),
                 ),
                 shiny::conditionalPanel(
-                  condition = sprintf(
-                    "input['%1$s'] == 'diff_var' ||
-                    input['%1$s'] == 'none_of_above'",
-                    ns("agreement")
-                  ),
+                  condition = comment_condition,
                   shiny::textInput(
                     inputId = ns("comment"),
                     label = "Comments",
@@ -380,9 +388,9 @@ votingServer <- function(
         annotations_df[rowIdx, "observation"] <- NA
       }
 
-      # only update comment if agreement is "diff_var" or "none_of_above"
+      # only update comment if agreement is one of the comment_trigger_options
       comment <- NA
-      if ((new_agreement == "diff_var" || new_agreement == "none_of_above") &&
+      if (new_agreement %in% cfg$comment_trigger_options &&
           !is.null(input$comment) && input$comment != "") {
         comment <- input$comment
       }

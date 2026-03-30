@@ -59,4 +59,7 @@ voting_options_max_matching_votes:
   'yes': 3
   diff_var : 3
   germline: 3
+comment_trigger_options:
+- diff_var
+- none_of_above
 cookie_expiry: 1

@@ -99,6 +99,22 @@ load_config <- function(config_file_path) {
   # cfg$user_data_dir <- Sys.getenv("IMGVOTER_USER_DATA_DIR", cfg$user_data_dir)
   # cfg$user_data_dir <- normalizePath(cfg$user_data_dir, mustWork = TRUE)
 
+  # Default comment_trigger_options to the original hardcoded values if not set
+  if (is.null(cfg$comment_trigger_options)) {
+    cfg$comment_trigger_options <- c("diff_var", "none_of_above")
+  }
+
+  # Validate that all comment_trigger_options are valid radio option values
+  valid_radio_vals <- unlist(cfg$radio_options2val_map, use.names = FALSE)
+  invalid_opts <- setdiff(cfg$comment_trigger_options, valid_radio_vals)
+  if (length(invalid_opts) > 0) {
+    stop(paste0(
+      "comment_trigger_options contains invalid values not present in ",
+      "radio_options2val_map: ",
+      paste(invalid_opts, collapse = ", ")
+    ))
+  }
+
   cfg$observations2val_map <- setNames(
     as.vector(cfg$observations_dict),
     paste0(names(cfg$observations_dict), " [", cfg$observation_hotkeys, "]")
