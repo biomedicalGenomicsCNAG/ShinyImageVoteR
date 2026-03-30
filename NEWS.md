@@ -4,11 +4,11 @@ ShinyImgVoteR 0.1.3 (Development)
 
 ## Features
 
-* Record the usage of hotkeys in voting process in the user info file (<user_id>_info.json) 
+* Record the usage of hotkeys for selecting voting options in the user info file (<user_id>_info.json) 
   - The system now distinguishes between options selected via hotkeys and those selected via mouse clicks
   - Each hotkey usage followed by pressing next increments the count for hotkey usage in the user info file
   - This allows to correlate average time spent per screenshot with hotkey usage
-  
+
 * Added the option to configure which voting options have a comment box via `comment_box` field in the `radio_options` configuration in config.yaml
   - Set `comment_box: true` for a voting option to show a comment box when that option is selected
 
