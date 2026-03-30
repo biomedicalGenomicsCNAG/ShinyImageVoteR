@@ -15,3 +15,6 @@ app_env/images/*/*.png
 docs
 .env
 .Renviron
+
+# release files
+*.tar.gz
