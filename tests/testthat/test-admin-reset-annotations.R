@@ -7,11 +7,17 @@ library(pool)
 # Helper to create mock config
 create_mock_config <- function() {
   list(
-    vote2dbcolumn_map = list(
-      'yes' = 'vote_count_correct',
-      'diff_var' = 'vote_count_different_variant',
-      'germline' = 'vote_count_germline',
-      'none_of_above' = 'vote_count_none_of_above'
+    radio_options = list(
+      "Yes" = list(value = "yes", db_column = "vote_count_correct"),
+      "Different variant" = list(
+        value = "diff_var",
+        db_column = "vote_count_different_variant"
+      ),
+      "Germline" = list(value = "germline", db_column = "vote_count_germline"),
+      "None of the above" = list(
+        value = "none_of_above",
+        db_column = "vote_count_none_of_above"
+      )
     )
   )
 }
@@ -63,7 +69,19 @@ testthat::test_that("reset_user_annotations keeps headers and coordinates", {
     )
     
     # Simulate that votes were cast
-    vote_col <- create_mock_config()$vote2dbcolumn_map[[test_data$agreement[i]]]
+    option_db_column_map <- stats::setNames(
+      vapply(
+        create_mock_config()$radio_options,
+        function(option) option$db_column,
+        character(1)
+      ),
+      vapply(
+        create_mock_config()$radio_options,
+        function(option) option$value,
+        character(1)
+      )
+    )
+    vote_col <- option_db_column_map[[test_data$agreement[i]]]
     if (!is.null(vote_col)) {
       DBI::dbExecute(
         db_pool,

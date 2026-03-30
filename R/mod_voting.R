@@ -11,10 +11,10 @@
 #'
 #' The displayed options and labels are configured using:
 #' - `cfg$radioBtns_label`
-#' - `cfg$radio_options2val_map`
+#' - `cfg$radio_options`
 #' - `cfg$checkboxes_label`
 #' - `cfg$observations2val_map`
-#' - `cfg$comment_trigger_options`
+#' - `cfg$radio_options[[...]]$comment_box`
 #'
 #' These should be defined in a sourced configuration file (config.yaml).
 #'
@@ -24,12 +24,24 @@
 #' @export
 votingUI <- function(id, cfg) {
   ns <- shiny::NS(id)
+  radio_option_values <- vapply(
+    cfg$radio_options,
+    function(option) option$value,
+    character(1)
+  )
+  comment_trigger_values <- unname(
+    radio_option_values[vapply(
+      cfg$radio_options,
+      function(option) isTRUE(option$comment_box),
+      logical(1)
+    )]
+  )
 
-  comment_condition <- if (length(cfg$comment_trigger_options) == 0) {
+  comment_condition <- if (length(comment_trigger_values) == 0) {
     "false"
   } else {
     paste(
-      sapply(cfg$comment_trigger_options, function(opt) {
+      sapply(comment_trigger_values, function(opt) {
         sprintf("input['%s'] == '%s'", ns("agreement"), opt)
       }),
       collapse = " || "
@@ -106,21 +118,20 @@ votingUI <- function(id, cfg) {
                   inputId = ns("agreement"),
                   label = cfg$radioBtns_label,
                   choiceNames = lapply(
-                    seq_along(cfg$radio_options2val_map),
+                    seq_along(cfg$radio_options),
                     function(i) {
                       shiny::tags$span(
                         class = "numbered-radio",
                         shiny::tags$span(class = "circle", i),
-                        names(cfg$radio_options2val_map)[i]
+                        names(cfg$radio_options)[i]
                       )
                     }
                   ),
-                  choiceValues = c(
-                    "yes",
-                    "diff_var",
-                    "germline",
-                    "none_of_above"
-                  ),
+                  choiceValues = unname(vapply(
+                    cfg$radio_options,
+                    function(option) option$value,
+                    character(1)
+                  )),
                   selected = character(0),
                 )
               ),
@@ -215,6 +226,62 @@ votingServer <- function(
   tab_trigger = NULL
 ) {
   shiny::moduleServer(id, function(input, output, session) {
+    radio_option_values <- vapply(
+      cfg$radio_options,
+      function(option) option$value,
+      character(1)
+    )
+
+    comment_trigger_values <- unname(vapply(
+      cfg$radio_options,
+      function(option) {
+        if (isTRUE(option$comment_box)) {
+          as.character(option$value)
+        } else {
+          NA_character_
+        }
+      },
+      character(1)
+    ))
+    comment_trigger_values <- stats::na.omit(comment_trigger_values)
+
+    option_max_votes_map <- stats::setNames(
+      vapply(
+        cfg$radio_options,
+        function(option) {
+          if (is.null(option$max_matching_votes) ||
+              identical(option$max_matching_votes, "")) {
+            return(NA_real_)
+          }
+
+          max_votes <- suppressWarnings(as.numeric(option$max_matching_votes))
+          if (is.na(max_votes)) {
+            stop(
+              "Each radio_options max_matching_votes must be numeric when provided."
+            )
+          }
+
+          max_votes
+        },
+        numeric(1)
+      ),
+      radio_option_values
+    )
+
+    option_db_column_map <- stats::setNames(
+      vapply(
+        cfg$radio_options,
+        function(option) {
+          if (is.null(option$db_column) || identical(option$db_column, "")) {
+            stop("Each radio_options entry must define db_column.")
+          }
+          as.character(option$db_column)
+        },
+        character(1)
+      ),
+      radio_option_values
+    )
+
     # validate cfg cols using "validate_cols" function from db_utils.R
     validate_cols(db_pool, "annotations", cfg$db_cols)
 
@@ -388,9 +455,9 @@ votingServer <- function(
         annotations_df[rowIdx, "observation"] <- NA
       }
 
-      # only update comment if agreement is one of the comment_trigger_options
+      # only update comment if agreement requires comment box
       comment <- NA
-      if (new_agreement %in% cfg$comment_trigger_options &&
+      if (new_agreement %in% comment_trigger_values &&
           !is.null(input$comment) && input$comment != "") {
         comment <- input$comment
       }
@@ -412,7 +479,7 @@ votingServer <- function(
         # depending on the agreement, update the vote counts in the database
         print("input$agreement:")
         print(input$agreement)
-        vote_col <- cfg$vote2dbcolumn_map[[input$agreement]]
+        vote_col <- option_db_column_map[[input$agreement]]
         print("Updating database vote counts...")
         print(paste("vote_col:", vote_col))
 
@@ -453,8 +520,8 @@ votingServer <- function(
       ) {
         print("User changed their vote, adjusting the database vote counts...")
 
-        prev_vote_col <- cfg$vote2dbcolumn_map[[previous_agreement]]
-        new_vote_col <- cfg$vote2dbcolumn_map[[input$agreement]]
+        prev_vote_col <- option_db_column_map[[previous_agreement]]
+        new_vote_col <- option_db_column_map[[input$agreement]]
 
         if (!is.null(prev_vote_col) && !is.null(new_vote_col)) {
           if (prev_vote_col == new_vote_col) {
@@ -713,13 +780,13 @@ votingServer <- function(
             if (nrow(df) == 1) {
               # Check if screenshot has already been voted max times
 
-              vote_max_map <- cfg$voting_options_max_matching_votes
+              vote_max_map <- option_max_votes_map
               print("vote_max_map:")
               print(vote_max_map)
-              if (is.null(vote_max_map) || length(vote_max_map) == 0) {
+              if (all(is.na(vote_max_map))) {
                 vote_max_map <- stats::setNames(
-                  rep(3, length(cfg$vote2dbcolumn_map)),
-                  names(cfg$vote2dbcolumn_map)
+                  rep(3, length(option_db_column_map)),
+                  names(option_db_column_map)
                 )
               }
 
@@ -727,13 +794,13 @@ votingServer <- function(
               matched_max <- NULL
               matched_count <- NULL
 
-              for (option_key in names(cfg$vote2dbcolumn_map)) {
+              for (option_key in names(option_db_column_map)) {
                 print(paste("option_key:", option_key))
-                vote_col <- cfg$vote2dbcolumn_map[[option_key]]
+                vote_col <- option_db_column_map[[option_key]]
                 print(paste("vote_col:", vote_col))
                 max_votes <- vote_max_map[[option_key]]
                 print(paste("max_votes:", max_votes))
-                # Skip limit check if option is not in voting_options_max_matching_votes
+                # Skip limit check if option has no configured max_matching_votes
                 if (is.null(max_votes) || is.na(max_votes)) {
                   print(paste("Skipping limit check for option:", option_key))
                   next

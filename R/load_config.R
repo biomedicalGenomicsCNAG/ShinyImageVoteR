@@ -31,7 +31,7 @@ overwrite_if_env_var <- function(env_var_name, cfg_value) {
 #' variables or external files.
 #' @param config_file_path Character. Path to the configuration file. Default is the one in the app directory
 #'
-#' @return A named list of configuration values (e.g., `cfg_sqlite_file`, `cfg_radio_options2val_map`, etc.)
+#' @return A named list of configuration values (e.g., `cfg_sqlite_file`, `cfg_radio_options`, etc.)
 #' @import yaml
 #' @export
 load_config <- function(config_file_path) {
@@ -99,31 +99,41 @@ load_config <- function(config_file_path) {
   # cfg$user_data_dir <- Sys.getenv("IMGVOTER_USER_DATA_DIR", cfg$user_data_dir)
   # cfg$user_data_dir <- normalizePath(cfg$user_data_dir, mustWork = TRUE)
 
-  # Default comment_trigger_options to the original hardcoded values if not set
-  if (is.null(cfg$comment_trigger_options)) {
-    cfg$comment_trigger_options <- c("diff_var", "none_of_above")
+  # Validate radio_options values and db columns
+  valid_radio_vals <- vapply(
+    cfg$radio_options,
+    function(option) {
+      if (is.null(option$value) || nchar(option$value) == 0) {
+        stop("Each radio_options entry must define a non-empty value.")
+      }
+      as.character(option$value)
+    },
+    character(1)
+  )
+
+  valid_db_cols <- vapply(
+    cfg$radio_options,
+    function(option) {
+      if (is.null(option$db_column) || nchar(option$db_column) == 0) {
+        stop("Each radio_options entry must define a non-empty db_column.")
+      }
+      as.character(option$db_column)
+    },
+    character(1)
+  )
+
+  if (anyDuplicated(valid_radio_vals)) {
+    stop("radio_options values must be unique.")
   }
 
-  # Validate that all comment_trigger_options are valid radio option values
-  valid_radio_vals <- unlist(cfg$radio_options2val_map, use.names = FALSE)
-  invalid_opts <- setdiff(cfg$comment_trigger_options, valid_radio_vals)
-  if (length(invalid_opts) > 0) {
-    stop(paste0(
-      "comment_trigger_options contains invalid values not present in ",
-      "radio_options2val_map: ",
-      paste(invalid_opts, collapse = ", ")
-    ))
-  }
+  option_db_column_map <- stats::setNames(valid_db_cols, valid_radio_vals)
 
   cfg$observations2val_map <- setNames(
     as.vector(cfg$observations_dict),
     paste0(names(cfg$observations_dict), " [", cfg$observation_hotkeys, "]")
   )
 
-  cfg$vote_counts_cols <- c(
-    unlist(cfg$vote2dbcolumn_map, use.names = FALSE),
-    "vote_count_total"
-  )
+  cfg$vote_counts_cols <- c(unname(option_db_column_map), "vote_count_total")
 
   cfg$db_cols <- c(cfg$db_general_cols, cfg$vote_counts_cols)
 
