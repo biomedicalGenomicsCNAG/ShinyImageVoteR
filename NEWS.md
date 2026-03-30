@@ -15,7 +15,7 @@ ShinyImgVoteR 0.1.3 (Development)
   and were written to the annotations file under the new vote type. This resulted in inconsistent records 
   confusion when analyzing the annotations data.
   
-  -  Now, sub-options are cleared when the vote type changes. Similarly, the comment field value is not recorded when the vote type has no comment field (for example, when the vote type is “Yes”).
+  -  Now, sub-options are cleared when the vote type changes. Similarly, the comment field value is not recorded when the vote type has no comment field.
 
 * Fixed unconfigured voting options being skipped at 3 votes
   - Previously, voting options without explicit `max_matching_votes` inside `radio_options`
