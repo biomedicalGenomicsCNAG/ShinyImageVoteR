@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ShinyImgVoteR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,31 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.2" id="shinyimgvoter-012-development">ShinyImgVoteR 0.1.2 (Development)<a class="anchor" aria-label="anchor" href="#shinyimgvoter-012-development"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.1.3" id="shinyimgvoter-013-development">ShinyImgVoteR 0.1.3 (Development)<a class="anchor" aria-label="anchor" href="#shinyimgvoter-013-development"></a></h2>
+<div class="section level3">
+<h3 id="features-0-1-3">Features<a class="anchor" aria-label="anchor" href="#features-0-1-3"></a></h3>
+<ul><li>Record the usage of hotkeys for selecting voting options in the user info file (<user_id>_info.json)
+<ul><li>The system now distinguishes between options selected via hotkeys and those selected via mouse clicks</li>
+<li>Each hotkey usage followed by pressing next increments the count for hotkey usage in the user info file</li>
+<li>This allows to correlate average time spent per screenshot with hotkey usage</li>
+</ul></user_id></li>
+<li>Added the option to configure which voting options have a comment box via <code>comment_box</code> field in the <code>radio_options</code> configuration in config.yaml
+<ul><li>Set <code>comment_box: true</code> for a voting option to show a comment box when that option is selected</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-1-3">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-3"></a></h3>
+<ul><li>Fixed state persistence bug where observations and comments were wronly recorded when switching vote types
+<ul><li><p>Previously, when users changed their vote type (for example, from “None of the above” to “Yes”), any selected sub-options or text entered in the comment field remained stored and were written to the annotations file under the new vote type. This resulted in inconsistent records confusion when analyzing the annotations data.</p></li>
+<li><p>Now, sub-options are cleared when the vote type changes. Similarly, the comment field value is not recorded when the vote type has no comment field.</p></li>
+</ul></li>
+<li>Fixed unconfigured voting options being skipped at 3 votes
+<ul><li>Previously, voting options without explicit <code>max_matching_votes</code> inside <code>radio_options</code> were skipped after reaching 3 matching votes because there was a hardcoded default limit of 3 votes for each option which needed to be explicitly overridden in the configuration file.</li>
+</ul></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.2" id="shinyimgvoter-012">ShinyImgVoteR 0.1.2<a class="anchor" aria-label="anchor" href="#shinyimgvoter-012"></a></h2>
 <div class="section level3">
 <h3 id="features-0-1-2">Features<a class="anchor" aria-label="anchor" href="#features-0-1-2"></a></h3>
 <ul><li>Added on-demand database update (of the annotations table) for admin users
@@ -70,7 +94,7 @@
 <li>Note, in the fullscreen overlay pan/zoom functionalities and the voting/navigation hotkeys are disabled</li>
 </ul></li>
 <li>Added configurable maximum matching votes per screenshot across all users
-<ul><li>It can be set via <code>voting_options_max_matching_votes</code> in config.yaml</li>
+<ul><li>It can be set via <code>radio_options.&lt;option&gt;.max_matching_votes</code> in config.yaml</li>
 <li>Default is 3 votes for each option if not specified</li>
 <li>If maximum matching votes reached for a screenshot, it will be skipped for future users</li>
 <li>Skipped screenshots are logged in user annotations file with reason “skipped - max matching votes (x) for option (y) reached” in the agreement column</li>

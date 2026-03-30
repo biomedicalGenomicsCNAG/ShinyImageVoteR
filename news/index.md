@@ -1,6 +1,44 @@
 # Changelog
 
-## ShinyImgVoteR 0.1.2 (Development)
+## ShinyImgVoteR 0.1.3 (Development)
+
+### Features
+
+- Record the usage of hotkeys for selecting voting options in the user
+  info file (\_info.json)
+  - The system now distinguishes between options selected via hotkeys
+    and those selected via mouse clicks
+  - Each hotkey usage followed by pressing next increments the count for
+    hotkey usage in the user info file
+  - This allows to correlate average time spent per screenshot with
+    hotkey usage
+- Added the option to configure which voting options have a comment box
+  via `comment_box` field in the `radio_options` configuration in
+  config.yaml
+  - Set `comment_box: true` for a voting option to show a comment box
+    when that option is selected
+
+### Bug Fixes
+
+- Fixed state persistence bug where observations and comments were
+  wronly recorded when switching vote types
+  - Previously, when users changed their vote type (for example, from
+    “None of the above” to “Yes”), any selected sub-options or text
+    entered in the comment field remained stored and were written to the
+    annotations file under the new vote type. This resulted in
+    inconsistent records confusion when analyzing the annotations data.
+
+  - Now, sub-options are cleared when the vote type changes. Similarly,
+    the comment field value is not recorded when the vote type has no
+    comment field.
+- Fixed unconfigured voting options being skipped at 3 votes
+  - Previously, voting options without explicit `max_matching_votes`
+    inside `radio_options` were skipped after reaching 3 matching votes
+    because there was a hardcoded default limit of 3 votes for each
+    option which needed to be explicitly overridden in the configuration
+    file.
+
+## ShinyImgVoteR 0.1.2
 
 ### Features
 
@@ -53,7 +91,8 @@
     voting/navigation hotkeys are disabled
 - Added configurable maximum matching votes per screenshot across all
   users
-  - It can be set via `voting_options_max_matching_votes` in config.yaml
+  - It can be set via `radio_options.<option>.max_matching_votes` in
+    config.yaml
   - Default is 3 votes for each option if not specified
   - If maximum matching votes reached for a screenshot, it will be
     skipped for future users

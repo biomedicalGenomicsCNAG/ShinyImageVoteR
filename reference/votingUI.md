@@ -36,10 +36,12 @@ The displayed options and labels are configured using:
 
 - `cfg$radioBtns_label`
 
-- `cfg$radio_options2val_map`
+- `cfg$radio_options`
 
 - `cfg$checkboxes_label`
 
 - `cfg$observations2val_map`
+
+- `cfg$radio_options[[...]]$comment_box`
 
 These should be defined in a sourced configuration file (config.yaml).

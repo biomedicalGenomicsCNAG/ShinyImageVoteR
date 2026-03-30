@@ -34,11 +34,11 @@ Toggle navigation
 
 ShinyImgVoteR (B1MG Somatic Mutation Voting)
 
-- [Vote](#tab-3280-1)
-- [Leaderboard](#tab-3280-2)
-- [User stats](#tab-3280-3)
-- [About](#tab-3280-4)
-- [FAQ](#tab-3280-5)
+- [Vote](#tab-8702-1)
+- [Leaderboard](#tab-8702-2)
+- [User stats](#tab-8702-3)
+- [About](#tab-8702-4)
+- [FAQ](#tab-8702-5)
 
 Log out
 
@@ -125,11 +125,11 @@ Toggle navigation
 
 ShinyImgVoteR (B1MG Somatic Mutation Voting)
 
-- [Vote](#tab-9755-1)
-- [Leaderboard](#tab-9755-2)
-- [User stats](#tab-9755-3)
-- [About](#tab-9755-4)
-- [FAQ](#tab-9755-5)
+- [Vote](#tab-1083-1)
+- [Leaderboard](#tab-1083-2)
+- [User stats](#tab-1083-3)
+- [About](#tab-1083-4)
+- [FAQ](#tab-1083-5)
 
 Log out
 

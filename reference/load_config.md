@@ -19,4 +19,4 @@ load_config(config_file_path)
 ## Value
 
 A named list of configuration values (e.g., `cfg_sqlite_file`,
-`cfg_radio_options2val_map`, etc.)
+`cfg_radio_options`, etc.)
