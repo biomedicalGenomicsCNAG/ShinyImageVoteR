@@ -312,3 +312,142 @@ testthat::test_that("reset_user_annotations correctly decrements vote counts", {
   unlink(mock_db$file)
 })
 
+testthat::test_that("reset_user_annotations resets vote_input_methods in user info JSON", {
+  # Create temporary annotation file and user info JSON file
+  temp_dir <- tempdir()
+  
+  # Create annotation file
+  temp_file <- file.path(temp_dir, "testuser_annotations.tsv")
+  user_annotations_colnames <- c(
+    "coordinates", "REF", "ALT", "agreement", 
+    "observation", "comment", "shinyauthr_session_id", 
+    "time_till_vote_casted_in_seconds"
+  )
+  
+  test_data <- data.frame(
+    coordinates = c("chr1:100"),
+    REF = c("A"),
+    ALT = c("T"),
+    agreement = c("yes"),
+    observation = c("coverage"),
+    comment = c("comment1"),
+    shinyauthr_session_id = c("sess1"),
+    time_till_vote_casted_in_seconds = c("10"),
+    stringsAsFactors = FALSE
+  )
+  
+  write.table(
+    test_data,
+    file = temp_file,
+    sep = "\t",
+    row.names = FALSE,
+    col.names = TRUE,
+    quote = FALSE
+  )
+  
+  # Create corresponding user info JSON file
+  user_info_file <- file.path(temp_dir, "testuser_info.json")
+  user_info <- list(
+    user_id = "testuser",
+    voting_institute = "institute1",
+    images_randomisation_seed = 12345,
+    vote_input_methods = list(
+      hotkey_count = 5,
+      mouse_count = 3,
+      unknown_count = 1
+    )
+  )
+  
+  jsonlite::write_json(
+    user_info,
+    user_info_file,
+    auto_unbox = TRUE,
+    pretty = TRUE
+  )
+  
+  # Create mock database
+  mock_db <- create_mock_db()
+  db_pool <- mock_db$pool
+  
+  # Insert test variant into database
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path) VALUES (?, ?, ?, ?)",
+    params = list("chr1:100", "A", "T", "/test/path.png")
+  )
+  
+  # Reset the annotations (should also reset vote_input_methods)
+  result <- reset_user_annotations(temp_file, user_annotations_colnames, db_pool, create_mock_config())
+  
+  # Check that reset was successful
+  testthat::expect_true(result)
+  
+  # Read the updated user info JSON file
+  updated_user_info <- jsonlite::read_json(user_info_file)
+  
+  # Verify vote_input_methods were reset to 0
+  testthat::expect_equal(updated_user_info$vote_input_methods$hotkey_count, 0)
+  testthat::expect_equal(updated_user_info$vote_input_methods$mouse_count, 0)
+  testthat::expect_equal(updated_user_info$vote_input_methods$unknown_count, 0)
+  
+  # Verify other fields were preserved
+  testthat::expect_equal(updated_user_info$user_id, "testuser")
+  testthat::expect_equal(updated_user_info$voting_institute, "institute1")
+  testthat::expect_equal(updated_user_info$images_randomisation_seed, 12345)
+  
+  # Clean up
+  pool::poolClose(db_pool)
+  unlink(temp_file)
+  unlink(user_info_file)
+  unlink(mock_db$file)
+})
+
+testthat::test_that("reset_user_annotations handles missing user info JSON gracefully", {
+  # Create annotation file without corresponding info JSON
+  temp_file <- tempfile(fileext = "_annotations.tsv")
+  
+  user_annotations_colnames <- c(
+    "coordinates", "REF", "ALT", "agreement"
+  )
+  
+  test_data <- data.frame(
+    coordinates = c("chr1:100"),
+    REF = c("A"),
+    ALT = c("T"),
+    agreement = c("yes"),
+    stringsAsFactors = FALSE
+  )
+  
+  write.table(
+    test_data,
+    file = temp_file,
+    sep = "\t",
+    row.names = FALSE,
+    col.names = TRUE,
+    quote = FALSE
+  )
+  
+  # Create mock database
+  mock_db <- create_mock_db()
+  db_pool <- mock_db$pool
+  
+  # Insert test variant into database
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path) VALUES (?, ?, ?, ?)",
+    params = list("chr1:100", "A", "T", "/test/path.png")
+  )
+  
+  # Reset the annotations (should succeed even without info.json file)
+  result <- reset_user_annotations(temp_file, user_annotations_colnames, db_pool, create_mock_config())
+  
+  # Should still succeed - missing info.json is not a fatal error
+  testthat::expect_true(result)
+  
+  # Clean up
+  pool::poolClose(db_pool)
+  unlink(temp_file)
+  unlink(mock_db$file)
+})
+
+
