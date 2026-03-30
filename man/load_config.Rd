@@ -10,7 +10,7 @@ load_config(config_file_path)
 \item{config_file_path}{Character. Path to the configuration file. Default is the one in the app directory}
 }
 \value{
-A named list of configuration values (e.g., \code{cfg_sqlite_file}, \code{cfg_radio_options2val_map}, etc.)
+A named list of configuration values (e.g., \code{cfg_sqlite_file}, \code{cfg_radio_options}, etc.)
 }
 \description{
 Returns a list of configuration values, optionally overridden by environment

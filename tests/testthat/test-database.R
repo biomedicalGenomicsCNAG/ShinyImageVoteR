@@ -122,20 +122,25 @@ testthat::test_that("Vote counting updates work correctly", {
 })
 
 testthat::test_that("Database column mappings are correct", {
+  option_db_column_map <- stats::setNames(
+    vapply(cfg$radio_options, function(option) option$db_column, character(1)),
+    vapply(cfg$radio_options, function(option) option$value, character(1))
+  )
+
   # Test that vote mappings match database columns
-  testthat::expect_equal(cfg$vote2dbcolumn_map$yes, "vote_count_correct")
+  testthat::expect_equal(option_db_column_map[["yes"]], "vote_count_correct")
   testthat::expect_equal(
-    cfg$vote2dbcolumn_map$diff_var,
+    option_db_column_map[["diff_var"]],
     "vote_count_different_variant"
   )
-  testthat::expect_equal(cfg$vote2dbcolumn_map$germline, "vote_count_germline")
+  testthat::expect_equal(option_db_column_map[["germline"]], "vote_count_germline")
   testthat::expect_equal(
-    cfg$vote2dbcolumn_map$none_of_above,
+    option_db_column_map[["none_of_above"]],
     "vote_count_none_of_above"
   )
 
   # Test that all vote count columns are included in cfg_vote_counts_cols
-  for (vote_col in cfg$vote2dbcolumn_map) {
+  for (vote_col in option_db_column_map) {
     testthat::expect_true(vote_col %in% cfg$vote_counts_cols)
   }
 

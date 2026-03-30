@@ -28,7 +28,7 @@ script to enable keyboard shortcuts (e.g., Enter for "Next", Backspace for "Back
 The displayed options and labels are configured using:
 \itemize{
 \item \code{cfg$radioBtns_label}
-\item \code{cfg$radio_options2val_map}
+\item \code{cfg$radio_options}
 \item \code{cfg$checkboxes_label}
 \item \code{cfg$observations2val_map}
 }

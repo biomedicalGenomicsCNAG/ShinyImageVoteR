@@ -18,7 +18,7 @@ reset_user_annotations(
 
 \item{db_pool}{Database connection pool}
 
-\item{cfg}{App configuration containing vote2dbcolumn_map}
+\item{cfg}{App configuration containing radio_options db_column mappings}
 }
 \value{
 Logical. TRUE if reset was successful, FALSE otherwise

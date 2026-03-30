@@ -60,7 +60,7 @@ build_base_url <- function(session) {
 #' @param annotation_file_path Character. Full path to the user's annotation TSV file
 #' @param user_annotations_colnames Character vector. Column names for the annotation file
 #' @param db_pool Database connection pool
-#' @param cfg App configuration containing vote2dbcolumn_map
+#' @param cfg App configuration containing radio_options db_column mappings
 #'
 #' @return Logical. TRUE if reset was successful, FALSE otherwise
 #' @export
@@ -81,10 +81,22 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
     return(FALSE)
   }
   
-  if (is.null(cfg) || is.null(cfg$vote2dbcolumn_map)) {
-    warning("cfg or cfg$vote2dbcolumn_map is NULL")
+  if (is.null(cfg) || is.null(cfg$radio_options)) {
+    warning("cfg or cfg$radio_options is NULL")
     return(FALSE)
   }
+
+  option_values <- vapply(
+    cfg$radio_options,
+    function(option) as.character(option$value),
+    character(1)
+  )
+  option_db_columns <- vapply(
+    cfg$radio_options,
+    function(option) as.character(option$db_column),
+    character(1)
+  )
+  option_db_column_map <- stats::setNames(option_db_columns, option_values)
   
   tryCatch({
     # Read the existing annotation file
@@ -113,7 +125,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
         message("Updating database vote counts for ", nrow(voted_rows), " voted variants")
         
         # Get valid vote columns from config to prevent SQL injection
-        valid_vote_cols <- unlist(cfg$vote2dbcolumn_map, use.names = FALSE)
+        valid_vote_cols <- unname(option_db_column_map)
         
         # Group updates by variant to batch operations
         for (i in seq_len(nrow(voted_rows))) {
@@ -123,7 +135,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
           alt_val <- voted_rows$ALT[i]
           
           # Get the database column for this agreement value
-          vote_col <- cfg$vote2dbcolumn_map[[agreement_val]]
+          vote_col <- option_db_column_map[[agreement_val]]
           
           # Validate vote_col against known columns to prevent SQL injection
           if (!is.null(vote_col) && vote_col != "" && vote_col %in% valid_vote_cols) {
