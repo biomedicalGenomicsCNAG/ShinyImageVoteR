@@ -12,6 +12,11 @@ ShinyImgVoteR 0.1.3 (Development)
   
   -  Now, sub-options are cleared when the vote type changes. Similarly, the comment field value is not recorded when the vote type has no comment field (for example, when the vote type is “Yes”).
 
+* Fixed unconfigured voting options being skipped at 3 votes
+  - Previously, voting options without explicit configuration in `voting_options_max_matching_votes` 
+  were skipped after reaching 3 matching votes because there was a hardcoded default limit of 3 votes for each option
+  which needed to be explicitly overridden in the configuration file.
+
 ShinyImgVoteR 0.1.2
 ================
 
