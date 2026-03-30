@@ -31,6 +31,7 @@ The displayed options and labels are configured using:
 \item \code{cfg$radio_options}
 \item \code{cfg$checkboxes_label}
 \item \code{cfg$observations2val_map}
+\item \code{cfg$radio_options[[...]]$comment_box}
 }
 
 These should be defined in a sourced configuration file (config.yaml).

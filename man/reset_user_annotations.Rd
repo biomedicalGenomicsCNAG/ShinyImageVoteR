@@ -27,6 +27,7 @@ Logical. TRUE if reset was successful, FALSE otherwise
 Resets a user's annotation file by keeping the header row and the first
 three columns (coordinates, REF, ALT) but clearing all other data columns.
 Also updates the database by decrementing vote counts for all votes that
-the user had cast. This allows a user to start voting from scratch while
-preserving the randomized order of variants.
+the user had cast. Additionally, resets the vote_input_methods counts in the
+user's info.json file to 0. This allows a user to start voting from scratch
+while preserving the randomized order of variants.
 }
