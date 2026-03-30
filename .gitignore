@@ -16,5 +16,5 @@ docs
 .env
 .Renviron
 
-# release files
+# ignore build artifacts
 *.tar.gz

@@ -62,7 +62,8 @@ userStatsServer <- function(
           user_annotations_file,
           header = TRUE,
           sep = "\t",
-          stringsAsFactors = FALSE
+          stringsAsFactors = FALSE,
+          quote = ""
         )
         annotations_df <- annotations_df[
           !is.na(annotations_df$shinyauthr_session_id),
