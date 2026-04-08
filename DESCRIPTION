@@ -27,13 +27,15 @@ Imports:
     tibble,
     data.table,
     markdown,
-    R.utils
+    R.utils,
+    purrr,
+    DT,
+    lubridate
 Suggests:
     testthat (>= 3.0.0),
     covr,
     shinytest2,
     pak,
-    DT,
     devtools,
     knitr,
     rmarkdown
