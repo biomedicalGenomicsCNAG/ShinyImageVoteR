@@ -54,8 +54,12 @@ build_base_url <- function(session) {
 #' three columns (coordinates, REF, ALT) but clearing all other data columns.
 #' Also updates the database by decrementing vote counts for all votes that
 #' the user had cast. Additionally, resets the vote_input_methods counts in the
-#' user's info.json file to 0. This allows a user to start voting from scratch 
+#' user's info.json file to 0. This allows a user to start voting from scratch
 #' while preserving the randomized order of variants.
+#'
+#' If "Update Database" was used before this call, the user's annotation file
+#' rows are first synced with the current database entries: rows that no longer
+#' exist in the database are removed, and new database entries are appended.
 #'
 #' @param annotation_file_path Character. Full path to the user's annotation TSV file
 #' @param user_annotations_colnames Character vector. Column names for the annotation file
@@ -114,6 +118,42 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       warning("Annotation file is missing required columns (coordinates, REF, ALT)")
       return(FALSE)
     }
+    
+    # Sync annotation file rows with the current database entries.
+    # This handles the case where "Update Database" was used before "Reset
+    # Annotations": rows removed from the database are dropped from the user
+    # file and new database rows are appended so the two stay congruent.
+    db_entries <- DBI::dbGetQuery(
+      db_pool,
+      "SELECT coordinates, REF, ALT FROM annotations"
+    )
+    
+    user_keys <- paste(
+      annotations_df$coordinates,
+      annotations_df$REF,
+      annotations_df$ALT,
+      sep = "|"
+    )
+    db_keys <- paste(
+      db_entries$coordinates,
+      db_entries$REF,
+      db_entries$ALT,
+      sep = "|"
+    )
+    
+    # Remove rows that no longer exist in the database
+    in_db_mask <- user_keys %in% db_keys
+    if (!all(in_db_mask)) {
+      message(
+        "Removing ", sum(!in_db_mask),
+        " row(s) from user annotation file that no longer exist in the database"
+      )
+      annotations_df <- annotations_df[in_db_mask, , drop = FALSE]
+      user_keys <- user_keys[in_db_mask]
+    }
+    
+    # Identify new database rows that are not yet in the user file
+    new_db_mask <- !db_keys %in% user_keys
     
     # Update database vote counts by decrementing for each vote cast
     # Only process rows where agreement is not empty
@@ -183,6 +223,29 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       ),
       user_annotations_colnames
     )
+    
+    # Append any new database rows that were not present in the user file
+    if (any(new_db_mask)) {
+      new_db_rows <- db_entries[new_db_mask, , drop = FALSE]
+      new_rows_df <- setNames(
+        as.data.frame(
+          lapply(user_annotations_colnames, function(col) {
+            if (col %in% c("coordinates", "REF", "ALT") && col %in% names(new_db_rows)) {
+              new_db_rows[[col]]
+            } else {
+              rep("", nrow(new_db_rows))
+            }
+          }),
+          stringsAsFactors = FALSE
+        ),
+        user_annotations_colnames
+      )
+      reset_df <- rbind(reset_df, new_rows_df)
+      message(
+        "Appended ", nrow(new_rows_df),
+        " new row(s) from the database to the user annotation file"
+      )
+    }
     
     # Write the reset data back to the file
     write.table(

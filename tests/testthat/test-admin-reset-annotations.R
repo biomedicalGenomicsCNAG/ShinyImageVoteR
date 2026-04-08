@@ -468,4 +468,242 @@ testthat::test_that("reset_user_annotations handles missing user info JSON grace
   unlink(mock_db$file)
 })
 
+testthat::test_that("reset_user_annotations syncs rows removed from the database", {
+  # Scenario: "Update Database" was used to remove a variant (chr3:300) from the
+  # database, but the user's annotation file still contains it. "Reset Annotations"
+  # should drop the stale row from the user file so the two stay congruent.
+  temp_file <- tempfile(fileext = ".tsv")
 
+  user_annotations_colnames <- c(
+    "coordinates", "REF", "ALT", "agreement",
+    "observation", "comment", "shinyauthr_session_id",
+    "time_till_vote_casted_in_seconds"
+  )
+
+  # User file has 3 rows
+  test_data <- data.frame(
+    coordinates = c("chr1:100", "chr2:200", "chr3:300"),
+    REF = c("A", "T", "G"),
+    ALT = c("T", "C", "A"),
+    agreement = c("yes", "diff_var", "germline"),
+    observation = c("", "", ""),
+    comment = c("", "", ""),
+    shinyauthr_session_id = c("sess1", "sess1", "sess1"),
+    time_till_vote_casted_in_seconds = c("10", "20", "30"),
+    stringsAsFactors = FALSE
+  )
+
+  write.table(
+    test_data,
+    file = temp_file,
+    sep = "\t",
+    row.names = FALSE,
+    col.names = TRUE,
+    quote = FALSE
+  )
+
+  # Database only has 2 of those 3 rows (chr3:300 was removed via Update Database)
+  mock_db <- create_mock_db()
+  db_pool <- mock_db$pool
+
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path, vote_count_correct) VALUES (?, ?, ?, ?, ?)",
+    params = list("chr1:100", "A", "T", "/test/path.png", 1)
+  )
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path, vote_count_different_variant) VALUES (?, ?, ?, ?, ?)",
+    params = list("chr2:200", "T", "C", "/test/path2.png", 1)
+  )
+
+  result <- reset_user_annotations(temp_file, user_annotations_colnames, db_pool, create_mock_config())
+
+  testthat::expect_true(result)
+
+  reset_data <- read.table(
+    temp_file,
+    sep = "\t",
+    header = TRUE,
+    stringsAsFactors = FALSE,
+    quote = "",
+    comment.char = ""
+  )
+
+  # Only 2 rows should remain (chr3:300 was removed)
+  testthat::expect_equal(nrow(reset_data), 2)
+  testthat::expect_equal(sort(reset_data$coordinates), c("chr1:100", "chr2:200"))
+
+  # All annotation columns should be cleared
+  testthat::expect_true(all(reset_data$agreement == ""))
+
+  # Vote counts for remaining rows should have been decremented
+  for (coord in c("chr1:100", "chr2:200")) {
+    row <- DBI::dbGetQuery(
+      db_pool,
+      "SELECT vote_count_correct, vote_count_different_variant FROM annotations WHERE coordinates = ?",
+      params = list(coord)
+    )
+    if (nrow(row) > 0) {
+      testthat::expect_equal(row$vote_count_correct + row$vote_count_different_variant, 0)
+    }
+  }
+
+  pool::poolClose(db_pool)
+  unlink(temp_file)
+  unlink(mock_db$file)
+})
+
+testthat::test_that("reset_user_annotations appends rows added to the database", {
+  # Scenario: "Update Database" added a new variant (chr4:400) to the database,
+  # which is not yet in the user's annotation file. "Reset Annotations" should
+  # append that row so the user file is congruent with the database.
+  temp_file <- tempfile(fileext = ".tsv")
+
+  user_annotations_colnames <- c(
+    "coordinates", "REF", "ALT", "agreement",
+    "observation", "comment", "shinyauthr_session_id",
+    "time_till_vote_casted_in_seconds"
+  )
+
+  # User file has 2 rows
+  test_data <- data.frame(
+    coordinates = c("chr1:100", "chr2:200"),
+    REF = c("A", "T"),
+    ALT = c("T", "C"),
+    agreement = c("yes", ""),
+    observation = c("", ""),
+    comment = c("", ""),
+    shinyauthr_session_id = c("sess1", ""),
+    time_till_vote_casted_in_seconds = c("10", ""),
+    stringsAsFactors = FALSE
+  )
+
+  write.table(
+    test_data,
+    file = temp_file,
+    sep = "\t",
+    row.names = FALSE,
+    col.names = TRUE,
+    quote = FALSE
+  )
+
+  # Database has those 2 rows plus a newly added one (chr4:400)
+  mock_db <- create_mock_db()
+  db_pool <- mock_db$pool
+
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path, vote_count_correct) VALUES (?, ?, ?, ?, ?)",
+    params = list("chr1:100", "A", "T", "/test/path.png", 1)
+  )
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path) VALUES (?, ?, ?, ?)",
+    params = list("chr2:200", "T", "C", "/test/path2.png")
+  )
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path) VALUES (?, ?, ?, ?)",
+    params = list("chr4:400", "G", "A", "/test/path4.png")
+  )
+
+  result <- reset_user_annotations(temp_file, user_annotations_colnames, db_pool, create_mock_config())
+
+  testthat::expect_true(result)
+
+  reset_data <- read.table(
+    temp_file,
+    sep = "\t",
+    header = TRUE,
+    stringsAsFactors = FALSE,
+    quote = "",
+    comment.char = ""
+  )
+
+  # Should now have 3 rows (the original 2 + the new one from DB)
+  testthat::expect_equal(nrow(reset_data), 3)
+  testthat::expect_true("chr4:400" %in% reset_data$coordinates)
+
+  # All annotation columns must be cleared
+  testthat::expect_true(all(reset_data$agreement == ""))
+
+  # The new row should have the correct coordinates/REF/ALT
+  new_row <- reset_data[reset_data$coordinates == "chr4:400", ]
+  testthat::expect_equal(new_row$REF, "G")
+  testthat::expect_equal(new_row$ALT, "A")
+
+  pool::poolClose(db_pool)
+  unlink(temp_file)
+  unlink(mock_db$file)
+})
+
+testthat::test_that("reset_user_annotations handles congruent file and database unchanged", {
+  # When file and database already match, behavior should be identical to before
+  temp_file <- tempfile(fileext = ".tsv")
+
+  user_annotations_colnames <- c(
+    "coordinates", "REF", "ALT", "agreement",
+    "observation", "comment", "shinyauthr_session_id",
+    "time_till_vote_casted_in_seconds"
+  )
+
+  test_data <- data.frame(
+    coordinates = c("chr1:100", "chr2:200"),
+    REF = c("A", "T"),
+    ALT = c("T", "C"),
+    agreement = c("yes", "diff_var"),
+    observation = c("", ""),
+    comment = c("", ""),
+    shinyauthr_session_id = c("sess1", "sess1"),
+    time_till_vote_casted_in_seconds = c("10", "20"),
+    stringsAsFactors = FALSE
+  )
+
+  write.table(
+    test_data,
+    file = temp_file,
+    sep = "\t",
+    row.names = FALSE,
+    col.names = TRUE,
+    quote = FALSE
+  )
+
+  mock_db <- create_mock_db()
+  db_pool <- mock_db$pool
+
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path, vote_count_correct) VALUES (?, ?, ?, ?, ?)",
+    params = list("chr1:100", "A", "T", "/test/path.png", 1)
+  )
+  DBI::dbExecute(
+    db_pool,
+    "INSERT INTO annotations (coordinates, REF, ALT, path, vote_count_different_variant) VALUES (?, ?, ?, ?, ?)",
+    params = list("chr2:200", "T", "C", "/test/path2.png", 1)
+  )
+
+  result <- reset_user_annotations(temp_file, user_annotations_colnames, db_pool, create_mock_config())
+
+  testthat::expect_true(result)
+
+  reset_data <- read.table(
+    temp_file,
+    sep = "\t",
+    header = TRUE,
+    stringsAsFactors = FALSE,
+    quote = "",
+    comment.char = ""
+  )
+
+  # Row count unchanged
+  testthat::expect_equal(nrow(reset_data), 2)
+  # Coordinates preserved
+  testthat::expect_equal(sort(reset_data$coordinates), c("chr1:100", "chr2:200"))
+  # All annotation columns cleared
+  testthat::expect_true(all(reset_data$agreement == ""))
+
+  pool::poolClose(db_pool)
+  unlink(temp_file)
+  unlink(mock_db$file)
+})
