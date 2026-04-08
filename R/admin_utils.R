@@ -74,17 +74,17 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
     warning("Annotation file does not exist: ", annotation_file_path)
     return(FALSE)
   }
-  
+
   if (is.null(user_annotations_colnames) || length(user_annotations_colnames) == 0) {
     warning("user_annotations_colnames is NULL or empty")
     return(FALSE)
   }
-  
+
   if (is.null(db_pool)) {
     warning("db_pool is NULL")
     return(FALSE)
   }
-  
+
   if (is.null(cfg) || is.null(cfg$radio_options)) {
     warning("cfg or cfg$radio_options is NULL")
     return(FALSE)
@@ -101,7 +101,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
     character(1)
   )
   option_db_column_map <- stats::setNames(option_db_columns, option_values)
-  
+
   tryCatch({
     # Read the existing annotation file
     annotations_df <- read.table(
@@ -112,13 +112,13 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       quote = "",
       comment.char = ""
     )
-    
+
     # Verify that the file has the expected columns
     if (!all(c("coordinates", "REF", "ALT") %in% colnames(annotations_df))) {
       warning("Annotation file is missing required columns (coordinates, REF, ALT)")
       return(FALSE)
     }
-    
+
     # Sync annotation file rows with the current database entries.
     # This handles the case where "Update Database" was used before "Reset
     # Annotations": rows removed from the database are dropped from the user
@@ -127,7 +127,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       db_pool,
       "SELECT coordinates, REF, ALT FROM annotations"
     )
-    
+
     user_keys <- paste(
       annotations_df$coordinates,
       annotations_df$REF,
@@ -140,7 +140,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       db_entries$ALT,
       sep = "|"
     )
-    
+
     # Remove rows that no longer exist in the database
     in_db_mask <- user_keys %in% db_keys
     if (!all(in_db_mask)) {
@@ -151,32 +151,32 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       annotations_df <- annotations_df[in_db_mask, , drop = FALSE]
       user_keys <- user_keys[in_db_mask]
     }
-    
+
     # Identify new database rows that are not yet in the user file
     new_db_mask <- !db_keys %in% user_keys
-    
+
     # Update database vote counts by decrementing for each vote cast
     # Only process rows where agreement is not empty
     if ("agreement" %in% colnames(annotations_df)) {
-      voted_rows <- annotations_df[!is.na(annotations_df$agreement) & 
+      voted_rows <- annotations_df[!is.na(annotations_df$agreement) &
                                    annotations_df$agreement != "", ]
-      
+
       if (nrow(voted_rows) > 0) {
         message("Updating database vote counts for ", nrow(voted_rows), " voted variants")
-        
+
         # Get valid vote columns from config to prevent SQL injection
         valid_vote_cols <- unname(option_db_column_map)
-        
+
         # Group updates by variant to batch operations
         for (i in seq_len(nrow(voted_rows))) {
           agreement_val <- voted_rows$agreement[i]
           coord <- voted_rows$coordinates[i]
           ref_val <- voted_rows$REF[i]
           alt_val <- voted_rows$ALT[i]
-          
+
           # Get the database column for this agreement value
           vote_col <- option_db_column_map[[agreement_val]]
-          
+
           # Validate vote_col against known columns to prevent SQL injection
           if (!is.null(vote_col) && vote_col != "" && vote_col %in% valid_vote_cols) {
             # Decrement the vote count in the database
@@ -187,7 +187,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
               vote_col,
               " - 1) WHERE coordinates = ? AND REF = ? AND ALT = ?"
             )
-            
+
             tryCatch({
               DBI::dbExecute(
                 db_pool,
@@ -201,13 +201,13 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
             warning("Invalid or unknown vote column for agreement: ", agreement_val)
           }
         }
-        
+
         message("Successfully updated database vote counts")
       } else {
         message("No votes to decrement in database")
       }
     }
-    
+
     # Create a new data frame with the same structure
     # Keep coordinates, REF, ALT, but reset all other columns to empty strings
     reset_df <- setNames(
@@ -223,7 +223,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       ),
       user_annotations_colnames
     )
-    
+
     # Append any new database rows that were not present in the user file
     if (any(new_db_mask)) {
       new_db_rows <- db_entries[new_db_mask, , drop = FALSE]
@@ -246,7 +246,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
         " new row(s) from the database to the user annotation file"
       )
     }
-    
+
     # Write the reset data back to the file
     write.table(
       reset_df,
@@ -256,9 +256,9 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       col.names = TRUE,
       quote = FALSE
     )
-    
+
     message("Successfully reset annotations for file: ", annotation_file_path)
-    
+
     # Reset vote_input_methods counts in the user info JSON file
     # The info.json file is in the same directory as the annotations file,
     # with a similar naming pattern (replacing _annotations.tsv with _info.json)
@@ -267,12 +267,12 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
     user_info_file <- file.path(user_dir, paste0(base_name, "_info.json"))
 
     message("Resetting vote_input_methods in user info file: ", user_info_file)
-    
+
     if (file.exists(user_info_file)) {
       tryCatch({
         # Read the existing user info JSON file
         user_info <- jsonlite::read_json(user_info_file)
-        
+
         # Reset vote_input_methods counts to 0
         if (!is.null(user_info$vote_input_methods)) {
           user_info$vote_input_methods <- list(
@@ -280,7 +280,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
             mouse_count = 0,
             unknown_count = 0
           )
-          
+
           # Write the updated user info back to the file
           jsonlite::write_json(
             user_info,
@@ -288,7 +288,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
             auto_unbox = TRUE,
             pretty = TRUE
           )
-          
+
           message("Successfully reset vote_input_methods for file: ", user_info_file)
         } else {
           message("No vote_input_methods found in user info file: ", user_info_file)
@@ -299,7 +299,7 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
     } else {
       message("User info file does not exist: ", user_info_file)
     }
-    
+
     return(TRUE)
   }, error = function(e) {
     warning("Failed to reset annotations: ", e$message)
