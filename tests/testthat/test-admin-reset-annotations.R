@@ -411,7 +411,15 @@ testthat::test_that("reset_user_annotations resets vote_input_methods in user in
   # Verify other fields were preserved
   testthat::expect_equal(updated_user_info$user_id, "testuser")
   testthat::expect_equal(updated_user_info$voting_institute, "institute1")
-  testthat::expect_equal(updated_user_info$images_randomisation_seed, 12345)
+  # Seed must have been updated (no longer the original 12345)
+  testthat::expect_false(
+    identical(updated_user_info$images_randomisation_seed, 12345),
+    info = "images_randomisation_seed should be updated to a new seed on reset"
+  )
+  testthat::expect_true(
+    is.numeric(updated_user_info$images_randomisation_seed),
+    info = "images_randomisation_seed should be a numeric value"
+  )
   
   # Clean up
   pool::poolClose(db_pool)

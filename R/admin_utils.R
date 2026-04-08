@@ -54,12 +54,13 @@ build_base_url <- function(session) {
 #' three columns (coordinates, REF, ALT) but clearing all other data columns.
 #' Also updates the database by decrementing vote counts for all votes that
 #' the user had cast. Additionally, resets the vote_input_methods counts in the
-#' user's info.json file to 0. This allows a user to start voting from scratch
-#' while preserving the randomized order of variants.
+#' user's info.json file to 0. This allows a user to start voting from scratch.
 #'
 #' If "Update Database" was used before this call, the user's annotation file
 #' rows are first synced with the current database entries: rows that no longer
 #' exist in the database are removed, and new database entries are appended.
+#' After syncing, the row order is re-randomised with a fresh seed and
+#' images_randomisation_seed in the user's _info.json is updated accordingly.
 #'
 #' @param annotation_file_path Character. Full path to the user's annotation TSV file
 #' @param user_annotations_colnames Character vector. Column names for the annotation file
@@ -247,6 +248,22 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
       )
     }
 
+    # Re-randomise the row order with a fresh seed so the user gets a new
+    # voting sequence (including any newly added rows at random positions).
+    randomisation_seed <- strtoi(
+      substr(
+        digest::digest(
+          paste0(annotation_file_path, as.numeric(Sys.time())),
+          algo = "crc32"
+        ),
+        1, 7
+      ),
+      base = 16
+    )
+    set.seed(randomisation_seed)
+    reset_df <- reset_df[sample(seq_len(nrow(reset_df))), , drop = FALSE]
+    rownames(reset_df) <- NULL
+
     # Write the reset data back to the file
     write.table(
       reset_df,
@@ -280,19 +297,22 @@ reset_user_annotations <- function(annotation_file_path, user_annotations_colnam
             mouse_count = 0,
             unknown_count = 0
           )
-
-          # Write the updated user info back to the file
-          jsonlite::write_json(
-            user_info,
-            user_info_file,
-            auto_unbox = TRUE,
-            pretty = TRUE
-          )
-
-          message("Successfully reset vote_input_methods for file: ", user_info_file)
         } else {
           message("No vote_input_methods found in user info file: ", user_info_file)
         }
+
+        # Update the randomisation seed to the newly generated one
+        user_info$images_randomisation_seed <- randomisation_seed
+
+        # Write the updated user info back to the file
+        jsonlite::write_json(
+          user_info,
+          user_info_file,
+          auto_unbox = TRUE,
+          pretty = TRUE
+        )
+
+        message("Successfully reset vote_input_methods and updated seed for file: ", user_info_file)
       }, error = function(e) {
         warning("Failed to reset vote_input_methods in user info file: ", e$message)
       })
