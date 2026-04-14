@@ -107,13 +107,20 @@ userStatsServer <- function(
           max_time_per_vote <- max(time_vals)
         }
 
+        average_votes_per_session <- NA
+        max_votes_per_session <- NA
+        if (nrow(session_counts_df) > 0) {
+          average_votes_per_session <- mean(session_counts_df$images_voted)
+          max_votes_per_session <- max(session_counts_df$images_voted)
+        }
+
         voting_stats_df <- data.frame(
           user_id = session$userData$userId,
           voting_institute = session$userData$votingInstitute,
           total_votes = sum(session_counts_df$images_voted),
           total_sessions_with_at_least_1_vote = nrow(session_counts_df),
-          average_votes_per_session = mean(session_counts_df$images_voted),
-          max_votes_per_session = max(session_counts_df$images_voted),
+          average_votes_per_session = average_votes_per_session,
+          max_votes_per_session = max_votes_per_session,
           average_session_length_in_minutes = average_session_length,
           max_session_length_in_minutes = max_session_length,
           average_time_per_vote_in_seconds = average_time_per_vote,

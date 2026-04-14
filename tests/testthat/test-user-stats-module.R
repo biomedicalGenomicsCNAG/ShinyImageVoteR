@@ -157,6 +157,83 @@ session$userData$userAnnotationsFile <- tempfile(fileext = ".tsv")
   unlink(db_file)
 })
 
+testthat::test_that("User stats shows NA instead of -Inf when user has not voted yet", {
+  # Create a mock database pool
+  db_file <- tempfile(fileext = ".sqlite")
+  pool <- dbPool(RSQLite::SQLite(), dbname = db_file)
+
+  # Create sessionids table (no rows inserted - user has never logged a session)
+  DBI::dbExecute(pool, "
+    CREATE TABLE sessionids (
+      userid TEXT,
+      sessionid TEXT,
+      login_time TEXT,
+      logout_time TEXT
+    )
+  ")
+
+  login_trigger <- shiny::reactiveVal(list(user_id = "test_user", voting_institute = "CNAG"))
+
+  cfg <- ShinyImgVoteR::load_config(
+    config_file_path = system.file(
+      "shiny-app",
+      "default_env",
+      "config",
+      "config.yaml",
+      package = "ShinyImgVoteR"
+    )
+  )
+  testServer(userStatsServer, args = list(
+    cfg,
+    login_trigger = login_trigger,
+    db_pool = pool
+  ), {
+    session$userData$userId <- "test_user"
+    session$userData$votingInstitute <- "CNAG"
+    # Create an annotations file with only a header (no vote rows)
+    annotations_file <- tempfile(fileext = ".tsv")
+    write.table(
+      data.frame(
+        coordinates = character(0),
+        agreement = character(0),
+        observation = character(0),
+        comment = character(0),
+        shinyauthr_session_id = character(0),
+        time_till_vote_casted_in_seconds = character(0),
+        stringsAsFactors = FALSE
+      ),
+      file = annotations_file,
+      sep = "\t",
+      row.names = FALSE,
+      col.names = TRUE,
+      quote = FALSE
+    )
+    session$userData$userAnnotationsFile <- annotations_file
+
+    result <- stats()
+    testthat::expect_true(is.data.frame(result))
+
+    # Extract key metrics from the transposed data frame
+    get_val <- function(df, metric_name) {
+      df[df$metric == metric_name, "value"]
+    }
+
+    max_val <- get_val(result, "max_votes_per_session")
+    avg_val <- get_val(result, "average_votes_per_session")
+
+    # Must not be "-Inf" or "NaN"
+    testthat::expect_false(identical(max_val, "-Inf"))
+    testthat::expect_false(identical(max_val, "NaN"))
+    testthat::expect_false(identical(avg_val, "-Inf"))
+    testthat::expect_false(identical(avg_val, "NaN"))
+
+    unlink(annotations_file)
+  })
+
+  poolClose(pool)
+  unlink(db_file)
+})
+
 testthat::test_that("User stats server works without tab trigger (backward compatibility)", {
   # Create a mock database pool
   db_file <- tempfile(fileext = ".sqlite")
