@@ -66,3 +66,7 @@ user_annotations_colnames:
 - shinyauthr_session_id
 - time_till_vote_casted_in_seconds
 cookie_expiry: 1
+
+# Optional: override the path to the "done" image shown when all mutations are voted.
+# When not set, the image bundled with the package (pkg-images/done.png) is used.
+# done_image_path: /path/to/custom/done.png
