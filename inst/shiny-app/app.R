@@ -60,6 +60,11 @@ shiny::addResourcePath(
   directoryPath = Sys.getenv("IMGVOTER_IMAGES_DIR")
 )
 
+shiny::addResourcePath(
+  prefix = "pkg-images",
+  directoryPath = system.file("shiny-app", "www", "images", package = "ShinyImgVoteR")
+)
+
 print("IMGVOTER_CONFIG_FILE_PATH:")
 print(Sys.getenv("IMGVOTER_CONFIG_FILE_PATH"))
 

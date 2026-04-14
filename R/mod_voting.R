@@ -292,7 +292,7 @@ votingServer <- function(
         coordinates = "done",
         REF = "-",
         ALT = "-",
-        path = "done.png"
+        path = cfg$done_image_path
       )
     }
 
@@ -995,7 +995,11 @@ votingServer <- function(
           shiny::img(
             id = image_id,
             `data-panzoom-image` = "true",
-            src = glue::glue("images/{mut_df$path}"),
+            src = if (mut_df$coordinates == "done") {
+              mut_df$path
+            } else {
+              glue::glue("images/{mut_df$path}")
+            },
             class = "voting-image",
             style = "width: 100%;",
             alt = sprintf("Mutation image for %s", mut_df$coordinates)

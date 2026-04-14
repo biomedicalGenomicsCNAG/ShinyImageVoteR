@@ -141,5 +141,10 @@ load_config <- function(config_file_path) {
   # missing annotations_cols
   cfg$theme <- bslib::bs_theme(version = 5)
 
+  # Set done_image_path: use the bundled package image if not configured
+  if (is.null(cfg$done_image_path) || !nzchar(cfg$done_image_path)) {
+    cfg$done_image_path <- "pkg-images/done.png"
+  }
+
   return(cfg)
 }
