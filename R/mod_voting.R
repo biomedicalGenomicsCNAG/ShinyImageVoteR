@@ -296,6 +296,13 @@ votingServer <- function(
       )
     }
 
+    # Helper function to construct the image src URL for a mutation row.
+    # Regular mutation images are served under the "images/" resource path,
+    # while the special "done" image already carries its full resource path.
+    get_image_src <- function(coordinates, path) {
+      if (coordinates == "done") path else glue::glue("images/{path}")
+    }
+
     # Tracks the url parameters be they manually set in the URL or
     # set by the app when the user clicks on the "Back" button
     # or presses "Go back one page" in the browser
@@ -995,11 +1002,7 @@ votingServer <- function(
           shiny::img(
             id = image_id,
             `data-panzoom-image` = "true",
-            src = if (mut_df$coordinates == "done") {
-              mut_df$path
-            } else {
-              glue::glue("images/{mut_df$path}")
-            },
+            src = get_image_src(mut_df$coordinates, mut_df$path),
             class = "voting-image",
             style = "width: 100%;",
             alt = sprintf("Mutation image for %s", mut_df$coordinates)
